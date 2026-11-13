@@ -39,3 +39,7 @@ _Avoid_: server data, world DB, emulator data
 **Offsets**:
 The catalog of native addresses, object-field offsets and vtable slots for the Target Build.
 _Avoid_: addresses, memory map, pointers
+
+**Offset entry**:
+One named address in the Offsets catalog, identified by its namespace path, such as a native function or a global.
+_Avoid_: constant, symbol, pointer
