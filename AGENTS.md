@@ -26,3 +26,17 @@ Run `vp toolchain` to show versions and relationships in the active Vite+ releas
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
 
 <!--VITE PLUS END-->
+
+## Agent skills
+
+### Issue tracker
+
+Track issues and specs in this repository’s GitHub Issues. Before tracker operations, read `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical triage labels. Before triage or applying role labels, read `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use single-context domain documentation. Before exploring the codebase, read `docs/agents/domain.md`.
