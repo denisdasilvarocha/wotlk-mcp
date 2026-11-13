@@ -6,40 +6,30 @@ A read-only reference that answers questions about the World of Warcraft 3.3.5a 
 
 ### Target
 
-**Target Build**:
-The one client the reference describes: World of Warcraft 3.3.5a, build 12340, enUS locale, Windows x86.
-_Avoid_: version, patch, WotLK (on its own)
+**Target Build**: The one client the reference describes: World of Warcraft 3.3.5a, build 12340, enUS locale, Windows x86. _Avoid_: version, patch, WotLK (on its own)
 
-**Blizzlike**:
-Content matching the original 3.3.5a game as shipped, with no realm-specific customisation.
-_Avoid_: retail, vanilla, stock
+**Blizzlike**: Content matching the original 3.3.5a game as shipped, with no realm-specific customisation. _Avoid_: retail, vanilla, stock
 
 ### Domains
 
-**Domain**:
-One of the three bodies of knowledge the reference covers: Lua API, Game Data and Offsets.
-_Avoid_: dataset, category, module
+**Domain**: One of the three bodies of knowledge the reference covers: Lua API, Game Data and Offsets. _Avoid_: dataset, category, module
 
-**Lua API**:
-The client's scripting surface as addons see it: global functions, events, widget types and methods, enums and constants, CVars, slash commands, and the FrameXML interface source.
-_Avoid_: WoW API, addon API
+**Lua API**: The client's scripting surface as addons see it: global functions, events, widget types and methods, enums and constants, CVars, slash commands, combat log sub-events, secure templates, and the Interface source (FrameXML, GlueXML and the Blizzard load-on-demand addons). _Avoid_: WoW API, addon API
 
-**Game Data**:
-The umbrella for game content records. It is made up of exactly Client Data and World Data.
-_Avoid_: game world data, DB data
+**Game Data**: The umbrella for game content records. It is made up of exactly Client Data and World Data. _Avoid_: game world data, DB data
 
-**Client Data**:
-Game Data shipped inside the client in its DBC files, such as spells, item sets, talents, maps, areas and factions.
-_Avoid_: DBC data, client DB
+**Client Data**: Game Data shipped inside the client in its DBC files, such as spells, item sets, talents, maps, areas and factions. _Avoid_: DBC data, client DB
 
-**World Data**:
-Game Data held in an emulator's world database, such as creatures, items, quests, loot, spawns and vendors, taken as the Blizzlike baseline.
-_Avoid_: server data, world DB, emulator data
+**World Data**: Game Data held in an emulator's world database, such as creatures, items, quests, loot, spawns and vendors, taken as the Blizzlike baseline. _Avoid_: server data, world DB, emulator data
 
-**Offsets**:
-The catalog of native addresses, object-field offsets and vtable slots for the Target Build.
-_Avoid_: addresses, memory map, pointers
+**Offsets**: The catalog of native addresses, object-field offsets and vtable slots for the Target Build. _Avoid_: addresses, memory map, pointers
 
-**Offset entry**:
-One named address in the Offsets catalog, identified by its namespace path, such as a native function or a global.
-_Avoid_: constant, symbol, pointer
+**Offset entry**: One named address in the Offsets catalog, identified by its namespace path, such as a native function or a global. _Avoid_: constant, symbol, pointer
+
+### Records
+
+**Record**: One entity the reference can return by id, such as a spell or a creature. _Avoid_: row, object
+
+**Record kind**: The type of a record. Each kind comes from exactly one source table, so records from different sources are never merged. _Avoid_: entity type, category
+
+**Link**: A typed, directed relation between two records, taken from a source foreign key. _Avoid_: edge, reference, relation
