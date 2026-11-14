@@ -302,7 +302,9 @@ async function update(directory: string, current: CacheState): Promise<void> {
   }
 }
 
-const selected: Promise<string> = (async () => {
+async function selectReference(): Promise<string> {
+  received = 0
+  total = undefined
   const override = process.env.WOTLK_MCP_DB
   if (override !== undefined)
     try {
@@ -339,20 +341,22 @@ const selected: Promise<string> = (async () => {
       { cause: error }
     )
   }
-})()
-const outcome = (async (): Promise<{ path?: string; error?: unknown }> => {
+}
+async function acquire(): Promise<{ path?: string; error?: unknown }> {
   try {
-    return { path: await selected }
+    return { path: await selectReference() }
   } catch (error) {
     return { error }
   }
-})()
+}
+let outcome: ReturnType<typeof acquire> | undefined = acquire()
 
 export async function getReferencePath(): Promise<string> {
+  const attempt = (outcome ??= acquire())
   let timer: ReturnType<typeof setTimeout> | undefined
   try {
     const result = await Promise.race([
-      outcome,
+      attempt,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
           let progress = ''
@@ -365,7 +369,10 @@ export async function getReferencePath(): Promise<string> {
         }, 20_000)
       })
     ])
-    if (result.error) throw result.error
+    if (result.error) {
+      if (outcome === attempt) outcome = undefined
+      throw result.error
+    }
     if (!result.path) throw new Error('no reference database')
     return result.path
   } finally {

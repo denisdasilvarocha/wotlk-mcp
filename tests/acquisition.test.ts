@@ -161,6 +161,47 @@ test('acquires the newest compatible published reference and uses optional token
     await client.close()
   }
 })
+test('retries a failed acquisition in the same session and shares the new attempt', async () => {
+  scenario = '429'
+  requests = []
+  const client = await launch()
+  try {
+    const failed = await call(client)
+    expect(failed.isError).toBe(true)
+    expect(JSON.stringify(failed)).toContain('HTTP 429')
+    expect(requests).toEqual(['/releases'])
+    scenario = 'good'
+    requests = []
+    const results = await Promise.all([call(client), call(client)])
+    expect(results.every((result) => !result.isError)).toBe(true)
+    expect((await call(client)).isError).not.toBe(true)
+    expect(requests).toEqual(['/releases', '/asset'])
+  } finally {
+    await client.close()
+  }
+})
+test('a failed session recovers offline after another process populates the cache', async () => {
+  const cache = mkdtempSync(path.join(dir, 'recovered-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  scenario = 'offline'
+  const client = await launch(env)
+  try {
+    expect((await call(client)).isError).toBe(true)
+    scenario = 'good'
+    const other = await launch(env)
+    try {
+      expect((await call(other)).isError).not.toBe(true)
+    } finally {
+      await other.close()
+    }
+    scenario = 'offline'
+    requests = []
+    expect((await call(client)).isError).not.toBe(true)
+    expect(requests).toEqual([])
+  } finally {
+    await client.close()
+  }
+})
 test('fresh acquisition follows release pages and persists once-per-session major guidance', async () => {
   const cache = mkdtempSync(path.join(dir, 'paginated-'))
   const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
