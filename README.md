@@ -75,7 +75,7 @@ The command verifies the archive, builds the pinned upstream database importer, 
 To add World Data to a newly built reference, pass the container name from the report and the reference database path:
 
 ```bash
-vp run build:reference -- reference.sqlite
+vp run build:reference reference.sqlite
 vpx scripts/export-world.ts <container> reference.sqlite
 ```
 
