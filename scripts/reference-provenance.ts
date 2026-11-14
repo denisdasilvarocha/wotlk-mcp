@@ -46,7 +46,7 @@ try {
   }
   for (const name of ['client-data', 'interface', 'native-registrations'])
     if (sources.has(name))
-      addNotice(name, 'Client rights and locale:', 'The owner accepts the redistribution risk; this is not evidence of Blizzard permission. The verified enGB extraction is an English stand-in for enUS, not proof of byte-identical enUS content.')
+      addNotice(name, 'Client rights and locale:', 'The owner accepts the redistribution risk; this is not evidence of Blizzard permission. The verified enGB extraction is an English stand-in for enUS, not proof of byte-identical enUS content. Fingerprint research (https://github.com/denisdasilvarocha/wotlk-mcp/issues/14) found Localization.lua and calendar first-weekday differences against an older enUS snapshot, and differences in 14 locale-sourced DBC text tables; those comparisons do not prove enUS identity. No locale corrections are silently applied.')
   if (sources.has('codex'))
     addNotice('codex', 'Codex rights:', 'The owner accepts the unlicensed Codex redistribution risk; permission has not been established.')
 
