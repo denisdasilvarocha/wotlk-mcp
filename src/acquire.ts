@@ -98,6 +98,7 @@ async function removeIfPossible(file: string): Promise<void> {
 
 async function cached(directory: string): Promise<{ path: string; state: CacheState } | undefined> {
   await mkdir(directory, { recursive: true })
+  const names = await readdir(directory)
   const entries = await states(directory)
   const keep = new Set<string>()
   const files = new Set<string>()
@@ -135,7 +136,7 @@ async function cached(directory: string): Promise<{ path: string; state: CacheSt
   await select(0)
   const now = Date.now()
   await Promise.all(
-    (await readdir(directory)).map(async (name) => {
+    names.map(async (name) => {
       if (keep.has(name)) return
       const partial = /^(\d+)-[0-9a-f-]+\.(?:br|sqlite|json)\.partial$/.exec(name)
       const session = /^session-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
