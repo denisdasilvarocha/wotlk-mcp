@@ -1,15 +1,16 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { delimiter, join, resolve } from 'node:path'
+import path from 'node:path'
+
 import { expect, test } from 'vite-plus/test'
 
-const root = resolve('world')
+const root = path.resolve('world')
 
 function run(mode: string): { status: number | null; output: string; report: boolean } {
-  const temp = mkdtempSync(join(tmpdir(), 'world-command-'))
-  const bin = join(temp, 'bin')
-  const out = join(temp, 'output')
+  const temp = mkdtempSync(path.join(tmpdir(), 'world-command-'))
+  const bin = path.join(temp, 'bin')
+  const out = path.join(temp, 'output')
   mkdirSync(bin)
   const executables: Record<string, string> = {
     openssl: `case "$*" in
@@ -29,20 +30,23 @@ function run(mode: string): { status: number | null; output: string; report: boo
         ;;
     esac`
   }
-  for (const [name, body] of Object.entries(executables)) {
-    writeFileSync(join(bin, name), `#!/bin/sh\n${body}\n`, { mode: 0o755 })
-  }
-  writeFileSync(join(temp, 'source.tar.gz'), '')
-  const result = spawnSync('sh', [join(root, 'reproduce.sh'), join(temp, 'source.tar.gz'), out], {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      PATH: `${bin}${delimiter}${process.env.PATH}`,
-      WORLD_TEST_MODE: mode,
-      WORLD_TEST_ROOT: root
+  for (const [name, body] of Object.entries(executables))
+    writeFileSync(path.join(bin, name), `#!/bin/sh\n${body}\n`, { mode: 0o755 })
+  writeFileSync(path.join(temp, 'source.tar.gz'), '')
+  const result = spawnSync(
+    'sh',
+    [path.join(root, 'reproduce.sh'), path.join(temp, 'source.tar.gz'), out],
+    {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+        WORLD_TEST_MODE: mode,
+        WORLD_TEST_ROOT: root
+      }
     }
-  })
-  const report = existsSync(join(out, 'report.txt'))
+  )
+  const report = existsSync(path.join(out, 'report.txt'))
   rmSync(temp, { recursive: true, force: true })
   return { status: result.status, output: result.stdout + result.stderr, report }
 }
