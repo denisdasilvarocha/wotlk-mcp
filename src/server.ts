@@ -81,7 +81,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error(
           `search requires a nonempty query, valid kinds (${kinds.join(', ')}), limit 1–100 and nonnegative integer offset`
         )
-      const db = openReference()
+      const db = openReference(await getReferencePath())
       try {
         return { content: [{ type: 'text', text: searchRecords(db, parsed.data) }] }
       } finally {
