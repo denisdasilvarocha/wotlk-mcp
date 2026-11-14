@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  existsSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -13,6 +14,7 @@ import { createServer, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { setTimeout as delay } from 'node:timers/promises'
 import { brotliCompressSync } from 'node:zlib'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -167,6 +169,38 @@ test('shared cache survives concurrent first downloads and offline restarts', as
     expect(readdirSync(directory)).not.toContain(path.basename(abandoned))
   } finally {
     await offline.close()
+  }
+})
+
+test('an interrupted download leaves no usable partial and a later start recovers', async () => {
+  const cache = mkdtempSync(path.join(dir, 'interrupted-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  scenario = 'slow'
+  const client = await launch(env)
+  async function waitForPartial(remaining: number): Promise<string> {
+    if (existsSync(directory)) {
+      const partial = readdirSync(directory).find((name) => name.endsWith('.br.partial'))
+      if (partial) return partial
+    }
+    if (!remaining) throw new Error('download partial was not created')
+    await delay(20)
+    return waitForPartial(remaining - 1)
+  }
+  const partial = await waitForPartial(250)
+  await client.close()
+  download.finish()
+  expect(readdirSync(directory).some((name) => name.startsWith('state-'))).toBe(false)
+  utimesSync(path.join(directory, partial), new Date(0), new Date(0))
+  scenario = 'good'
+  const restarted = await launch(env)
+  try {
+    expect((await call(restarted)).isError).not.toBe(true)
+    expect(readdirSync(directory)).not.toContain(partial)
+  } finally {
+    await restarted.close()
   }
 })
 
