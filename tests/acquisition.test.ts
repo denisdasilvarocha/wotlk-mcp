@@ -34,12 +34,17 @@ let scenario = 'good'
 let requests: string[] = []
 let authorization = ''
 const download = { finish: (): void => {} }
+const metadata = { hold: false, finish: (): void => {} }
 const concurrent: ServerResponse[] = []
 const server = createServer((req, res) => {
   requests.push(req.url ?? '')
   authorization = req.headers.authorization ?? ''
   if (scenario === 'offline') {
     res.writeHead(503).end()
+    return
+  }
+  if (scenario === '403' || scenario === '429') {
+    res.writeHead(Number(scenario)).end()
     return
   }
   if (req.url === '/releases') {
@@ -52,13 +57,20 @@ const server = createServer((req, res) => {
       { tag_name: 'v9.0.0', prerelease: false, draft: false, assets: [] },
       { tag_name: 'db-v2.0.0', prerelease: false, draft: false, assets: [asset] }
     ]
+    let version = 'db-v1.2.0'
+    if (scenario === 'rollback') version = 'db-v1.1.0'
     if (scenario !== 'higher')
       releases.push(
         { tag_name: 'db-v1.9.0', prerelease: true, draft: false, assets: [] },
-        { tag_name: 'db-v1.2.0', prerelease: false, draft: false, assets: [asset] },
-        { tag_name: 'db-v1.1.0', prerelease: false, draft: false, assets: [] }
+        { tag_name: version, prerelease: false, draft: false, assets: [asset] }
       )
-    res.end(JSON.stringify(releases))
+    const body = JSON.stringify(releases)
+    if (metadata.hold)
+      metadata.finish = (): void => {
+        metadata.finish = (): void => {}
+        res.end(body)
+      }
+    else res.end(body)
   } else {
     res.setHeader('content-length', data.length)
     if (scenario === 'slow') {
@@ -87,7 +99,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${address.port}`
   writeFileSync(
     preload,
-    `const original = globalThis.fetch; globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options)`
+    `const original = globalThis.fetch; globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options); if (process.env.TEST_NOW) Date.now = () => Number(process.env.TEST_NOW)`
   )
 })
 afterAll(() => {
@@ -121,6 +133,14 @@ async function launch(extra: Record<string, string> = {}, homeCache = false): Pr
 }
 function call(client: Client): ReturnType<Client['callTool']> {
   return client.callTool({ name: 'get', arguments: { ids: ['offset:Globals::PlayerName'] } })
+}
+async function marker(client: Client): Promise<string> {
+  return JSON.stringify(
+    await client.callTool({
+      name: 'sql',
+      arguments: { query: "SELECT value FROM meta WHERE key = 'lifecycle_marker'" }
+    })
+  )
 }
 
 test('acquires the newest compatible published reference and uses optional token', async () => {
@@ -365,6 +385,218 @@ test('higher-major-only releases name the required package major', async () => {
     await client.close()
   }
 })
+
+test('cached higher-major guidance reaches one result without blocking the session', async () => {
+  const cache = mkdtempSync(path.join(dir, 'update-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  scenario = 'good'
+  const initial = await launch(env)
+  expect((await call(initial)).isError).not.toBe(true)
+  await initial.close()
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  const state = readdirSync(directory).find((name) => name.startsWith('state-'))
+  if (!state) throw new Error('missing cache state')
+  const old = z
+    .object({ file: z.string(), version: z.string() })
+    .parse(JSON.parse(readFileSync(path.join(directory, state), 'utf8')))
+  writeFileSync(path.join(directory, state), JSON.stringify({ ...old, lastCheck: 0 }))
+  requests = []
+  scenario = 'higher'
+  metadata.hold = true
+  const cached = await launch(env)
+  try {
+    const first = await call(cached)
+    expect(first.isError).not.toBe(true)
+    expect(JSON.stringify(first)).not.toContain('note: newer reference data')
+    async function waitForMetadata(remaining: number): Promise<void> {
+      if (requests.includes('/releases')) return
+      if (!remaining) throw new Error('update request did not start')
+      await delay(10)
+      await waitForMetadata(remaining - 1)
+    }
+    await waitForMetadata(200)
+    metadata.finish()
+    async function guidance(remaining: number): Promise<void> {
+      const result = JSON.stringify(await call(cached))
+      if (result.includes('note: newer reference data needs wotlk-mcp@2; update your config'))
+        return
+      if (!remaining) throw new Error('missing update guidance')
+      await delay(10)
+      await guidance(remaining - 1)
+    }
+    await guidance(200)
+    expect(requests).toContain('/releases')
+    expect(JSON.stringify(await call(cached))).not.toContain('note: newer reference data')
+    async function waitForJournal(remaining: number): Promise<void> {
+      const saved = readdirSync(directory).some((name) => {
+        if (!name.startsWith('state-')) return false
+        const entry = z
+          .object({ warningMajor: z.number().optional() })
+          .parse(JSON.parse(readFileSync(path.join(directory, name), 'utf8')))
+        return entry.warningMajor === 2
+      })
+      if (saved) return
+      if (!remaining) throw new Error('update journal was not saved')
+      await delay(10)
+      await waitForJournal(remaining - 1)
+    }
+    await waitForJournal(200)
+  } finally {
+    metadata.hold = false
+    metadata.finish()
+    await cached.close()
+  }
+  const restarted = await launch(env)
+  try {
+    expect(JSON.stringify(await call(restarted))).toContain(
+      'note: newer reference data needs wotlk-mcp@2; update your config'
+    )
+    expect(JSON.stringify(await call(restarted))).not.toContain('note: newer reference data')
+  } finally {
+    await restarted.close()
+  }
+})
+
+test('a published rollback is activated at the next process start', async () => {
+  const cache = mkdtempSync(path.join(dir, 'rollback-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const original = data
+  const replacement = path.join(dir, 'rollback.sqlite')
+  copyFileSync(dbPath, replacement)
+  const db = new DatabaseSync(replacement)
+  db.exec("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', 'rollback')")
+  db.close()
+  scenario = 'good'
+  const first = await launch(env)
+  expect((await call(first)).isError).not.toBe(true)
+  await first.close()
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  const stateName = readdirSync(directory).find((name) => name.startsWith('state-'))
+  if (!stateName) throw new Error('missing initial cache state')
+  const state = z
+    .object({ file: z.string(), version: z.string() })
+    .parse(JSON.parse(readFileSync(path.join(directory, stateName), 'utf8')))
+  writeFileSync(path.join(directory, stateName), JSON.stringify({ ...state, lastCheck: 0 }))
+  data = brotliCompressSync(readFileSync(replacement))
+  scenario = 'rollback'
+  const active = await launch(env)
+  async function waitForPromotion(remaining: number): Promise<void> {
+    const names = readdirSync(directory)
+      .filter((name) => name.startsWith('state-'))
+      .toSorted()
+    const latest = names.at(-1)
+    if (latest) {
+      const entry = z
+        .object({ version: z.string() })
+        .parse(JSON.parse(readFileSync(path.join(directory, latest), 'utf8')))
+      if (entry.version === 'db-v1.1.0') return
+    }
+    if (!remaining) throw new Error('rollback was not promoted')
+    await delay(10)
+    await waitForPromotion(remaining - 1)
+  }
+  try {
+    expect(await marker(active)).not.toContain('rollback')
+    await waitForPromotion(500)
+    expect(await marker(active)).not.toContain('rollback')
+    const next = await launch(env)
+    try {
+      expect(await marker(next)).toContain('rollback')
+    } finally {
+      await next.close()
+    }
+    const currentName = readdirSync(directory)
+      .filter((name) => name.startsWith('state-'))
+      .toSorted()
+      .at(-1)
+    if (!currentName) throw new Error('missing promoted cache state')
+    const current = z
+      .object({ file: z.string(), version: z.string() })
+      .parse(JSON.parse(readFileSync(path.join(directory, currentName), 'utf8')))
+    const clock = 2_000_000_000_000
+    scenario = 'offline'
+    const checker = await launch({ ...env, TEST_NOW: String(clock) })
+    expect(await marker(checker)).toContain('rollback')
+    async function waitForFailure(remaining: number): Promise<void> {
+      if (readdirSync(directory).some((name) => name.startsWith(`state-${clock + 1}-`))) return
+      if (!remaining) throw new Error('failed check was not saved')
+      await delay(10)
+      await waitForFailure(remaining - 1)
+    }
+    await waitForFailure(500)
+    await checker.close()
+    const pruner = await launch({ ...env, TEST_NOW: String(clock + 1) })
+    expect(await marker(pruner)).toContain('rollback')
+    await pruner.close()
+    writeFileSync(path.join(directory, current.file), 'corrupt')
+    const fallback = await launch({ ...env, TEST_NOW: String(clock + 2) })
+    try {
+      expect((await call(fallback)).isError).not.toBe(true)
+      expect(await marker(fallback)).not.toContain('rollback')
+    } finally {
+      await fallback.close()
+    }
+  } finally {
+    await active.close()
+    data = original
+  }
+})
+
+test('failed checks persist the full 24-hour attempt window', async () => {
+  const cache = mkdtempSync(path.join(dir, 'clock-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const start = 2_000_000_000_000
+  const day = 24 * 60 * 60 * 1000
+  scenario = 'good'
+  const initial = await launch({ ...env, TEST_NOW: String(start) })
+  expect((await call(initial)).isError).not.toBe(true)
+  await initial.close()
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  async function waitForCheck(timestamp: number, remaining: number): Promise<void> {
+    if (
+      requests.includes('/releases') &&
+      readdirSync(directory).some((name) => name.startsWith(`state-${timestamp + 1}-`))
+    )
+      return
+    if (!remaining)
+      throw new Error(`update check did not finish: ${JSON.stringify(readdirSync(directory))}`)
+    await delay(10)
+    await waitForCheck(timestamp, remaining - 1)
+  }
+  scenario = '403'
+  requests = []
+  const early = await launch({ ...env, TEST_NOW: String(start + day - 1) })
+  expect((await call(early)).isError).not.toBe(true)
+  await delay(100)
+  expect(requests).toEqual([])
+  await early.close()
+  const boundaries = await Promise.all([
+    launch({ ...env, TEST_NOW: String(start + day) }),
+    launch({ ...env, TEST_NOW: String(start + day) })
+  ])
+  expect((await Promise.all(boundaries.map(call))).every((result) => !result.isError)).toBe(true)
+  await waitForCheck(start + day, 500)
+  expect(requests).toEqual(['/releases'])
+  await Promise.all(boundaries.map((client) => client.close()))
+  requests = []
+  scenario = '429'
+  const throttled = await launch({ ...env, TEST_NOW: String(start + day + 1) })
+  expect((await call(throttled)).isError).not.toBe(true)
+  await delay(100)
+  expect(requests).toEqual([])
+  await throttled.close()
+  const retry = await launch({ ...env, TEST_NOW: String(start + 2 * day) })
+  expect((await call(retry)).isError).not.toBe(true)
+  await waitForCheck(start + 2 * day, 500)
+  expect(requests).toEqual(['/releases'])
+  await retry.close()
+}, 20000)
 
 test('invalid override never contacts the network', async () => {
   scenario = 'good'

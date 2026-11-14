@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream, unlinkSync } from 'node:fs'
 import { link, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
@@ -37,6 +38,7 @@ const releasesSchema = z.array(
     tag_name: z.string(),
     draft: z.boolean(),
     prerelease: z.boolean(),
+    published_at: z.string().nullish(),
     assets: z.array(
       z.object({ name: z.string(), digest: z.string().nullish(), browser_download_url: z.string() })
     )
@@ -46,7 +48,8 @@ const releasesSchema = z.array(
 const cacheStateSchema = z.object({
   file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/),
   version: z.string().regex(/^db-v\d+\.\d+\.\d+$/),
-  lastCheck: z.number().nullable()
+  lastCheck: z.number().nullable(),
+  warningMajor: z.number().int().positive().optional()
 })
 type CacheState = z.infer<typeof cacheStateSchema>
 
@@ -93,14 +96,20 @@ async function removeIfPossible(file: string): Promise<void> {
   }
 }
 
-async function cached(directory: string): Promise<string | undefined> {
+async function cached(directory: string): Promise<{ path: string; state: CacheState } | undefined> {
   await mkdir(directory, { recursive: true })
+  const names = await readdir(directory)
   const entries = await states(directory)
   const keep = new Set<string>()
-  let selected: string | undefined
+  const files = new Set<string>()
+  let selected: { path: string; state: CacheState } | undefined
   async function select(index: number): Promise<void> {
     const entry = entries[index]
-    if (!entry || keep.size >= 4) return
+    if (!entry || files.size >= 2) return
+    if (files.has(entry.state.file)) {
+      await select(index + 1)
+      return
+    }
     const source = path.join(directory, entry.state.file)
     const session = path.join(directory, `session-${process.pid}-${randomUUID()}.sqlite`)
     try {
@@ -108,8 +117,9 @@ async function cached(directory: string): Promise<string | undefined> {
       openReference(session).close()
       keep.add(entry.name)
       keep.add(entry.state.file)
+      files.add(entry.state.file)
       if (!selected) {
-        selected = session
+        selected = { path: session, state: entry.state }
         process.once('exit', () => {
           try {
             unlinkSync(session)
@@ -126,7 +136,7 @@ async function cached(directory: string): Promise<string | undefined> {
   await select(0)
   const now = Date.now()
   await Promise.all(
-    (await readdir(directory)).map(async (name) => {
+    names.map(async (name) => {
       if (keep.has(name)) return
       const partial = /^(\d+)-[0-9a-f-]+\.(?:br|sqlite|json)\.partial$/.exec(name)
       const session = /^session-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
@@ -149,7 +159,7 @@ async function cached(directory: string): Promise<string | undefined> {
   return selected
 }
 
-async function download(): Promise<string> {
+async function download(existing?: CacheState): Promise<string | undefined> {
   const response = await fetch(releasesUrl, { headers })
   if (!response.ok) throw new Error(`GitHub releases request returned HTTP ${response.status}`)
   const releases = releasesSchema.parse(await response.json())
@@ -159,19 +169,20 @@ async function download(): Promise<string> {
       if (!match || release.draft || release.prerelease) return []
       return [{ release, version: match.slice(1).map(Number) }]
     })
-    .toSorted(
-      (a, b) =>
-        b.version[0] - a.version[0] || b.version[1] - a.version[1] || b.version[2] - a.version[2]
-    )
+    .toSorted((a, b) => (b.release.published_at ?? '').localeCompare(a.release.published_at ?? ''))
   const selected = candidates.find(({ version }) => version[0] === acceptedSchemaMajor)
+  const higher = candidates.find(({ version }) => version[0] > acceptedSchemaMajor)
+  if (existing) warningMajor = higher?.version[0]
+  if (existing && higher)
+    console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
   if (!selected) {
-    const higher = candidates.find(({ version }) => version[0] > acceptedSchemaMajor)
     if (higher)
       throw new Error(
         `no compatible release; newer reference data needs wotlk-mcp@${higher.version[0]}`
       )
     throw new Error('no compatible published reference release')
   }
+  if (existing && selected.release.tag_name === existing.version) return undefined
   const asset = selected.release.assets.find((item) => item.name === 'wotlk.sqlite.br')
   if (!asset?.digest || !/^sha256:[0-9a-f]{64}$/i.test(asset.digest))
     throw new Error('release asset missing required SHA-256 digest')
@@ -210,26 +221,72 @@ async function download(): Promise<string> {
     )
     openReference(partial).close()
     await rename(partial, final)
-    const checked = Date.now()
+    const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
     await writeFile(
       statePartial,
       JSON.stringify({
         file: path.basename(final),
         version: selected.release.tag_name,
-        lastCheck: checked
+        lastCheck: existing?.lastCheck ?? checked,
+        warningMajor
       } satisfies CacheState),
       { flag: 'wx' }
     )
     await rename(statePartial, path.join(directory, `state-${checked}-${id}.json`))
+    if (existing) return final
     const snapshot = await cached(directory)
     if (!snapshot) throw new Error('verified cache could not be opened')
-    return snapshot
+    return snapshot.path
   } finally {
     await Promise.all([
       removeIfPossible(compressed),
       removeIfPossible(partial),
       removeIfPossible(statePartial)
     ])
+  }
+}
+
+let warningMajor: number | undefined
+let warningReported = false
+
+export function takeUpdateWarning(): string | undefined {
+  if (!warningMajor || warningReported) return undefined
+  warningReported = true
+  return `note: newer reference data needs wotlk-mcp@${warningMajor}; update your config`
+}
+
+async function update(directory: string, current: CacheState): Promise<void> {
+  const lock = new DatabaseSync(path.join(directory, 'update-lock.sqlite'), { timeout: 0 })
+  try {
+    lock.exec('BEGIN IMMEDIATE')
+  } catch (error) {
+    lock.close()
+    throw error
+  }
+  try {
+    try {
+      const latest = (await states(directory))[0]?.state ?? current
+      const now = Date.now()
+      if (latest.lastCheck !== null && now - latest.lastCheck < 24 * 60 * 60 * 1000) return
+      const attempted = { ...current, lastCheck: now }
+      async function publish(state: CacheState, timestamp: number): Promise<void> {
+        const id = randomUUID()
+        const partial = path.join(directory, `${process.pid}-${id}.json.partial`)
+        await writeFile(partial, JSON.stringify(state), { flag: 'wx' })
+        await rename(partial, path.join(directory, `state-${timestamp}-${id}.json`))
+      }
+      await publish(attempted, now)
+      let promoted: string | undefined
+      try {
+        promoted = await download(attempted)
+      } finally {
+        if (!promoted) await publish({ ...attempted, warningMajor }, Math.max(Date.now(), now + 1))
+      }
+    } finally {
+      lock.exec('ROLLBACK')
+    }
+  } finally {
+    lock.close()
   }
 }
 
@@ -247,9 +304,23 @@ const selected: Promise<string> = (async () => {
       )
     }
   const snapshot = await cached(cacheDirectory())
-  if (snapshot) return snapshot
+  if (snapshot) {
+    ;({ warningMajor } = snapshot.state)
+    if (warningMajor)
+      console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
+    void (async (): Promise<void> => {
+      try {
+        await update(cacheDirectory(), snapshot.state)
+      } catch (error) {
+        console.error(`reference update check failed: ${String(error).replace(/[\r\n]+/g, ' ')}`)
+      }
+    })()
+    return snapshot.path
+  }
   try {
-    return await download()
+    const result = await download()
+    if (!result) throw new Error('verified cache could not be opened')
+    return result
   } catch (error) {
     throw new Error(
       `no reference database: download failed (${String(error).replace(/[\r\n]+/g, ' ')}); retry online or set WOTLK_MCP_DB`,
