@@ -128,7 +128,7 @@ vp run validate:offsets
 The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry. Release acceptance runs the actual packed executable against a candidate SQLite database:
 
 ```bash
-vp run acceptance -- /path/to/wotlk-mcp.tgz /path/to/candidate.sqlite tests/fixtures/acceptance.json
+vpx scripts/acceptance.ts /path/to/wotlk-mcp.tgz /path/to/candidate.sqlite tests/fixtures/acceptance.json
 ```
 
 The cited fixtures include **unapproved** World Data candidates. The command fails until a maintainer reviews the exact assertions in `docs/world-data-facts.md` and records approval in `data/world-acceptance-approval.json`: `status` must be `approved`, with `reviewer`, ISO `date`, a URL `record` to the durable review, `fixtures_sha256` for the exact fixture file, and `world_cases` listing every approved World case ID. Changes to any fixture require a new approval digest. This is not a publication command. A local candidate is not a substitute for the verified draft asset and six-cell release matrix.
@@ -191,7 +191,7 @@ SQLite REAL cannot retain the sign of negative zero. The exporter rejects a sour
 
 Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
-After importing both World Data and Client Data, run `vp run build:world-links -- reference.sqlite` to derive quest, reward, vendor, default-trainer and item-spell Links from their stored keys. Only existing Records become endpoints; original World Data rows remain available through SQL. Notes identify reward and spell slots, vendor details and trainer keys; scripts and names are not used to infer Links.
+After importing both World Data and Client Data, run `vpx scripts/build-world-links.ts reference.sqlite` to derive quest, reward, vendor, default-trainer and item-spell Links from their stored keys. Only existing Records become endpoints; original World Data rows remain available through SQL. Notes identify reward and spell slots, vendor details and trainer keys; scripts and names are not used to infer Links.
 
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 
@@ -219,7 +219,7 @@ Build the reference first, then supply the extracted client directory, the indep
 
 ```bash
 curl -L https://codeload.github.com/wowdev/WoWDBDefs/tar.gz/fe771f93091b18db417c99621cfe9e36a228a590 -o wowdbdefs.tar.gz
-vp run import:client-data -- reference.sqlite /path/to/client-inputs MANIFEST_SHA256 wowdbdefs.tar.gz
+vpx scripts/import-client-data.ts reference.sqlite /path/to/client-inputs MANIFEST_SHA256 wowdbdefs.tar.gz
 ```
 
 The importer verifies the manifest, every imported DBC and the definition archive SHA-256 `b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca`. It imports build 12340 layouts into `dbc_` tables, expands arrays with one-based suffixes, and records definition references in `dbc_foreign_key`. The enGB extraction remains an English stand-in, not proof of enUS identity. The local extraction is not the reviewed or published #30 production asset.
