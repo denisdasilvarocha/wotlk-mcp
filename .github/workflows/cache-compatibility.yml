@@ -5,6 +5,7 @@ on:
     branches:
       - feature/22-ticket-43-cache
       - feature/22-ticket-44-updates
+      - feature/22-ticket-51-install-docs
       - main
 
 permissions:
@@ -32,4 +33,4 @@ jobs:
           cache: false
       - run: node --version
       - run: vp run build
-      - run: vp test tests/acquisition.test.ts
+      - run: vp test tests/acquisition.test.ts tests/package-install.test.ts
