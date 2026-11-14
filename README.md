@@ -85,6 +85,8 @@ SQLite REAL cannot retain the sign of negative zero. The exporter rejects a sour
 
 Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
+After importing both World Data and Client Data, run `vp run build:world-links -- reference.sqlite` to derive quest, reward, vendor, default-trainer and item-spell Links from their stored keys. Only existing Records become endpoints; original World Data rows remain available through SQL. Notes identify reward and spell slots, vendor details and trainer keys; scripts and names are not used to infer Links.
+
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 
 ## Extracting maintainer client inputs

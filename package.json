@@ -24,6 +24,7 @@
   "scripts": {
     "build": "vp pack",
     "build:reference": "vpx scripts/build-reference.ts",
+    "build:world-links": "vpx scripts/build-world-links.ts",
     "check": "vp check",
     "dev": "vp pack --watch",
     "import:client-data": "vpx scripts/import-client-data.ts",
