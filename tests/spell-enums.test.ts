@@ -1,14 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -17,11 +8,14 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+import { importSpellEnums } from '../scripts/import-spell-enums.js'
+import { unpackPackage } from './package.js'
+
 test('spell mappings validate fields and materialize named references without changing raw data', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'spell-enums-'))
   try {
     const database = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', database])
+    execFileSync('vpx', ['scripts/init-reference.ts', database])
     const db = new DatabaseSync(database)
     const columns = [
       'Attributes',
@@ -89,19 +83,11 @@ test('spell mappings validate fields and materialize named references without ch
     }
     const archive = path.join(dir, 'source.tar.gz')
     execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    const digest = createHash('sha256').update(readFileSync(archive)).digest('hex')
-    const command = path.join(dir, 'import-spell-enums.ts')
-    writeFileSync(
-      command,
-      readFileSync('scripts/import-spell-enums.ts', 'utf8').replace(
-        '748a228d62fb2bf7203a193a4b622e3299fb78a3537ae1a150eda9091c1cf7f9',
-        digest
-      )
-    )
-    cpSync('scripts/world-enum-parser.ts', path.join(dir, 'world-enum-parser.ts'))
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'node_modules'), 'dir')
-    const result = spawnSync('vpx', [command, database, archive], { encoding: 'utf8' })
-    if (result.status !== 0) throw new Error(result.stderr)
+    const rejected = spawnSync('vpx', ['scripts/import-spell-enums.ts', database, archive], {
+      encoding: 'utf8'
+    })
+    expect(rejected.stderr).toContain('AzerothCore archive hash mismatch')
+    importSpellEnums(database, archive)
     const output = new DatabaseSync(database)
     expect(
       output
@@ -133,13 +119,7 @@ test('spell mappings validate fields and materialize named references without ch
         .get()?.n
     ).toBe(6)
     output.close()
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', dir])
-    const archiveName = (await import('node:fs'))
-      .readdirSync(dir)
-      .find((name) => name.endsWith('.tgz'))
-    if (!archiveName) throw new Error('Package archive not created')
-    execFileSync('tar', ['-xzf', path.join(dir, archiveName), '-C', dir])
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+    unpackPackage(dir)
     const client = new Client({ name: 'test-spell', version: '1' })
     await client.connect(
       new StdioClientTransport({
@@ -194,9 +174,9 @@ test('spell mappings validate fields and materialize named references without ch
     const invalid = new DatabaseSync(database)
     invalid.exec('ALTER TABLE dbc_Spell DROP COLUMN Effect_3')
     invalid.close()
-    const failure = spawnSync('vpx', [command, database, archive], { encoding: 'utf8' })
-    expect(failure.status).not.toBe(0)
-    expect(failure.stderr).toContain('Missing mapped column dbc_Spell.Effect_3')
+    expect(() => importSpellEnums(database, archive)).toThrow(
+      'Missing mapped column dbc_Spell.Effect_3'
+    )
     const restored = new DatabaseSync(database)
     restored.exec('ALTER TABLE dbc_Spell ADD COLUMN Effect_3 INTEGER')
     restored.close()
@@ -206,11 +186,7 @@ test('spell mappings validate fields and materialize named references without ch
       readFileSync(shared, 'utf8').replace('enum SpellEffects', 'enum RemovedSpellEffects')
     )
     execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    const changedDigest = createHash('sha256').update(readFileSync(archive)).digest('hex')
-    writeFileSync(command, readFileSync(command, 'utf8').replace(digest, changedDigest))
-    const missingEnum = spawnSync('vpx', [command, database, archive], { encoding: 'utf8' })
-    expect(missingEnum.status).not.toBe(0)
-    expect(missingEnum.stderr).toContain('Missing pinned enum SpellEffects')
+    expect(() => importSpellEnums(database, archive)).toThrow('Missing pinned enum SpellEffects')
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

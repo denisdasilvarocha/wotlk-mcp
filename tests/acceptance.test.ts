@@ -9,7 +9,7 @@ test('acceptance rejects malformed fixtures and unapproved World Data for a real
   const dir = mkdtempSync(path.join(tmpdir(), 'acceptance-'))
   try {
     const db = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', db])
+    execFileSync('vpx', ['scripts/init-reference.ts', db])
     execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
     const archive = readdirSync(dir).find((file) => file.endsWith('.tgz'))
     if (!archive) throw new Error('package archive missing')

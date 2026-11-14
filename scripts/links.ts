@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 
-import { relations } from './schema.js'
+import { relations } from '../src/schema.ts'
 
 /** Add evidence for a directed Link; callers retain the original source rows separately. */
 export function addLink(

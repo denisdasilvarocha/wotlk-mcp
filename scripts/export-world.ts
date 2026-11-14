@@ -4,8 +4,6 @@ import { existsSync, readFileSync } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { DatabaseSync } from 'node:sqlite'
 
-import { indexWorld } from './index-world.ts'
-
 const [, , container, output, ...extra] = process.argv
 // The container must be the unmodified output of world/reproduce.sh; schema checks alone cannot authenticate its data.
 if (!container || !output || extra.length)
@@ -270,7 +268,33 @@ try {
     'GPL-2.0-or-later; data may have additional rights; see world/azerothcore-LICENSE.txt',
     'AzerothCore authors; see world/azerothcore-AUTHORS.txt. Modified by conversion to SQLite. Corresponding source: https://github.com/azerothcore/azerothcore-wotlk/tree/2948c203faa0d23c4772441119ebe98e5b7cad95'
   )
-  indexWorld(db)
+  db.exec(`
+    INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint)
+    SELECT 'creature:' || entry, 'creature', name, 'world_creature_template', rowid,
+      COALESCE(subname, ''),
+      'level ' || minlevel || CASE WHEN maxlevel != minlevel THEN '-' || maxlevel ELSE '' END ||
+        CASE WHEN COALESCE(subname, '') != '' THEN ', ' || subname ELSE '' END
+    FROM world_creature_template;
+
+    INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint)
+    SELECT 'item:' || entry, 'item', name, 'world_item_template', rowid,
+      COALESCE(description, ''), 'level ' || ItemLevel || ', quality ' || Quality
+    FROM world_item_template;
+
+    INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint)
+    SELECT 'quest:' || ID, 'quest', COALESCE(LogTitle, ''), 'world_quest_template', rowid,
+      COALESCE(LogDescription, ''), 'level ' || QuestLevel || ', zone ' || QuestSortID
+    FROM world_quest_template;
+
+    INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint)
+    SELECT 'gameobject:' || entry, 'gameobject', name, 'world_gameobject_template', rowid,
+      COALESCE(castBarCaption, ''), ''
+    FROM world_gameobject_template;
+
+    INSERT INTO record_fts (id, name, text)
+    SELECT id, name, search_text FROM record
+    WHERE kind IN ('creature', 'item', 'quest', 'gameobject');
+  `)
   db.exec('COMMIT')
 } catch (error) {
   db.exec('ROLLBACK')

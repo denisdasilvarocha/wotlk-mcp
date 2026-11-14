@@ -1,13 +1,10 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import {
   appendFileSync,
-  cpSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -15,6 +12,8 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { expect, test } from 'vite-plus/test'
+
+import { importWorldEnums } from '../scripts/import-world-enums.js'
 
 test('world mapping command parses expressions and rejects missing mapped columns', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-enums-'))
@@ -84,19 +83,16 @@ test('world mapping command parses expressions and rejects missing mapped column
     )
     const archive = path.join(dir, 'source.tar.gz')
     execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    const digest = createHash('sha256').update(readFileSync(archive)).digest('hex')
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'node_modules'), 'dir')
-    const command = path.join(dir, 'import-world-enums.ts')
-    writeFileSync(
-      command,
-      readFileSync('scripts/import-world-enums.ts', 'utf8').replace(
-        '748a228d62fb2bf7203a193a4b622e3299fb78a3537ae1a150eda9091c1cf7f9',
-        digest
-      )
+    const rejected = spawnSync(
+      'vpx',
+      ['scripts/import-world-enums.ts', path.join(dir, 'x.sqlite'), archive],
+      {
+        encoding: 'utf8'
+      }
     )
-    cpSync('scripts/world-enum-parser.ts', path.join(dir, 'world-enum-parser.ts'))
+    expect(rejected.stderr).toContain('AzerothCore archive hash mismatch')
     const database = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', database])
+    execFileSync('vpx', ['scripts/init-reference.ts', database])
     const db = new DatabaseSync(database)
     for (const table of [
       'item_template',
@@ -115,11 +111,7 @@ test('world mapping command parses expressions and rejects missing mapped column
       `CREATE TABLE dbc_ItemClass (ClassID INTEGER, ClassName_lang TEXT); CREATE TABLE dbc_CreatureType (ID INTEGER, Name_lang TEXT); CREATE TABLE dbc_CreatureFamily (ID INTEGER, Name_lang TEXT); CREATE TABLE dbc_FactionTemplate (ID INTEGER, Faction INTEGER); CREATE TABLE dbc_Faction (ID INTEGER, Name_lang TEXT);`
     )
     db.close()
-    const result = spawnSync('vpx', [command, database, archive], {
-      encoding: 'utf8',
-      env: { ...process.env, NODE_PATH: path.resolve('node_modules') }
-    })
-    if (result.status !== 0) throw new Error(result.stderr)
+    importWorldEnums(database, archive)
     const output = new DatabaseSync(database)
     expect(
       output
@@ -135,10 +127,10 @@ test('world mapping command parses expressions and rejects missing mapped column
     ])
     output.close()
     const other = path.join(dir, 'missing.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', other])
-    const failure = spawnSync('vpx', [command, other, archive], { encoding: 'utf8' })
-    expect(failure.status).not.toBe(0)
-    expect(failure.stderr).toContain('Missing mapped column world_item_template.Quality')
+    execFileSync('vpx', ['scripts/init-reference.ts', other])
+    expect(() => importWorldEnums(other, archive)).toThrow(
+      'Missing mapped column world_item_template.Quality'
+    )
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

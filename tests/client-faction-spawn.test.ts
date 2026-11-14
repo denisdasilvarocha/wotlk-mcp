@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -7,6 +7,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
+
+import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-client-links-'))
 const file = path.join(dir, 'reference.sqlite')
@@ -17,7 +19,7 @@ function columns(prefix: string, count: number): string {
 }
 
 beforeAll(async () => {
-  execFileSync('vpx', ['scripts/build-reference.ts', file])
+  execFileSync('vpx', ['scripts/init-reference.ts', file])
   const db = new DatabaseSync(file)
   db.exec(`CREATE TABLE dbc_ItemSet (ID INTEGER, ${columns('ItemID', 17)});
     CREATE TABLE dbc_Talent (ID INTEGER, ${columns('SpellRank', 9)});
@@ -54,11 +56,7 @@ beforeAll(async () => {
     insert.run(id, id.split(':')[0], id, 'dbc_ItemSet', 1, '', '')
   db.close()
   execFileSync('vpx', ['scripts/build-client-faction-spawn-links.ts', file])
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir])
-  const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  unpackPackage(dir)
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,

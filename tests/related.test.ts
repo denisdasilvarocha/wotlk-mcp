@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -8,19 +8,16 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
-import { addLink } from '../src/links.ts'
+import { addLink } from '../scripts/links.ts'
+import { unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-related-'))
 const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'related-test', version: '1' })
 
 beforeAll(async () => {
-  execFileSync('vpx', ['scripts/build-reference.ts', database], { stdio: 'pipe' })
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', directory], { stdio: 'pipe' })
-  const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(directory, archive), '-C', directory])
-  symlinkSync(path.resolve('node_modules'), path.join(directory, 'package/node_modules'), 'dir')
+  execFileSync('vpx', ['scripts/init-reference.ts', database], { stdio: 'pipe' })
+  unpackPackage(directory)
   const db = new DatabaseSync(database)
   db.exec(`CREATE TABLE world_evidence (creature INTEGER, item INTEGER, chance TEXT);
     INSERT INTO world_evidence VALUES (1, 2, '25%'), (1, 2, '5%'), (1, 2, '25%');

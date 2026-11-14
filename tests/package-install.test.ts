@@ -31,7 +31,7 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
   const client = new Client({ name: 'install-test', version: '1' })
   try {
     const database = path.join(directory, 'reference.sqlite')
-    run('vpx', ['scripts/build-reference.ts', database])
+    run('vpx', ['scripts/init-reference.ts', database])
     run('vp', ['pm', 'pack', '--pack-destination', directory])
     const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
     if (!archive) throw new Error('Package archive not created')

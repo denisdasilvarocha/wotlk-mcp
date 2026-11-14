@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, mkdirSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -8,6 +8,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
+
+import { unpackPackage } from './package.ts'
 
 test('Codex importer preserves source details and rejects altered inputs', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'codex-'))
@@ -31,7 +33,7 @@ test('Codex importer preserves source details and rejects altered inputs', async
   const manifest = path.join(dir, 'pins.json')
   writeFileSync(manifest, JSON.stringify({ revision: 'fixture', files: hashes }))
   const dbPath = path.join(dir, 'reference.sqlite')
-  execFileSync('vpx', ['scripts/build-reference.ts', dbPath], { stdio: 'pipe' })
+  execFileSync('vpx', ['scripts/init-reference.ts', dbPath], { stdio: 'pipe' })
   execFileSync('node', ['scripts/import-codex.ts', dbPath, dir, manifest], { stdio: 'pipe' })
   const db = new DatabaseSync(dbPath, { readOnly: true })
   expect(db.prepare("SELECT hint, search_text FROM record WHERE id='fn:Foo'").get()).toMatchObject({
@@ -54,11 +56,7 @@ test('Codex importer preserves source details and rejects altered inputs', async
   })
   expect(db.prepare('SELECT count(*) AS n FROM link').get()).toMatchObject({ n: 0 })
   db.close()
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-  const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  unpackPackage(dir)
   const client = new Client({ name: 'codex-test', version: '1' })
   await client.connect(
     new StdioClientTransport({

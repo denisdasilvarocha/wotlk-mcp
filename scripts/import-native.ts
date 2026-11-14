@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { addLink } from '../src/links.js'
+import { addLink } from './links.ts'
 
 const [database, directory, manifestHash, overridePath] = process.argv
   .slice(2)

@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs'
 
 import * as z from 'zod'
 
-import { loadOffsets, offsetTopicSchema } from '../src/offsets.ts'
+import { loadOffsets, offsetTopicSchema } from './offsets.ts'
 
 try {
   const [, , argument] = process.argv

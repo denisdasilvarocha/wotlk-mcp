@@ -1,14 +1,5 @@
-import { execFileSync, spawnSync } from 'node:child_process'
-import {
-  cpSync,
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync
-} from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -16,6 +7,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
+
+import { unpackPackage } from './package.ts'
 
 test('exported artifact preserves world rows and indexes only curated templates', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-export-'))
@@ -142,7 +135,7 @@ esac
       { mode: 0o755 }
     )
     expect(
-      spawnSync('vpx', ['scripts/build-reference.ts', database], { encoding: 'utf8' }).status
+      spawnSync('vpx', ['scripts/init-reference.ts', database], { encoding: 'utf8' }).status
     ).toBe(0)
     const result = spawnSync('vpx', [exporter, 'fixture', database], {
       cwd: dir,
@@ -275,11 +268,7 @@ esac
     } finally {
       db.close()
     }
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-    const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-    if (!archive) throw new Error('Package archive not created')
-    execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+    unpackPackage(dir)
     const client = new Client({ name: 'world-test', version: '1' })
     await client.connect(
       new StdioClientTransport({
@@ -307,7 +296,7 @@ esac
     }
     const failedDatabase = path.join(dir, 'failed.sqlite')
     expect(
-      spawnSync('vpx', ['scripts/build-reference.ts', failedDatabase], { encoding: 'utf8' }).status
+      spawnSync('vpx', ['scripts/init-reference.ts', failedDatabase], { encoding: 'utf8' }).status
     ).toBe(0)
     const failed = spawnSync('vpx', [exporter, 'fixture', failedDatabase], {
       cwd: dir,
@@ -376,7 +365,7 @@ test('exporter reports a failed MySQL command without changing the reference', (
         mode: 0o755
       }
     )
-    const built = spawnSync('vpx', ['scripts/build-reference.ts', database], { encoding: 'utf8' })
+    const built = spawnSync('vpx', ['scripts/init-reference.ts', database], { encoding: 'utf8' })
     expect(built.status).toBe(0)
     const before = new DatabaseSync(database)
     const count = before.prepare('SELECT count(*) AS n FROM record').get()

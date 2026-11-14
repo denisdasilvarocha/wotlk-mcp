@@ -23,7 +23,7 @@ EXPECTED_GLOBAL_CALLS = 73
 EXPECTED_METHOD_CALLS = 39
 
 
-def native_registrations(path, fingerprint):
+def native_registrations(path, fingerprint, expected_global_calls, expected_method_calls):
     data = path.read_bytes()
     if hashlib.sha256(data).hexdigest() != fingerprint:
         raise ValueError('native registration extraction: executable changed after fingerprint verification')
@@ -95,7 +95,7 @@ def native_registrations(path, fingerprint):
         return result
 
     global_calls, method_calls = calls(0x817f90), calls(0x8167e0)
-    require(len(global_calls) == EXPECTED_GLOBAL_CALLS and len(method_calls) == EXPECTED_METHOD_CALLS,
+    require(len(global_calls) == expected_global_calls and len(method_calls) == expected_method_calls,
             f'unexpected registrar call counts: {len(global_calls)} globals, {len(method_calls)} methods')
 
     def direct_targets(start, end):
@@ -245,9 +245,15 @@ def main():
         if fingerprint == LAA:
             raise ValueError('Wow_Original.exe is the installed large-address-aware variant, not the trusted original')
         raise ValueError('Wow_Original.exe fingerprint mismatch: ' + fingerprint)
+    extract(root, output, library, fingerprint,
+            '686dcc93b174144265d885ffdd28cf73c64afd64a550170aa995accb39f60493',
+            EXPECTED_GLOBAL_CALLS, EXPECTED_METHOD_CALLS)
+
+
+def extract(root, output, library, fingerprint, expected_inventory, expected_global_calls, expected_method_calls):
     if output.exists():
         raise ValueError('output must not already exist: ' + str(output))
-    native = native_registrations(root / 'Wow_Original.exe', fingerprint)
+    native = native_registrations(root / 'Wow_Original.exe', fingerprint, expected_global_calls, expected_method_calls)
     lib = C.CDLL(str(library.resolve()))
     H = C.c_void_p
     lib.SFileOpenPatchArchive.argtypes = [H, C.c_char_p, C.c_char_p, C.c_uint32]
@@ -301,7 +307,7 @@ def main():
             finally:
                 lib.SFileFindClose(find)
         inventory_hash = hashlib.sha256((''.join(key + '\n' for key in sorted(winners))).encode()).hexdigest()
-        if inventory_hash != '686dcc93b174144265d885ffdd28cf73c64afd64a550170aa995accb39f60493':
+        if inventory_hash != expected_inventory:
             raise ValueError('client input paths do not match the trusted research inventory: ' + inventory_hash)
         output.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='.client-inputs-', dir=output.parent) as tmp:

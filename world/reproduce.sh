@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-if [ "$#" -ne 2 ]; then
-  echo 'usage: sh world/reproduce.sh <pinned-source.tar.gz> <new-output-directory>' >&2
+if [ "$#" -ne 2 ] && [ "$#" -ne 3 ]; then
+  echo 'usage: sh world/reproduce.sh <pinned-source.tar.gz> <new-output-directory> [owned-resource-name]' >&2
   exit 2
 fi
 root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -22,7 +22,14 @@ if [ "$patch_hash" != f6b3c5c896d67271b53fc5c98896d12d2f188ead9e66007da6d2ed067a
 fi
 output=$(CDPATH= cd -- "$output" && pwd)
 tmp=$(mktemp -d)
-name=wotlk-world-$(basename "$tmp" | tr -cd '[:alnum:]')
+name=${3:-wotlk-world-$(basename "$tmp" | tr -cd '[:alnum:]')}
+case "$name" in
+  wotlk-world-*) suffix=${name#wotlk-world-} ;;
+  *) echo 'Invalid World Data resource name' >&2; rm -rf "$tmp"; exit 1 ;;
+esac
+case "$suffix" in
+  ''|*[!a-zA-Z0-9]*) echo 'Invalid World Data resource name' >&2; rm -rf "$tmp"; exit 1 ;;
+esac
 keep=0
 cleanup() {
   if [ "$keep" = 0 ]; then

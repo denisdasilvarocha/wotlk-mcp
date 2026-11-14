@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
-import { importInterface } from '../src/import-interface.ts'
+import { importInterface } from './interface.ts'
 
 const [, , database, directory, manifestHash] = process.argv
 if (!database || !directory || !manifestHash || process.argv.length !== 5)

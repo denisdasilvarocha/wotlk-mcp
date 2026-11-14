@@ -4,11 +4,11 @@ import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { loadOffsets } from '../src/offsets.ts'
 import { schema } from '../src/schema.ts'
+import { loadOffsets } from './offsets.ts'
 
 const [, , output] = process.argv
-if (!output) throw new Error('Usage: vp run build:reference -- <new-database-path>')
+if (!output) throw new Error('Usage: vp run init:reference <new-database-path>')
 const directory = 'data/offsets'
 const entries = loadOffsets(directory)
 const hash = createHash('sha256')

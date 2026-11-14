@@ -1,5 +1,4 @@
-import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -9,6 +8,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { schema } from '../src/schema.ts'
+import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-search-'))
 const dbPath = path.join(dir, 'reference.sqlite')
@@ -62,11 +62,7 @@ beforeAll(async () => {
   line.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   db.close()
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-  const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  unpackPackage(dir)
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,

@@ -70,18 +70,17 @@ test.skipIf(!library)('extracts the winning MPQ file and honors a later delete m
     expect(binary.stderr).toBe('')
     expect(binary.status).toBe(0)
     const exe = readFileSync(executable)
-    const script = readFileSync('extract-client.py', 'utf8')
-      .replace('aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8', hash(exe))
-      .replace(
-        '686dcc93b174144265d885ffdd28cf73c64afd64a550170aa995accb39f60493',
-        hash('dbfilesclient/test.dbc\n')
-      )
-      .replace('EXPECTED_GLOBAL_CALLS = 73', 'EXPECTED_GLOBAL_CALLS = 2')
-      .replace('EXPECTED_METHOD_CALLS = 39', 'EXPECTED_METHOD_CALLS = 1')
-    const command = join(root, 'extract.py')
-    writeFileSync(command, script)
+    const fixture = [
+      'import runpy, sys',
+      'from pathlib import Path',
+      "extract = runpy.run_path('extract-client.py')['extract']",
+      'extract(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4], sys.argv[5], 2, 1)'
+    ].join('\n')
+    const inventory = hash('dbfilesclient/test.dbc\n')
     const out = join(root, 'output')
-    const result = spawnSync('python3', [command, root, out, library], { encoding: 'utf8' })
+    const result = spawnSync('python3', ['-c', fixture, root, out, library, hash(exe), inventory], {
+      encoding: 'utf8'
+    })
     expect(result.stderr).toBe('')
     expect(result.status).toBe(0)
     expect(readFileSync(join(out, 'DBFilesClient', 'Test.dbc'), 'utf8')).toBe('new')
@@ -123,11 +122,12 @@ test.skipIf(!library)('extracts the winning MPQ file and honors a later delete m
     const broken = Buffer.from(exe)
     broken.writeUInt32LE(0xdeadbeef, 0x5df400)
     writeFileSync(executable, broken)
-    writeFileSync(command, script.replace(hash(exe), hash(broken)))
     const rejectedOutput = join(root, 'rejected')
-    const rejected = spawnSync('python3', [command, root, rejectedOutput, library], {
-      encoding: 'utf8'
-    })
+    const rejected = spawnSync(
+      'python3',
+      ['-c', fixture, root, rejectedOutput, library, hash(broken), inventory],
+      { encoding: 'utf8' }
+    )
     expect(rejected.status).toBe(1)
     expect(rejected.stderr).toContain('address outside one file-backed PE section')
     expect(existsSync(rejectedOutput)).toBe(false)

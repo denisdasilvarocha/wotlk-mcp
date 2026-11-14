@@ -56,22 +56,17 @@ jobs:
         run: |
           vp run build:complete-reference "$RUNNER_TEMP/candidate"
           node scripts/database-release.mjs previous "$RUNNER_TEMP/previous.sqlite" "$RUNNER_TEMP/versions.json"
-      - name: Gate, recompress and measure final candidate
+      - name: Prepare and validate final candidate
         env:
           ALLOW_SHRINK: ${{ inputs.allow-shrink }}
         shell: bash
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/candidate"
-          args=("$d/wotlk.sqlite" "$d/wotlk.sqlite.br")
-          args+=("--used-versions=$RUNNER_TEMP/versions.json")
+          args=("$d" "--used-versions=$RUNNER_TEMP/versions.json")
           if test -f "$RUNNER_TEMP/previous.sqlite"; then args+=("$RUNNER_TEMP/previous.sqlite"); fi
           if test "$ALLOW_SHRINK" = true; then args+=(--allow-shrink); fi
-          vpx scripts/release-gate.ts "${args[@]}" --prepare
-          rm "$d/wotlk.sqlite.br"
-          node --input-type=module -e 'import {createReadStream,createWriteStream} from "node:fs"; import {pipeline} from "node:stream/promises"; import {createBrotliCompress,constants} from "node:zlib"; await pipeline(createReadStream(process.argv[1]),createBrotliCompress({params:{[constants.BROTLI_PARAM_QUALITY]:5}}),createWriteStream(process.argv[2],{flags:"wx"}))' "$d/wotlk.sqlite" "$d/wotlk.sqlite.br"
-          vpx scripts/release-gate.ts "${args[@]}" > "$d/gate.json"
-          node --input-type=module -e 'import {readFileSync,writeFileSync,createReadStream} from "node:fs"; import {createHash} from "node:crypto"; const [report,gate,asset]=process.argv.slice(1); const value=JSON.parse(readFileSync(report)); const measured=JSON.parse(readFileSync(gate)); const hash=createHash("sha256"); for await (const chunk of createReadStream(asset)) hash.update(chunk); Object.assign(value,{uncompressed_bytes:measured.uncompressed_bytes,compressed_bytes:measured.compressed_bytes,compressed_sha256:hash.digest("hex"),compressed_250_mb_gate_passed:true}); writeFileSync(report,JSON.stringify(value,null,2)+"\n")' "$d/build-report.json" "$d/gate.json" "$d/wotlk.sqlite.br"
+          vpx scripts/prepare-reference.ts "${args[@]}"
       - name: Build actual package
         run: |
           vp run build

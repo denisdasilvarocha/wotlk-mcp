@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -8,12 +8,14 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+import { unpackPackage } from './package.ts'
+
 test('world keys navigate both ways while SQL retains source evidence', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-links-'))
   const database = path.join(dir, 'reference.sqlite')
   const client = new Client({ name: 'world-links-test', version: '1' })
   try {
-    execFileSync('vpx', ['scripts/build-reference.ts', database])
+    execFileSync('vpx', ['scripts/init-reference.ts', database])
     const db = new DatabaseSync(database)
     db.exec(`
       CREATE TABLE world_creature_queststarter (id INTEGER, quest INTEGER);
@@ -38,11 +40,7 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
     `)
     db.close()
     execFileSync('vpx', ['scripts/build-world-links.ts', database])
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-    const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-    if (!archive) throw new Error('Package archive not created')
-    execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+    unpackPackage(dir)
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,

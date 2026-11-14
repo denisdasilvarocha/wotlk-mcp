@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { copyFileSync, mkdtempSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -9,13 +9,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+import { unpackPackage } from './package.ts'
+
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex')
 }
 test('native facts retain contexts and only link verified equal curated VAs', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'native-'))
   const database = path.join(dir, 'db.sqlite')
-  execFileSync('vpx', ['scripts/build-reference.ts', database])
+  execFileSync('vpx', ['scripts/init-reference.ts', database])
   const db = new DatabaseSync(database)
   db.exec(`CREATE TABLE lua_widget (name TEXT, methods TEXT, inherits TEXT DEFAULT '[]', inheritedMethods TEXT DEFAULT '[]'); INSERT INTO lua_widget (name,methods) VALUES ('Region','["SetPoint"]');
     CREATE TABLE lua_fn (name TEXT, memoryAddress TEXT); INSERT INTO lua_fn VALUES ('Foo','0x00400001');
@@ -193,11 +195,7 @@ test('native facts retain contexts and only link verified equal curated VAs', as
       .all()
   ).toEqual([{ destination_id: 'offset:fixture-a' }, { destination_id: 'offset:fixture-b' }])
   result.close()
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-  const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  unpackPackage(dir)
   const client = new Client({ name: 'native-test', version: '1' })
   await client.connect(
     new StdioClientTransport({

@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
-import { addLink } from '../src/links.ts'
+import { addLink } from './links.ts'
 
 const [, , file] = process.argv
 if (!file || process.argv.length !== 3)

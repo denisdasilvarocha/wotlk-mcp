@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -8,12 +8,14 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, expect, test } from 'vite-plus/test'
 
+import { unpackPackage } from './package.ts'
+
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-loot-'))
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
 function fixture(name: string): string {
   const file = path.join(dir, `${name}.sqlite`)
-  execFileSync('vpx', ['scripts/build-reference.ts', file])
+  execFileSync('vpx', ['scripts/init-reference.ts', file])
   const db = new DatabaseSync(file)
   db.exec(`CREATE TABLE world_creature_template (entry INTEGER, lootid INTEGER, skinloot INTEGER, pickpocketloot INTEGER);
     CREATE TABLE world_gameobject_template (entry INTEGER, type INTEGER, Data1 INTEGER);
@@ -79,11 +81,7 @@ test('loot paths survive artifact and packed related/sql surfaces', async () => 
   expect(links.some((row) => row.destination_id === 'item:103')).toBe(true)
   expect(links.some((row) => row.destination_id === 'item:104')).toBe(true)
   db.close()
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir])
-  const archive = readdirSync(dir).find((entry) => entry.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  unpackPackage(dir)
   const client = new Client({ name: 'loot-test', version: '1' })
   await client.connect(
     new StdioClientTransport({

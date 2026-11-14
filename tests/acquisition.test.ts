@@ -1,4 +1,4 @@
-import { execFileSync, execSync, spawn } from 'node:child_process'
+import { execSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { once } from 'node:events'
 import {
@@ -8,7 +8,6 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   utimesSync,
   writeFileSync
 } from 'node:fs'
@@ -24,6 +23,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 import * as z from 'zod'
+
+import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-acquire-'))
 const dbPath = path.join(dir, 'reference.sqlite')
@@ -91,12 +92,8 @@ const server = createServer((req, res) => {
 })
 
 beforeAll(async () => {
-  execSync(`vpx scripts/build-reference.ts "${dbPath}"`)
-  execSync(`vp pm pack --pack-destination "${dir}"`)
-  const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-  if (!archive) throw new Error('Package archive not created')
-  execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'junction')
+  execSync(`vpx scripts/init-reference.ts "${dbPath}"`)
+  unpackPackage(dir)
   data = brotliCompressSync(readFileSync(dbPath))
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()

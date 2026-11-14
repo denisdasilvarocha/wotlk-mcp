@@ -1,14 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import {
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync
-} from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -16,6 +8,9 @@ import { DatabaseSync } from 'node:sqlite'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
+
+import { importClientData } from '../scripts/import-client-data.js'
+import { unpackPackage } from './package.js'
 
 function digest(data: Buffer | string): string {
   return createHash('sha256').update(data).digest('hex')
@@ -26,7 +21,7 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
   const client = new Client({ name: 'test', version: '1' })
   try {
     const db = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', db])
+    execFileSync('vpx', ['scripts/init-reference.ts', db])
     mkdirSync(path.join(dir, 'DBFilesClient'))
     mkdirSync(path.join(dir, 'fixture', 'definitions'), { recursive: true })
     const files: { path: string; sha256: string }[] = []
@@ -86,12 +81,6 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       make(name, ['int ID', 'string Name_lang'], ['$id$ID<32>', 'Name_lang'], [1, 0])
     const archive = path.join(dir, 'definitions.tar.gz')
     execFileSync('tar', ['-czf', archive, '-C', dir, 'fixture'])
-    const source = readFileSync('scripts/import-client-data.ts', 'utf8').replace(
-      'b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca',
-      digest(readFileSync(archive))
-    )
-    const script = path.join(dir, 'import-client-data.ts')
-    writeFileSync(script, source)
     const manifest = JSON.stringify({
       client: {
         build: 12340,
@@ -102,8 +91,13 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       files
     })
     writeFileSync(path.join(dir, 'manifest.json'), manifest)
-    const args = [script, db, dir, digest(manifest), archive]
-    execFileSync('vpx', args, { stdio: 'pipe' })
+    expect(() =>
+      execFileSync('vpx', ['scripts/import-client-data.ts', db, dir, digest(manifest), archive], {
+        stdio: 'pipe'
+      })
+    ).toThrow(/WoWDBDefs archive hash mismatch/)
+    const definitionsHash = digest(readFileSync(archive))
+    importClientData(db, dir, digest(manifest), archive, definitionsHash)
     const result = new DatabaseSync(db, { readOnly: true })
     expect(result.prepare('SELECT Effect_1, Effect_2, Effect_3 FROM dbc_Spell').get()).toEqual({
       Effect_1: 10,
@@ -117,11 +111,7 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       hint: 'Fire'
     })
     result.close()
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-    const packed = readdirSync(dir).find((name) => name.endsWith('.tgz'))
-    if (!packed) throw new Error('Package archive not created')
-    execFileSync('tar', ['-xzf', path.join(dir, packed), '-C', dir])
-    symlinkSync(path.resolve('node_modules'), path.join(dir, 'package', 'node_modules'), 'dir')
+    unpackPackage(dir)
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,
@@ -139,17 +129,17 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
     const originalItem = readFileSync(itemFile)
     writeFileSync(path.join(dir, 'DBFilesClient', 'Item.dbc'), Buffer.from('invalid'))
     const other = path.join(dir, 'other.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', other])
-    expect(() =>
-      execFileSync('vpx', [script, other, dir, digest(manifest), archive], { stdio: 'pipe' })
-    ).toThrow(/hash mismatch/)
+    execFileSync('vpx', ['scripts/init-reference.ts', other])
+    expect(() => importClientData(other, dir, digest(manifest), archive, definitionsHash)).toThrow(
+      /hash mismatch/
+    )
     const badSchema = Buffer.from(originalItem)
     badSchema.writeUInt32LE(3, 8)
     writeFileSync(itemFile, badSchema)
     const schemaManifest = manifest.replace(digest(originalItem), digest(badSchema))
     writeFileSync(path.join(dir, 'manifest.json'), schemaManifest)
     expect(() =>
-      execFileSync('vpx', [script, other, dir, digest(schemaManifest), archive], { stdio: 'pipe' })
+      importClientData(other, dir, digest(schemaManifest), archive, definitionsHash)
     ).toThrow(/schema mismatch/)
     writeFileSync(itemFile, originalItem)
     const missingManifest = manifest.replace(
@@ -158,7 +148,7 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
     )
     writeFileSync(path.join(dir, 'manifest.json'), missingManifest)
     expect(() =>
-      execFileSync('vpx', [script, other, dir, digest(missingManifest), archive], { stdio: 'pipe' })
+      importClientData(other, dir, digest(missingManifest), archive, definitionsHash)
     ).toThrow(/Missing required Client Data/)
   } finally {
     await client.close()
