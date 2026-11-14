@@ -1,5 +1,13 @@
 import { spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -38,7 +46,11 @@ test('rejects a corrupt private release before extraction and removes partial in
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
   try {
     const output = path.join(dir, 'inputs')
-    executable(dir, 'gh', 'for last do :; done\nprintf corrupt > "$last/client-inputs-12340-engb-1.tar.gz"')
+    executable(
+      dir,
+      'gh',
+      'for last do :; done\nprintf corrupt > "$last/client-inputs-12340-engb-1.tar.gz"'
+    )
     executable(dir, 'tar', `echo extracted > '${dir}/extracted'; exit 1`)
     const result = run(output, dir)
     expect(result.status).not.toBe(0)
@@ -54,7 +66,11 @@ test('rejects a corrupt definitions download before fetching world data or Codex
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
   try {
     const output = path.join(dir, 'inputs')
-    executable(dir, 'gh', 'for last do :; done\nprintf bundle > "$last/client-inputs-12340-engb-1.tar.gz"')
+    executable(
+      dir,
+      'gh',
+      'for last do :; done\nprintf bundle > "$last/client-inputs-12340-engb-1.tar.gz"'
+    )
     executable(dir, 'python3', 'exit 0')
     executable(dir, 'tar', 'exit 0')
     executable(dir, 'curl', 'for last do :; done\nprintf corrupt > "$last"')

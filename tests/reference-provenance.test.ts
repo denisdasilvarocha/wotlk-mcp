@@ -4,7 +4,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+
 import { expect, test } from 'vite-plus/test'
+
 import { schema } from '../src/schema.ts'
 
 function digest(value: string | Buffer): string {
@@ -18,23 +20,54 @@ test('final provenance hashes typed logical tables and emits notices from the em
     const notice = path.join(dir, 'NOTICE.md')
     const db = new DatabaseSync(database)
     db.exec(schema)
-    db.exec("INSERT INTO meta VALUES ('input_pins', '{}'), ('hash.sample', 'original-export-proof'), ('count.sample', 'original-count'); CREATE TABLE sample (value); INSERT INTO sample VALUES (42); CREATE TABLE typed (value); INSERT INTO typed VALUES (NULL), (42), (42.5), ('42'), (x'3432')")
+    db.exec(
+      "INSERT INTO meta VALUES ('input_pins', '{}'), ('hash.sample', 'original-export-proof'), ('count.sample', 'original-count'); CREATE TABLE sample (value); INSERT INTO sample VALUES (42); CREATE TABLE typed (value); INSERT INTO typed VALUES (NULL), (42), (42.5), ('42'), (x'3432')"
+    )
     const source = db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)')
-    source.run('wowdbdefs', 'definition-pin', 'definition-hash', 'CC BY-SA 4.0', 'Definitions transformed into SQLite')
-    source.run('world', 'world-pin', 'world-hash', 'GPL-2.0-or-later', 'AzerothCore; modified; corresponding source https://example.test/source')
-    source.run('client-data', '12340 enGB', 'manifest-hash', 'Blizzard-derived', 'Client extraction')
+    source.run(
+      'wowdbdefs',
+      'definition-pin',
+      'definition-hash',
+      'CC BY-SA 4.0',
+      'Definitions transformed into SQLite'
+    )
+    source.run(
+      'world',
+      'world-pin',
+      'world-hash',
+      'GPL-2.0-or-later',
+      'AzerothCore; modified; corresponding source https://example.test/source'
+    )
+    source.run(
+      'client-data',
+      '12340 enGB',
+      'manifest-hash',
+      'Blizzard-derived',
+      'Client extraction'
+    )
     source.run('codex', 'codex-pin', 'codex-hash', 'Unlicensed', 'Codex authors')
     const manifestHash = digest(readFileSync('data/client-inputs/manifest.json'))
-    db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify({ client_inputs: manifestHash }))
+    db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(
+      JSON.stringify({ client_inputs: manifestHash })
+    )
     db.close()
     function run(): ReturnType<typeof spawnSync> {
-      return spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+      return spawnSync(
+        process.execPath,
+        ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice],
+        { encoding: 'utf8' }
+      )
     }
     const first = run()
     expect(first.status).toBe(0)
     const result = new DatabaseSync(database)
     function meta(): Record<string, unknown> {
-      return Object.fromEntries(result.prepare('SELECT key, value FROM meta').all().map((row) => [row.key, row.value]))
+      return Object.fromEntries(
+        result
+          .prepare('SELECT key, value FROM meta')
+          .all()
+          .map((row) => [row.key, row.value])
+      )
     }
     const initial = meta()
     expect(initial['hash.sample']).toBe('original-export-proof')
@@ -59,7 +92,9 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(second.status).toBe(0)
     expect(meta()['canonical_hash.source']).toBe(initial['canonical_hash.source'])
     expect(readFileSync(notice, 'utf8')).toBe(text)
-    result.exec("DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)")
+    result.exec(
+      "DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)"
+    )
     const reordered = run()
     expect(reordered.status).toBe(0)
     expect(meta()['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
@@ -80,14 +115,22 @@ test('a mismatched client pin fails without altering the manifest or writing a n
     const notice = path.join(dir, 'NOTICE.md')
     const db = new DatabaseSync(database)
     db.exec(schema)
-    db.exec("INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')")
+    db.exec(
+      "INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')"
+    )
     db.close()
-    const run = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+    const run = spawnSync(
+      process.execPath,
+      ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice],
+      { encoding: 'utf8' }
+    )
     expect(run.status).not.toBe(0)
     expect(run.stderr).toContain('Client manifest pin does not match')
     const result = new DatabaseSync(database, { readOnly: true })
     expect(result.prepare('SELECT name FROM source').all()).toEqual([{ name: 'client-data' }])
-    expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({ value: '{}' })
+    expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({
+      value: '{}'
+    })
     result.close()
     expect(existsSync(notice)).toBe(false)
   } finally {
