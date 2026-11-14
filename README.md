@@ -45,6 +45,12 @@ vp run import:codex -- reference.sqlite /path/to/milkyway-codex
 
 The importer verifies each directly imported TypeScript data file against `data/codex-pins.json` before executing it with Node's type stripping; it does not build the upstream application or import its DBC data. The optional third argument selects an alternate pins manifest for isolated fixtures. The source manifest records the revision and a combined hash (sorted in importer file order, each path followed by a NUL and its file bytes). The Codex has no declared licence; the owner accepts the redistribution risk, which is not evidence of permission. Codex `memoryAddress` values are unverified source claims and are never used as native linking evidence.
 
+After the Codex import, `vp run import:native -- reference.sqlite /path/to/client-inputs <manifest-sha256> [overrides.json]` imports the fingerprint-derived registrations. Supply the independently trusted SHA-256 of `manifest.json`; the command checks its native dump hash and executable fingerprint. It retains raw glue/game registrations, table and row identity, and call sites. `get` shows associated native facts; `implemented by` links are created only for equal curated VAs, never from Codex `memoryAddress`.
+
+Every native method table must match exactly one Codex widget's own method names. The optional decisions JSON contains `overrides` and `missing_widgets` maps keyed by table VA. Each entry supplies `widget`, `methods_sha256` (SHA-256 of the JSON array of distinct method names in sorted order), and an independent-evidence `reason`. Overrides identify a widget from evidence, not similarity. For inherited methods, association requires an explicit Codex inheritance path and exactly one declaring ancestor; native facts and Link notes retain the registering widget, so an override callback is not presented as a universal ancestor implementation. Ambiguous methods remain raw. The owner-approved `missing_widgets` allowlist is limited to independently identified widgets absent from Codex and preserves their rows without association or Links. Missing, ambiguous, stale and unused decisions fail the transaction. Decisions in `data/native-widget-decisions.json` refer to executable SHA-256 `aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8`.
+
+The documented binary evidence connects the iterator's method-table callback to its initializer, which saves the Lua registration token. A virtual method returns that exact token, while the slot 20 bytes later in the same class vtable returns the named type string. The common vtable identifies the class; merely finding nearby strings or similar method names would not establish this association. The shared base callback is called at `0x0049CA98` before Region's own registration and uses the exact Codex ParentedObject and UIObject inherited-method union.
+
 - Build the executable:
 
 ```bash
@@ -71,6 +77,19 @@ sh world/reproduce.sh azerothcore.tar.gz world-output
 ```
 
 The command verifies the archive, builds the pinned upstream database importer, creates isolated fresh databases, applies upstream updates, and compares the selected World Data schema to the committed manifests. The output contains the importer log, observed schema, and a report; it does not publish data. On success the report names the running MySQL container and its private network for the export step. Remove both with `docker rm -f <container>` and `docker network rm <network>` when finished.
+
+To add World Data to a newly built reference, pass the container name from the report and the reference database path:
+
+```bash
+vp run build:reference reference.sqlite
+vpx scripts/export-world.ts <container> reference.sqlite
+```
+
+The exporter checks the selected schema, stores the source tables with the `world_` prefix, and indexes creature, item, quest and gameobject Records. The source's `*_dbc` overrides remain separate from Client Data. Spawn rows retain their stored map, coordinates, zone and area values; no area is inferred. The reference's source and metadata tables record the pin and export evidence. The pinned AzerothCore [licence](world/azerothcore-LICENSE.txt) and [authors notice](world/azerothcore-AUTHORS.txt) accompany these sources. The database also contains data with separate rights; the package's MIT licence does not apply to the database as a whole.
+
+SQLite REAL cannot retain the sign of negative zero. The exporter rejects a source negative zero with a table, column and value diagnostic rather than changing its SQL type or silently losing the sign. Ordinary floating-point values remain REAL.
+
+Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 

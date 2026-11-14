@@ -1,0 +1,137 @@
+{
+  "overrides": {
+    "0x00AC1028": {
+      "widget": "Texture",
+      "methods_sha256": "1a700c85ede6897c809df1c0cdf3d2b3e1629e312e97dbe928cbaae6bc08616e",
+      "reason": "iterator 0x0048BC35; token getter 0x00482D00; name getter 0x00482CF0; literal 0x009EA178"
+    },
+    "0x00AC1118": {
+      "widget": "FontString",
+      "methods_sha256": "b8ce9dd70e1b2530440ad271708d2425819ee293c60aea11a28f43f9c365a896",
+      "reason": "iterator 0x0048BCB5; token getter 0x00485430; name getter 0x00485420; literal 0x009EA160"
+    },
+    "0x00AC1550": {
+      "widget": "Frame",
+      "methods_sha256": "6f689e4068871c779a2bfe96f9898c7d2742cd982b0c10abaf553a2524866ffe",
+      "reason": "iterator 0x0049E555; token getter 0x00492760; name getter 0x00492750; literal 0x009EB2A0"
+    },
+    "0x00AC1818": {
+      "widget": "Font",
+      "methods_sha256": "7469eaed17f529471b9cc98d6ce592f737d3c2bbf08161f197dd3f9ebaa699f9",
+      "reason": "iterator 0x004A36FE; token getter 0x00496670; name getter 0x00496660; literal 0x009EBC2C"
+    },
+    "0x00AC18E0": {
+      "widget": "Animation",
+      "methods_sha256": "c939e77cf07e430b16fdc77b714d63666395b0006cb2c5df1fbe2dcb332b3ab9",
+      "reason": "iterator 0x004A4C45; token getter 0x00498D40; name getter 0x00498D30; literal 0x009EBD38"
+    },
+    "0x00AC1AB8": {
+      "widget": "AnimationGroup",
+      "methods_sha256": "93950b68845833f22174617bdb3ae4fccae9dfb08cac4b0eab8169631ec518cd",
+      "reason": "iterator 0x004A4EC5; token getter 0x0049A050; name getter 0x0049A040; literal 0x009EA800"
+    },
+    "0x00AC1B68": {
+      "widget": "ParentedObject",
+      "methods_sha256": "4e324daa12dfffd0401fbcbb8488649244993ceae3437ece8ac82550257bb1a8",
+      "exact_inheritance": true,
+      "reason": "Base callback 0x004A8190 registers this table before descendant callbacks; its names exactly equal Codex ParentedObject own and UIObject inherited methods. Only its own GetParent is associated."
+    },
+    "0x00ACEBB8": {
+      "widget": "Minimap",
+      "methods_sha256": "7bef796e60e35b19f815f9afd71eb0ad74c813de571a28df059afca6141b354e",
+      "reason": "iterator 0x0057C055; token getter 0x0057BE90; name getter 0x0057BE80; literal 0x00A02AA8"
+    },
+    "0x00ACF180": {
+      "widget": "QuestPOIFrame",
+      "methods_sha256": "6060c838481a29d632816494d4527491e14c170b9d717476b2c4acd670662bf8",
+      "reason": "iterator 0x0058DFF5; token getter 0x0058FAA0; name getter 0x0058FA90; literal 0x00A02A70"
+    },
+    "0x00ACF514": {
+      "widget": "PlayerModel",
+      "methods_sha256": "762c68aba582f2e38504b62b5f5a0f10c7f0b130149c337456efce94be5cf0c0",
+      "reason": "iterator 0x00597245; token getter 0x005970E0; name getter 0x005970D0; literal 0x00A02A9C"
+    },
+    "0x00ACF550": {
+      "widget": "DressUpModel",
+      "methods_sha256": "3ecd5dd85dc613dcf6938565b9b72b0f000077d14105047395016a73c2578bfe",
+      "reason": "iterator 0x00597CD5; token getter 0x00597B90; name getter 0x00597B80; literal 0x00A02A8C"
+    },
+    "0x00AD13A4": {
+      "widget": "Cooldown",
+      "methods_sha256": "c3abc663c36f2a006d16021c8d8d456a05761b000537df9f13e8a37daef93c12",
+      "reason": "iterator 0x005EBE25; token getter 0x005EB0B0; name getter 0x005EB0A0; literal 0x00A02AB0"
+    },
+    "0x00AD2AE0": {
+      "widget": "GameTooltip",
+      "methods_sha256": "81e3f97212b829de16e7a5a9910eb17c2090a7921b2af5ff75822ff4cc4faa77",
+      "reason": "iterator 0x0061B4B5; token getter 0x0061E0C0; name getter 0x0061E0B0; literal 0x00A02ABC"
+    },
+    "0x00B2CB10": {
+      "widget": "Model",
+      "methods_sha256": "e1f6b2600acfc5e65789405c5703a390bde7363c6b3e72c7f32dde333e5ed8fa",
+      "reason": "iterator 0x009603E5; token getter 0x0095F410; name getter 0x004E6150; literal 0x00A43CBC"
+    },
+    "0x00B2CD30": {
+      "widget": "MovieFrame",
+      "methods_sha256": "31e9cb0ee03a11298b0618cb05b17975f6e5eb2071473016a37b5864bec65b06",
+      "reason": "iterator 0x00970625; token getter 0x0095E7E0; name getter 0x0095E7D0; literal 0x00A43C60"
+    },
+    "0x00B2CD50": {
+      "widget": "ColorSelect",
+      "methods_sha256": "b23f69ef2e9eb125c91ff08a1b6b8cacbaf635c03a27ba8bf9357092a5cdf020",
+      "reason": "iterator 0x009707F5; token getter 0x0096DC40; name getter 0x0096DC30; literal 0x00A43C6C"
+    },
+    "0x00B2CDB8": {
+      "widget": "StatusBar",
+      "methods_sha256": "56f30354b31c632f2178a4738218169bf2896dca6747e226b3d9d237dabb50b1",
+      "reason": "iterator 0x009711C5; token getter 0x00961620; name getter 0x00961610; literal 0x00A43C78"
+    },
+    "0x00B2CE20": {
+      "widget": "Slider",
+      "methods_sha256": "25cdea773fe41d42af96f3eaae1d974ba7e53467c5f48af504c86c15a4765f9f",
+      "reason": "iterator 0x00971A55; token getter 0x0096BEE0; name getter 0x0096BED0; literal 0x00A43C90"
+    },
+    "0x00B2CE90": {
+      "widget": "ScrollFrame",
+      "methods_sha256": "f80d015c739163046d0ea3575aa53aea762d47507f396b561a20fc5462fe6049",
+      "reason": "iterator 0x009721D5; token getter 0x0096B0A0; name getter 0x0096B090; literal 0x00A43CB0"
+    },
+    "0x00B2CEE0": {
+      "widget": "ScrollingMessageFrame",
+      "methods_sha256": "f911e43b3b3d7451759e9d0aa716e38a1e187d3c823aab3afb405b559da11f5d",
+      "reason": "iterator 0x00972825; token getter 0x00969DC0; name getter 0x00969DB0; literal 0x00A43C98"
+    },
+    "0x00B2D068": {
+      "widget": "MessageFrame",
+      "methods_sha256": "b401a91ebccebb8b36a54cda5a202b0b4e5b2372cb40ebf76df18d6f06194e98",
+      "reason": "iterator 0x00973D35; token getter 0x00968620; name getter 0x00968610; literal 0x00A43CC4"
+    },
+    "0x00B2D150": {
+      "widget": "SimpleHTML",
+      "methods_sha256": "0c25715abe19b6cdd1f2752b3ae30fbace99077c1a2e3eb73f125ea4e6976c6d",
+      "reason": "iterator 0x009749D5; token getter 0x0096C940; name getter 0x0096C930; literal 0x00A43C84"
+    },
+    "0x00B2D210": {
+      "widget": "EditBox",
+      "methods_sha256": "e492f7813e525a0bd7ed1c448469d9a0acb38c3ea49433e869650f6ede1eb54b",
+      "reason": "iterator 0x009752D5; token getter 0x00966F30; name getter 0x00966F20; literal 0x00A43CD4"
+    },
+    "0x00B2D3E4": {
+      "widget": "CheckButton",
+      "methods_sha256": "d01462852e411646e85c5a59584b6b316f65c6dbdf4e4246ecdceca98c9f19d0",
+      "reason": "iterator 0x00976B05; token getter 0x00962190; name getter 0x00962180; literal 0x00A43CDC"
+    },
+    "0x00B2D418": {
+      "widget": "Button",
+      "methods_sha256": "c954fd9577fab0d99cc2d0e80db39c1097a9da2b6235d71aa053e99d41079a83",
+      "reason": "iterator 0x00977055; token getter 0x0096F1F0; name getter 0x0096F1E0; literal 0x00A43CE8"
+    }
+  },
+  "missing_widgets": {
+    "0x00AC465C": {
+      "widget": "ModelFFX",
+      "methods_sha256": "ce42506de3cfc9408076ce555e41196b8549d1d183c5f0dbdb9b46ded4aa10f2",
+      "reason": "GlueParent.lua:329-385 calls these on a model; CharacterCreate.lua:293 and CharacterSelect.lua:431 pass ModelFFX objects declared in their XML. Pinned Codex has no ModelFFX and no such methods; preserve raw only."
+    }
+  }
+}
