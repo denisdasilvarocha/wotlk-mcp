@@ -1,6 +1,6 @@
 # Windows x86 catalog context
 
-This reference describes the provenance and address representation of the bundled domain code examples. Its platform-specific facts apply to that dataset, not to every client supported by the skill's lookup and verification workflow.
+This reference describes the provenance and address representation of the curated [Offsets catalog](../../data/offsets).
 
 | Property               | Catalog target                          |
 | ---------------------- | --------------------------------------- |
@@ -16,7 +16,7 @@ The executable's PE32 header identifies machine `0x014C`, image base `0x00400000
 
 For this dataset, subtract the preferred image base from a catalog VA to obtain an RVA, then add the observed runtime module base. For example, `Lua::FrameScript::Execute` is VA `0x00819210`, so its RVA is `0x00419210`. Adding the module base directly to the catalog value is incorrect.
 
-The following example uses the declarations from [Lua and FrameScript](lua.md). Catalog fragments use `uint32_t`; include `<cstdint>` and make `std::uint32_t` available before those fragments when compiling them.
+For example, given the catalog VA for `Lua::FrameScript::Execute`:
 
 ```cpp
 #include <cstdint>
@@ -24,7 +24,7 @@ The following example uses the declarations from [Lua and FrameScript](lua.md). 
 constexpr std::uintptr_t execute_address(std::uintptr_t runtime_base) {
     constexpr std::uintptr_t preferred_image_base = 0x00400000;
     return runtime_base +
-        (WoWOffsets::Lua::FrameScript::Execute - preferred_image_base);
+        (0x00819210 - preferred_image_base);
 }
 
 static_assert(execute_address(0x00400000) == 0x00819210);

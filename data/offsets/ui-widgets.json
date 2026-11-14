@@ -1,0 +1,296 @@
+[
+  {
+    "path": "UI::CSimpleFrame::LoadXML",
+    "va": "0x004932C0",
+    "kind": "function",
+    "note": "load XML"
+  },
+  {
+    "path": "UI::CSimpleFrame::OnFrameRender",
+    "va": "0x00490840",
+    "kind": "function",
+    "note": "frame render"
+  },
+  {
+    "path": "UI::CSimpleTop::CSimpleTop",
+    "va": "0x00495EB0",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "UI::CSimpleUI::CreateTooltip",
+    "va": "0x00621070",
+    "kind": "function",
+    "note": "create tooltip"
+  },
+  {
+    "path": "UI::CSimpleFontString::UpdateString",
+    "va": "0x00486B20",
+    "kind": "function",
+    "note": "update font string"
+  },
+  {
+    "path": "UI::Font::GxuFontCreateFont",
+    "va": "0x006BDE80",
+    "kind": "function",
+    "note": "create font"
+  },
+  {
+    "path": "UI::Font::TextBlockGenerateFont",
+    "va": "0x004BE9C0",
+    "kind": "function",
+    "note": "generate font block"
+  },
+  {
+    "path": "UI::Font::TextBlockCreate",
+    "va": "0x004BDAA0",
+    "kind": "function",
+    "note": "create text block"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetPoint",
+    "va": "0x0049DB10",
+    "kind": "function",
+    "note": "script method %s:SetPoint - set anchor point"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetWidth",
+    "va": "0x0049D480",
+    "kind": "function",
+    "note": "script method %s:SetWidth - set width"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetHeight",
+    "va": "0x0049D620",
+    "kind": "function",
+    "note": "script method %s:SetHeight - set height"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetSize",
+    "va": "0x0049D7A0",
+    "kind": "function",
+    "note": "script method %s:SetSize - set size"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetAlpha_0",
+    "va": "0x0049F9E0",
+    "kind": "function",
+    "note": "script method %s:SetAlpha_0 - set alpha"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetID",
+    "va": "0x0049FB00",
+    "kind": "function",
+    "note": "script method %s:SetID - set frame ID"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetScale",
+    "va": "0x0049F820",
+    "kind": "function",
+    "note": "script method %s:SetScale - set scale"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetFrameStrata",
+    "va": "0x0049E880",
+    "kind": "function",
+    "note": "script method %s:SetFrameStrata - set strata"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetFrameLevel",
+    "va": "0x0049E9D0",
+    "kind": "function",
+    "note": "script method %s:SetFrameLevel - set level"
+  },
+  {
+    "path": "UI::LuaFrameMethods::HookScript",
+    "va": "0x0049EDB0",
+    "kind": "function",
+    "note": "script method %s:HookScript - hook script"
+  },
+  {
+    "path": "UI::LuaFrameMethods::RegisterEvent",
+    "va": "0x0049EFE0",
+    "kind": "function",
+    "note": "script method %s:RegisterEvent - register event"
+  },
+  {
+    "path": "UI::LuaFrameMethods::UnregisterEvent",
+    "va": "0x0049F060",
+    "kind": "function",
+    "note": "script method %s:UnregisterEvent - unregister event"
+  },
+  {
+    "path": "UI::LuaFrameMethods::IsEventRegistered",
+    "va": "0x0049F160",
+    "kind": "function",
+    "note": "script method %s:IsEventRegistered - check event"
+  },
+  {
+    "path": "UI::LuaFrameMethods::GetAttribute",
+    "va": "0x0049F2D0",
+    "kind": "function",
+    "note": "script method %s:GetAttribute - get attribute"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetAttribute",
+    "va": "0x0049F610",
+    "kind": "function",
+    "note": "script method %s:SetAttribute - set attribute"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetHitRectInsets",
+    "va": "0x004A0090",
+    "kind": "function",
+    "note": "script method %s:SetHitRectInsets - set hit rect"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetClampRectInsets",
+    "va": "0x004A0310",
+    "kind": "function",
+    "note": "script method %s:SetClampRectInsets - set clamp rect"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetMinResize",
+    "va": "0x004A0520",
+    "kind": "function",
+    "note": "script method %s:SetMinResize - set min resize"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetMaxResize",
+    "va": "0x004A06E0",
+    "kind": "function",
+    "note": "script method %s:SetMaxResize - set max resize"
+  },
+  {
+    "path": "UI::LuaFrameMethods::SetBackdrop",
+    "va": "0x004A15A0",
+    "kind": "function",
+    "note": "script method %s:SetBackdrop - set backdrop"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetBlendMode",
+    "va": "0x0048C040",
+    "kind": "function",
+    "note": "script method %s:SetBlendMode - set blend mode"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetGradient",
+    "va": "0x0048C240",
+    "kind": "function",
+    "note": "script method %s:SetGradient - set gradient"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetGradientAlpha",
+    "va": "0x0048C310",
+    "kind": "function",
+    "note": "script method %s:SetGradientAlpha - set gradient alpha"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetAlpha_1",
+    "va": "0x0048C3E0",
+    "kind": "function",
+    "note": "script method %s:SetAlpha_1 - set alpha (texture)"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetRotation",
+    "va": "0x0048C860",
+    "kind": "function",
+    "note": "script method %s:SetRotation - set rotation"
+  },
+  {
+    "path": "UI::LuaTextureMethods::SetTexCoord",
+    "va": "0x0048E170",
+    "kind": "function",
+    "note": "script method %s:SetTexCoord - set texture coords"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetAlpha_0_0",
+    "va": "0x0048D030",
+    "kind": "function",
+    "note": "script method %s:SetAlpha_0_0 - set alpha"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetAlphaGradient",
+    "va": "0x0048D0F0",
+    "kind": "function",
+    "note": "script method %s:SetAlphaGradient - set alpha gradient"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetFontObject",
+    "va": "0x0048D380",
+    "kind": "function",
+    "note": "script method %s:SetFontObject - set font object"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetFont",
+    "va": "0x0048D5B0",
+    "kind": "function",
+    "note": "script method %s:SetFont - set font"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetShadowOffset",
+    "va": "0x0048DBB0",
+    "kind": "function",
+    "note": "script method %s:SetShadowOffset - set shadow offset"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetSpacing",
+    "va": "0x0048DD00",
+    "kind": "function",
+    "note": "script method %s:SetSpacing - set spacing"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetTextHeight",
+    "va": "0x0048DDB0",
+    "kind": "function",
+    "note": "script method %s:SetTextHeight - set text height"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetJustifyH",
+    "va": "0x0048E360",
+    "kind": "function",
+    "note": "script method %s:SetJustifyH - set horizontal justify"
+  },
+  {
+    "path": "UI::LuaFontStringMethods::SetJustifyV",
+    "va": "0x0048E430",
+    "kind": "function",
+    "note": "script method %s:SetJustifyV - set vertical justify"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetButtonState",
+    "va": "0x00977280",
+    "kind": "function",
+    "note": "script method %s:SetButtonState - set button state"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetNormalFontObject",
+    "va": "0x00977340",
+    "kind": "function",
+    "note": "script method %s:SetNormalFontObject - set normal font"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetDisabledFontObject",
+    "va": "0x009774C0",
+    "kind": "function",
+    "note": "script method %s:SetDisabledFontObject - set disabled font"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetHighlightFontObject",
+    "va": "0x00977640",
+    "kind": "function",
+    "note": "script method %s:SetHighlightFontObject - set highlight font"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetHighlightTexture",
+    "va": "0x00977D30",
+    "kind": "function",
+    "note": "script method %s:SetHighlightTexture - set highlight texture"
+  },
+  {
+    "path": "UI::LuaButtonMethods::SetPushedTextOffset",
+    "va": "0x00977F60",
+    "kind": "function",
+    "note": "script method %s:SetPushedTextOffset - set pushed offset"
+  }
+]

@@ -1,0 +1,266 @@
+[
+  {
+    "path": "Spell::Spell_C::CastSpell",
+    "va": "0x0080DA40",
+    "kind": "function",
+    "note": "cast spell by ID"
+  },
+  {
+    "path": "Spell::Spell_C::SystemInitialize",
+    "va": "0x008100E0",
+    "kind": "function",
+    "note": "initialize spell system"
+  },
+  {
+    "path": "Spell::Spell_C::GetSpellCooldown",
+    "va": "0x00807980",
+    "kind": "function",
+    "note": "get spell cooldown"
+  },
+  {
+    "path": "Spell::Spell_C::GetSpellCooldown_Proxy",
+    "va": "0x00809000",
+    "kind": "function",
+    "note": "cooldown proxy; indexes the cooldown pointer table by book type (24-byte stride)"
+  },
+  {
+    "path": "Spell::Spell_C::GetItemCooldown",
+    "va": "0x00809030",
+    "kind": "function",
+    "note": "get item cooldown"
+  },
+  {
+    "path": "Spell::Spell_C::GetSpellRange",
+    "va": "0x00802C30",
+    "kind": "function",
+    "note": "get spell range"
+  },
+  {
+    "path": "Spell::Spell_C::TargetTradeItem",
+    "va": "0x005198A0",
+    "kind": "function",
+    "note": "target trade item"
+  },
+  {
+    "path": "Spell::Spell_C::HandleTerrainClick",
+    "va": "0x0080C340",
+    "kind": "function",
+    "note": "handle terrain targeting"
+  },
+  {
+    "path": "Spell::Spell_C::HandleSpriteRay",
+    "va": "0x00803A50",
+    "kind": "function",
+    "note": "handle sprite ray"
+  },
+  {
+    "path": "Spell::Spell::CreatePendingSpellCast",
+    "va": "0x00805010",
+    "kind": "function",
+    "note": "create pending cast"
+  },
+  {
+    "path": "Spell::Spell::GetPendingSpellCast",
+    "va": "0x00805180",
+    "kind": "function",
+    "note": "get pending cast"
+  },
+  {
+    "path": "Spell::Spell::Alloc_PeriodicClientTrigger",
+    "va": "0x0080DF10",
+    "kind": "function",
+    "note": "allocate periodic trigger"
+  },
+  {
+    "path": "Spell::Spell::SendCancelChannelingOpcode",
+    "va": "0x008008D0",
+    "kind": "function",
+    "note": "cancel channeling"
+  },
+  {
+    "path": "Spell::Spell::GetSpellIdForDifficulty",
+    "va": "0x00802850",
+    "kind": "function",
+    "note": "get difficulty spell ID"
+  },
+  {
+    "path": "Spell::Spell::HasApplyAuraEffect",
+    "va": "0x0076BD50",
+    "kind": "function",
+    "note": "has apply aura"
+  },
+  {
+    "path": "Spell::Spell::IsValidSpell",
+    "va": "0x00540650",
+    "kind": "function",
+    "note": "validate spell ID"
+  },
+  {
+    "path": "Spell::Spell::HasSpell",
+    "va": "0x0053C5B0",
+    "kind": "function",
+    "note": "player knows spell"
+  },
+  {
+    "path": "Spell::Spell::GetSpellVisualRow",
+    "va": "0x007FA290",
+    "kind": "function",
+    "note": "get spell visual"
+  },
+  {
+    "path": "Spell::Spell::GetSpellFailedResult",
+    "va": "0x007FCCA0",
+    "kind": "function",
+    "note": "get fail reason"
+  },
+  {
+    "path": "Spell::Spell::GetSpellFailedEventString",
+    "va": "0x007FEF10",
+    "kind": "function",
+    "note": "get fail string"
+  },
+  {
+    "path": "Spell::Spell::BroadcastSpellEvent",
+    "va": "0x0060BF60",
+    "kind": "function",
+    "note": "broadcast spell event"
+  },
+  {
+    "path": "Spell::Spell::SpellTableInitialize",
+    "va": "0x00812200",
+    "kind": "function",
+    "note": "initialize spell table"
+  },
+  {
+    "path": "Spell::Spell::GetSpellIdByName",
+    "va": "0x00540200",
+    "kind": "function",
+    "note": "get spell ID by name"
+  },
+  {
+    "path": "Spell::Spell::GetSpellManaCostByID",
+    "va": "0x008012F0",
+    "kind": "function",
+    "note": "get mana cost"
+  },
+  {
+    "path": "Spell::SpellRec::GetCastTime",
+    "va": "0x007FF180",
+    "kind": "function",
+    "note": "get base cast time; reads the spell record's cast-time index, resolved through SpellCastTimes.dbc"
+  },
+  {
+    "path": "Spell::SpellRec::GetDuration",
+    "va": "0x00800A70",
+    "kind": "function",
+    "note": "get spell duration; reads the spell record's duration index, resolved through SpellDuration.dbc (a different index from GetCastTime)"
+  },
+  {
+    "path": "Spell::SpellRec::GetLevel",
+    "va": "0x007FF070",
+    "kind": "function",
+    "note": "get required level"
+  },
+  {
+    "path": "Spell::SpellRec::GetClassMask",
+    "va": "0x007FDE80",
+    "kind": "function",
+    "note": "get class mask"
+  },
+  {
+    "path": "Spell::SpellRec::GetModifiedStats",
+    "va": "0x007FD970",
+    "kind": "function",
+    "note": "get modified stats"
+  },
+  {
+    "path": "Spell::SpellRec::GetModifiedStatValue",
+    "va": "0x007FDB50",
+    "kind": "function",
+    "note": "get modified stat value"
+  },
+  {
+    "path": "Spell::SpellRec::IsModifiedStat",
+    "va": "0x00800770",
+    "kind": "function",
+    "note": "check if stat modified"
+  },
+  {
+    "path": "Spell::SpellRec::HasEffect",
+    "va": "0x007FDE20",
+    "kind": "function",
+    "note": "check spell effect type"
+  },
+  {
+    "path": "Spell::SpellRec::HasAura",
+    "va": "0x007FDE50",
+    "kind": "function",
+    "note": "check aura type"
+  },
+  {
+    "path": "Spell::SpellRec::HasTrackingAura",
+    "va": "0x007FDF60",
+    "kind": "function",
+    "note": "has tracking aura"
+  },
+  {
+    "path": "Spell::SpellRec::WillSummonCritter",
+    "va": "0x008009B0",
+    "kind": "function",
+    "note": "will summon critter"
+  },
+  {
+    "path": "Spell::SpellRec::IsHelpfulOrHarmful",
+    "va": "0x007FE1B0",
+    "kind": "function",
+    "note": "check helpful/harmful"
+  },
+  {
+    "path": "Spell::SpellRec::UsableInShapeshift",
+    "va": "0x007FE850",
+    "kind": "function",
+    "note": "usable in shapeshift"
+  },
+  {
+    "path": "Spell::SpellRec::NotUsableInShapeshiftForm",
+    "va": "0x007FE890",
+    "kind": "function",
+    "note": "not usable in form"
+  },
+  {
+    "path": "Spell::SpellRec::HasShapeshiftFlag_0x1",
+    "va": "0x00800950",
+    "kind": "function",
+    "note": "has shapeshift flag"
+  },
+  {
+    "path": "Spell::SpellRec::RangeHasFlag_0x1",
+    "va": "0x007FF380",
+    "kind": "function",
+    "note": "range flag check"
+  },
+  {
+    "path": "Spell::SpellRec::RangeHasFlag_0x2",
+    "va": "0x007FF3C0",
+    "kind": "function",
+    "note": "range flag check"
+  },
+  {
+    "path": "Spell::CGSpellBook::CastSpell",
+    "va": "0x0053BC40",
+    "kind": "function",
+    "note": "cast from spellbook"
+  },
+  {
+    "path": "Spell::CGSpellBook::UpdateSpells",
+    "va": "0x0053CA70",
+    "kind": "function",
+    "note": "update spellbook"
+  },
+  {
+    "path": "Spell::CGSpellBook::PickupSpell",
+    "va": "0x0053BAF0",
+    "kind": "function",
+    "note": "pickup spell to cursor"
+  }
+]

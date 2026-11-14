@@ -1,0 +1,825 @@
+[
+  {
+    "path": "Network::CDataStore::New",
+    "va": "0x008CD0B0",
+    "kind": "function",
+    "note": "create new data store"
+  },
+  {
+    "path": "Network::CDataStore::Free",
+    "va": "0x00401030",
+    "kind": "function",
+    "note": "free data store"
+  },
+  {
+    "path": "Network::CDataStore::Free_0",
+    "va": "0x008CD160",
+    "kind": "function",
+    "note": "free (alternate)"
+  },
+  {
+    "path": "Network::CDataStore::Destroy",
+    "va": "0x00403880",
+    "kind": "function",
+    "note": "frees the buffer and restores the base CDataStore vtable; matches Packets::Destroy"
+  },
+  {
+    "path": "Network::CDataStore::Reset",
+    "va": "0x004010E0",
+    "kind": "function",
+    "note": "reset data store"
+  },
+  {
+    "path": "Network::CDataStore::InternalDestroy",
+    "va": "0x0047AE50",
+    "kind": "function",
+    "note": "internal destroy"
+  },
+  {
+    "path": "Network::CDataStore::dtor",
+    "va": "0x008CCF50",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Network::CDataStore::GetByte",
+    "va": "0x0047B340",
+    "kind": "function",
+    "note": "read byte (uint8)"
+  },
+  {
+    "path": "Network::CDataStore::GetInt8_2",
+    "va": "0x00401140",
+    "kind": "function",
+    "note": "read int8"
+  },
+  {
+    "path": "Network::CDataStore::GetInt16",
+    "va": "0x0047B380",
+    "kind": "function",
+    "note": "read int16"
+  },
+  {
+    "path": "Network::CDataStore::GetInt",
+    "va": "0x0047B3C0",
+    "kind": "function",
+    "note": "read int32"
+  },
+  {
+    "path": "Network::CDataStore::ReadInt32",
+    "va": "0x0050F420",
+    "kind": "function",
+    "note": "read int32 (alt)"
+  },
+  {
+    "path": "Network::CDataStore::GetUInt64",
+    "va": "0x0047B400",
+    "kind": "function",
+    "note": "read uint64"
+  },
+  {
+    "path": "Network::CDataStore::GetFloat",
+    "va": "0x0047B440",
+    "kind": "function",
+    "note": "read float"
+  },
+  {
+    "path": "Network::CDataStore::GetString",
+    "va": "0x0047B480",
+    "kind": "function",
+    "note": "read string"
+  },
+  {
+    "path": "Network::CDataStore::GetCString",
+    "va": "0x0047B560",
+    "kind": "function",
+    "note": "read C string"
+  },
+  {
+    "path": "Network::CDataStore::GetCString_2",
+    "va": "0x0047B6A0",
+    "kind": "function",
+    "note": "read C string (alt)"
+  },
+  {
+    "path": "Network::CDataStore::GetIntArray",
+    "va": "0x0047B5F0",
+    "kind": "function",
+    "note": "read int array"
+  },
+  {
+    "path": "Network::CDataStore::ReadBytes",
+    "va": "0x0047B6B0",
+    "kind": "function",
+    "note": "read raw bytes"
+  },
+  {
+    "path": "Network::CDataStore::GetWowGUID",
+    "va": "0x0076DC20",
+    "kind": "function",
+    "note": "read WoW GUID"
+  },
+  {
+    "path": "Network::CDataStore::ReadPackedVector3",
+    "va": "0x007152B0",
+    "kind": "function",
+    "note": "read packed vector"
+  },
+  {
+    "path": "Network::CDataStore::PutByte",
+    "va": "0x0047AFE0",
+    "kind": "function",
+    "note": "write byte"
+  },
+  {
+    "path": "Network::CDataStore::PutInt8AtPos",
+    "va": "0x0047AEF0",
+    "kind": "function",
+    "note": "write int8 at position"
+  },
+  {
+    "path": "Network::CDataStore::PutInt16",
+    "va": "0x0047B040",
+    "kind": "function",
+    "note": "write int16"
+  },
+  {
+    "path": "Network::CDataStore::PutInt16AtPos",
+    "va": "0x0047AF40",
+    "kind": "function",
+    "note": "write int16 at position"
+  },
+  {
+    "path": "Network::CDataStore::PutInt32AtPos",
+    "va": "0x0047AF90",
+    "kind": "function",
+    "note": "write int32 at position"
+  },
+  {
+    "path": "Network::CDataStore::Put",
+    "va": "0x0047B0A0",
+    "kind": "function",
+    "note": "write data"
+  },
+  {
+    "path": "Network::CDataStore::PutGuid",
+    "va": "0x0047B100",
+    "kind": "function",
+    "note": "write GUID"
+  },
+  {
+    "path": "Network::CDataStore::PutFloat",
+    "va": "0x0047B160",
+    "kind": "function",
+    "note": "write float"
+  },
+  {
+    "path": "Network::CDataStore::PutString",
+    "va": "0x0047B300",
+    "kind": "function",
+    "note": "write string"
+  },
+  {
+    "path": "Network::CDataStore::PutCString_2",
+    "va": "0x0047B1C0",
+    "kind": "function",
+    "note": "write C string"
+  },
+  {
+    "path": "Network::CDataStore::PutCString_3",
+    "va": "0x0047B280",
+    "kind": "function",
+    "note": "write C string (alt)"
+  },
+  {
+    "path": "Network::CDataStore::PutVector3",
+    "va": "0x00406DA0",
+    "kind": "function",
+    "note": "write vector3"
+  },
+  {
+    "path": "Network::CDataStore::GetBufferParams",
+    "va": "0x0047ADE0",
+    "kind": "function",
+    "note": "get buffer params"
+  },
+  {
+    "path": "Network::CDataStore::DetachBuffer",
+    "va": "0x0047AE10",
+    "kind": "function",
+    "note": "detach buffer"
+  },
+  {
+    "path": "Network::CDataStore::DetachBufferProxy",
+    "va": "0x008CCFC0",
+    "kind": "function",
+    "note": "detach buffer proxy"
+  },
+  {
+    "path": "Network::CDataStore::CanRead",
+    "va": "0x0047B290",
+    "kind": "function",
+    "note": "check readable bytes"
+  },
+  {
+    "path": "Network::CDataStore::CanReadNumBytes",
+    "va": "0x008CBBF0",
+    "kind": "function",
+    "note": "check specific count"
+  },
+  {
+    "path": "Network::CDataStore::InternalFetchWrite",
+    "va": "0x0047AEA0",
+    "kind": "function",
+    "note": "internal write fetch"
+  },
+  {
+    "path": "Network::CDataStore::InternalFetchRead",
+    "va": "0x00936900",
+    "kind": "function",
+    "note": "internal read fetch"
+  },
+  {
+    "path": "Network::CDataStore::Alloc",
+    "va": "0x00401010",
+    "kind": "function",
+    "note": "allocate packet"
+  },
+  {
+    "path": "Network::CDataStore::GenPacket",
+    "va": "0x00401050",
+    "kind": "function",
+    "note": "generate packet"
+  },
+  {
+    "path": "Network::CDataStore::InitPacket2",
+    "va": "0x00403EC0",
+    "kind": "function",
+    "note": "initialize packet"
+  },
+  {
+    "path": "Network::CDataStore::GetPosition",
+    "va": "0x00401190",
+    "kind": "function",
+    "note": "get read position"
+  },
+  {
+    "path": "Network::CDataStore::Finalize",
+    "va": "0x00401130",
+    "kind": "function",
+    "note": "finalize packet"
+  },
+  {
+    "path": "Network::CDataStore::ReleasePacket2",
+    "va": "0x00403F10",
+    "kind": "function",
+    "note": "release packet"
+  },
+  {
+    "path": "Network::CDataStore::ReleaseSomePacket",
+    "va": "0x008CD040",
+    "kind": "function",
+    "note": "release packet (alt)"
+  },
+  {
+    "path": "Network::CDataStore::InitSomePacket",
+    "va": "0x008CCEE0",
+    "kind": "function",
+    "note": "init packet"
+  },
+  {
+    "path": "Network::NetClient::NetClient",
+    "va": "0x00632A40",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Network::NetClient::_NetClient",
+    "va": "0x006331B0",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Network::NetClient::Initialize",
+    "va": "0x00631D30",
+    "kind": "function",
+    "note": "initialize client"
+  },
+  {
+    "path": "Network::NetClient::Destroy",
+    "va": "0x006322A0",
+    "kind": "function",
+    "note": "destroy client"
+  },
+  {
+    "path": "Network::NetClient::SetMessageHandler",
+    "va": "0x00631FA0",
+    "kind": "function",
+    "note": "set message handler"
+  },
+  {
+    "path": "Network::NetClient::HandleDisconnect",
+    "va": "0x00632540",
+    "kind": "function",
+    "note": "handle disconnect"
+  },
+  {
+    "path": "Network::NetClient::HandleData",
+    "va": "0x00632460",
+    "kind": "function",
+    "note": "handle incoming data"
+  },
+  {
+    "path": "Network::NetClient::WCMessageReady",
+    "va": "0x00633330",
+    "kind": "function",
+    "note": "message ready callback"
+  },
+  {
+    "path": "Network::NetClient::WCDisconnected",
+    "va": "0x00632060",
+    "kind": "function",
+    "note": "disconnected callback"
+  },
+  {
+    "path": "Network::NetClient::DelayedDelete",
+    "va": "0x00632390",
+    "kind": "function",
+    "note": "delayed delete"
+  },
+  {
+    "path": "Network::NetClient::Disconnect",
+    "va": "0x00631EA0",
+    "kind": "function",
+    "note": "disconnect"
+  },
+  {
+    "path": "Network::NetClient::GetNetStats",
+    "va": "0x006320D0",
+    "kind": "function",
+    "note": "get network stats"
+  },
+  {
+    "path": "Network::CNetClient::ResetHandler",
+    "va": "0x00631FC0",
+    "kind": "function",
+    "note": "reset handler"
+  },
+  {
+    "path": "Network::CNetClient::Process",
+    "va": "0x00631FE0",
+    "kind": "function",
+    "note": "process network"
+  },
+  {
+    "path": "Network::CNetClient::SetUserNameAndSessionKey",
+    "va": "0x00631F70",
+    "kind": "function",
+    "note": "set credentials"
+  },
+  {
+    "path": "Network::ClientServices::GetSessionKey",
+    "va": "0x00631F90",
+    "kind": "function",
+    "note": "get session key"
+  },
+  {
+    "path": "Network::ClientServices::Initialize",
+    "va": "0x006B2200",
+    "kind": "function",
+    "note": "initialize"
+  },
+  {
+    "path": "Network::ClientServices::PollStatus",
+    "va": "0x006B1100",
+    "kind": "function",
+    "note": "poll status"
+  },
+  {
+    "path": "Network::ClientServices::Connect",
+    "va": "0x006B1390",
+    "kind": "function",
+    "note": "connect"
+  },
+  {
+    "path": "Network::ClientServices::Disconnect",
+    "va": "0x006B0940",
+    "kind": "function",
+    "note": "disconnect"
+  },
+  {
+    "path": "Network::ClientServices::CharacterCreate",
+    "va": "0x006B1620",
+    "kind": "function",
+    "note": "create character"
+  },
+  {
+    "path": "Network::ClientServices::DeleteCharacter",
+    "va": "0x006B1A70",
+    "kind": "function",
+    "note": "delete character"
+  },
+  {
+    "path": "Network::ClientServices::CharacterForceLogout",
+    "va": "0x006B1930",
+    "kind": "function",
+    "note": "force logout"
+  },
+  {
+    "path": "Network::ClientServices::ClearMessageHandler",
+    "va": "0x006B0BC0",
+    "kind": "function",
+    "note": "clear handler"
+  },
+  {
+    "path": "Network::ClientServices::GetErrorToken",
+    "va": "0x006B0F40",
+    "kind": "function",
+    "note": "get error token"
+  },
+  {
+    "path": "Network::ClientServices::SendPacket",
+    "va": "0x00406F40",
+    "kind": "function",
+    "note": "send packet"
+  },
+  {
+    "path": "Network::CClientConnection::Send",
+    "va": "0x00926A70",
+    "kind": "function",
+    "note": "send packet — **label unverified**: FMOD static-lib socket-send loop (`send()`+`WSAEWOULDBLOCK` retry); both callers are FMOD translation units",
+    "status": "unverified"
+  },
+  {
+    "path": "Network::ClientConnection::ClientConnection",
+    "va": "0x004650E0",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Network::ClientConnection::_ClientConnection",
+    "va": "0x00465320",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Network::ClientConnection::HandleAuthResponse",
+    "va": "0x00464640",
+    "kind": "function",
+    "note": "auth response"
+  },
+  {
+    "path": "Network::ClientConnection::HandleCharEnum",
+    "va": "0x00464C10",
+    "kind": "function",
+    "note": "character enum"
+  },
+  {
+    "path": "Network::ClientConnection::SendCharEnumOpcode",
+    "va": "0x00464A40",
+    "kind": "function",
+    "note": "send char enum"
+  },
+  {
+    "path": "Network::ClientConnection::SendPlayerLoginOpcode",
+    "va": "0x00464AB0",
+    "kind": "function",
+    "note": "send player login"
+  },
+  {
+    "path": "Network::ClientConnection::HandleCharacterLoginFailed",
+    "va": "0x00464460",
+    "kind": "function",
+    "note": "login failed"
+  },
+  {
+    "path": "Network::ClientConnection::HandleCharacterCreate",
+    "va": "0x00464780",
+    "kind": "function",
+    "note": "character create"
+  },
+  {
+    "path": "Network::ClientConnection::HandleClientCacheVersion",
+    "va": "0x00464730",
+    "kind": "function",
+    "note": "cache version"
+  },
+  {
+    "path": "Network::ClientConnection::HandleAddonInfo",
+    "va": "0x00464410",
+    "kind": "function",
+    "note": "addon info"
+  },
+  {
+    "path": "Network::ClientLink::CMD_AUTH_LOGON_CHALLENGE",
+    "va": "0x008CC3E0",
+    "kind": "function",
+    "note": "logon challenge"
+  },
+  {
+    "path": "Network::ClientLink::CMD_AUTH_LOGON_PROOF",
+    "va": "0x008CC7A0",
+    "kind": "function",
+    "note": "logon proof"
+  },
+  {
+    "path": "Network::ClientLink::CMD_AUTH_RECONNECT_CHALLENGE",
+    "va": "0x008CC980",
+    "kind": "function",
+    "note": "reconnect challenge"
+  },
+  {
+    "path": "Network::ClientLink::CMD_AUTH_RECONNECT_PROOF",
+    "va": "0x008CCA50",
+    "kind": "function",
+    "note": "reconnect proof"
+  },
+  {
+    "path": "Network::ClientLink::CMD_REALM_LIST",
+    "va": "0x008CC250",
+    "kind": "function",
+    "note": "realm list"
+  },
+  {
+    "path": "Network::ClientLink::CMD_XFER_INITIATE",
+    "va": "0x008CCB40",
+    "kind": "function",
+    "note": "transfer initiate"
+  },
+  {
+    "path": "Network::ClientLink::CMD_XFER_DATA",
+    "va": "0x008CCC20",
+    "kind": "function",
+    "note": "transfer data"
+  },
+  {
+    "path": "Network::GruntLogin::GruntLogin",
+    "va": "0x008CACA0",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc0",
+    "va": "0x008CA0B0",
+    "kind": "function",
+    "note": "vFunc0"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc1",
+    "va": "0x008CA1D0",
+    "kind": "function",
+    "note": "vFunc1"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc2",
+    "va": "0x008CA140",
+    "kind": "function",
+    "note": "vFunc2"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc14",
+    "va": "0x008CB160",
+    "kind": "function",
+    "note": "vFunc14"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc15",
+    "va": "0x008CB020",
+    "kind": "function",
+    "note": "vFunc15"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc18",
+    "va": "0x008CA4F0",
+    "kind": "function",
+    "note": "vFunc18"
+  },
+  {
+    "path": "Network::GruntLogin::vFunc8",
+    "va": "0x008CAD40",
+    "kind": "function",
+    "note": "vFunc8"
+  },
+  {
+    "path": "Network::BattleNetLogin::BattlenetLogin",
+    "va": "0x008C8C00",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Network::BattleNetLogin::vFunc0",
+    "va": "0x008C52E0",
+    "kind": "function",
+    "note": "vFunc0"
+  },
+  {
+    "path": "Network::BattleNetLogin::vFunc18",
+    "va": "0x008C52D0",
+    "kind": "function",
+    "note": "vFunc18"
+  },
+  {
+    "path": "Network::BattleNetLogin::vFunc10",
+    "va": "0x008C62B0",
+    "kind": "function",
+    "note": "vFunc10"
+  },
+  {
+    "path": "Network::BattleNetLogin::PatchInstruction",
+    "va": "0x008C6550",
+    "kind": "function",
+    "note": "patch instruction"
+  },
+  {
+    "path": "Network::BattleNetLogin::GameAccount",
+    "va": "0x008C64B0",
+    "kind": "function",
+    "note": "game account"
+  },
+  {
+    "path": "Network::CGChat_C::SendMessage",
+    "va": "0x00509DD0",
+    "kind": "function",
+    "note": "send chat message"
+  },
+  {
+    "path": "Network::Packets::SMSG_UPDATE_OBJECT",
+    "va": "0x004D73A0",
+    "kind": "function",
+    "note": "object update"
+  },
+  {
+    "path": "Network::Packets::SMSG_COMPRESSED_UPDATE_OBJECT",
+    "va": "0x004D74D0",
+    "kind": "function",
+    "note": "compressed update"
+  },
+  {
+    "path": "Network::Packets::SMSG_DESTROY_OBJECT",
+    "va": "0x004D7610",
+    "kind": "function",
+    "note": "destroy object"
+  },
+  {
+    "path": "Network::Packets::SMSG_COMPRESSED_MOVES",
+    "va": "0x007169A0",
+    "kind": "function",
+    "note": "compressed moves"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLLOGEXECUTE",
+    "va": "0x006D3220",
+    "kind": "function",
+    "note": "spell log execute"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLHEALLOG",
+    "va": "0x006D3C30",
+    "kind": "function",
+    "note": "spell heal log"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLENERGIZELOG",
+    "va": "0x006D3DF0",
+    "kind": "function",
+    "note": "spell energize log"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLLOGMISS",
+    "va": "0x006D3090",
+    "kind": "function",
+    "note": "spell miss log"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLNONMELEEDAMAGELOG",
+    "va": "0x006D3C10",
+    "kind": "function",
+    "note": "spell damage log"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLBREAKLOG",
+    "va": "0x006CE2B0",
+    "kind": "function",
+    "note": "spell break log"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELLINSTAKILLLOG",
+    "va": "0x006CE260",
+    "kind": "function",
+    "note": "instant kill log"
+  },
+  {
+    "path": "Network::Packets::SMSG_AURA_UPDATE",
+    "va": "0x007300A0",
+    "kind": "function",
+    "note": "aura update"
+  },
+  {
+    "path": "Network::Packets::SMSG_POWER_UPDATE",
+    "va": "0x007236C0",
+    "kind": "function",
+    "note": "power update"
+  },
+  {
+    "path": "Network::Packets::SMSG_CHANNEL_NOTIFY",
+    "va": "0x0050E120",
+    "kind": "function",
+    "note": "channel notify"
+  },
+  {
+    "path": "Network::Packets::SMSG_CHANNEL_LIST",
+    "va": "0x00505DC0",
+    "kind": "function",
+    "note": "channel list"
+  },
+  {
+    "path": "Network::Packets::SMSG_GM_MESSAGECHAT",
+    "va": "0x0050EBC0",
+    "kind": "function",
+    "note": "GM message"
+  },
+  {
+    "path": "Network::Packets::SMSG_LOGIN_VERIFY_WORLD",
+    "va": "0x00403DE0",
+    "kind": "function",
+    "note": "verify world"
+  },
+  {
+    "path": "Network::Packets::SMSG_NEW_WORLD",
+    "va": "0x00403D10",
+    "kind": "function",
+    "note": "new world"
+  },
+  {
+    "path": "Network::Packets::SMSG_TRANSFER_ABORTED",
+    "va": "0x00403910",
+    "kind": "function",
+    "note": "transfer aborted"
+  },
+  {
+    "path": "Network::Packets::SMSG_TRANSFER_PENDING",
+    "va": "0x00401480",
+    "kind": "function",
+    "note": "transfer pending"
+  },
+  {
+    "path": "Network::Packets::SMSG_LOGIN_SETTIMESPEED",
+    "va": "0x007E28E0",
+    "kind": "function",
+    "note": "set time speed"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELL_GO",
+    "va": "0x0080FEE0",
+    "kind": "function",
+    "note": "spell go packet (original row name Packet_PACKET_SMSG_SPELL_GO)"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELL_FAILURE",
+    "va": "0x00809C70",
+    "kind": "function",
+    "note": "spell failure (original row name Packet_PACKET_SMSG_SPELL_FAILURE)"
+  },
+  {
+    "path": "Network::Packets::SMSG_CAST_FAILED",
+    "va": "0x00809AF0",
+    "kind": "function",
+    "note": "cast failed (original row name Packet_PACKET_SMSG_CAST_FAILED)"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELL_COOLDOWN",
+    "va": "0x00806DD0",
+    "kind": "function",
+    "note": "cooldown packet (original row name Packet_PACKET_SMSG_SPELL_COOLDOWN)"
+  },
+  {
+    "path": "Network::Packets::SMSG_SPELL_DELAYED",
+    "va": "0x00801B80",
+    "kind": "function",
+    "note": "spell delayed (original row name Packet_PACKET_SMSG_SPELL_DELAYED)"
+  },
+  {
+    "path": "Network::Packets::MSG_CHANNEL_START",
+    "va": "0x00801C90",
+    "kind": "function",
+    "note": "channel start (original row name Packet_PACKET_MSG_CHANNEL_START)"
+  },
+  {
+    "path": "Network::Packets::MSG_CHANNEL_UPDATE",
+    "va": "0x00801DB0",
+    "kind": "function",
+    "note": "channel update (original row name Packet_PACKET_MSG_CHANNEL_UPDATE)"
+  },
+  {
+    "path": "Network::Packets::SMSG_MOVE_KNOCK_BACK",
+    "va": "0x00732450",
+    "kind": "function",
+    "note": "knockback packet (Packet_PACKET_SMSG_MOVE_KNOCK_BACK)"
+  },
+  {
+    "path": "Network::Packets::SMSG_WARDEN_DATA",
+    "va": "0x007DA850",
+    "kind": "function",
+    "note": "warden data packet"
+  }
+]

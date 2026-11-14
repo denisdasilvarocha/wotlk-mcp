@@ -1,0 +1,50 @@
+[
+  {
+    "path": "System::Client::InitializeGame",
+    "va": "0x00405540",
+    "kind": "function",
+    "note": "initialize game client"
+  },
+  {
+    "path": "System::Client::DestroyGame",
+    "va": "0x00406510",
+    "kind": "function",
+    "note": "destroy game client"
+  },
+  {
+    "path": "System::Client::Idle",
+    "va": "0x00403340",
+    "kind": "function",
+    "note": "main idle loop"
+  },
+  {
+    "path": "System::Client::WinMain",
+    "va": "0x00406C70",
+    "kind": "function",
+    "note": "entry point"
+  },
+  {
+    "path": "System::Client::start",
+    "va": "0x00401000",
+    "kind": "function",
+    "note": "program start"
+  },
+  {
+    "path": "System::SMem::Alloc",
+    "va": "0x0076E540",
+    "kind": "function",
+    "note": "memory allocation"
+  },
+  {
+    "path": "System::SMem::Free",
+    "va": "0x0076E5A0",
+    "kind": "function",
+    "note": "memory free"
+  },
+  {
+    "path": "System::SMem::ReAlloc",
+    "va": "0x0076E5E0",
+    "kind": "function",
+    "note": "memory reallocation"
+  }
+]
