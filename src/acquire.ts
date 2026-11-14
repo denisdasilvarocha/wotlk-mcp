@@ -11,7 +11,6 @@ import * as z from 'zod'
 
 import { openReference } from './reference.js'
 import { acceptedSchemaMajor } from './schema.js'
-export { acceptedSchemaMajor } from './schema.js'
 
 const releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases?per_page=100'
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
