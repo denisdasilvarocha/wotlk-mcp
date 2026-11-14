@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, rename, rm } from 'node:fs/promises'
+import { createReadStream, createWriteStream, unlinkSync } from 'node:fs'
+import { link, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
@@ -43,6 +43,112 @@ const releasesSchema = z.array(
   })
 )
 
+const cacheStateSchema = z.object({
+  file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/),
+  version: z.string().regex(/^db-v\d+\.\d+\.\d+$/),
+  lastCheck: z.number().nullable()
+})
+type CacheState = z.infer<typeof cacheStateSchema>
+
+async function states(directory: string): Promise<{ name: string; state: CacheState }[]> {
+  const names = (await readdir(directory)).filter((name) =>
+    /^state-\d+-[0-9a-f-]+\.json$/.test(name)
+  )
+  const entries = await Promise.all(
+    names.map(async (name) => {
+      try {
+        const state = cacheStateSchema.parse(
+          JSON.parse(await readFile(path.join(directory, name), 'utf8'))
+        )
+        return { name, state }
+      } catch {
+        return undefined
+      }
+    })
+  )
+  return entries
+    .filter((entry) => entry !== undefined)
+    .toSorted((a, b) => b.name.localeCompare(a.name))
+}
+
+function errorCode(error: unknown): unknown {
+  if (typeof error === 'object' && error !== null && 'code' in error) return error.code
+  return undefined
+}
+
+function processAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return errorCode(error) !== 'ESRCH'
+  }
+}
+
+async function removeIfPossible(file: string): Promise<void> {
+  try {
+    await rm(file, { force: true })
+  } catch (error) {
+    if (!['EPERM', 'EACCES', 'EBUSY'].some((code) => code === errorCode(error))) throw error
+  }
+}
+
+async function cached(directory: string): Promise<string | undefined> {
+  await mkdir(directory, { recursive: true })
+  const entries = await states(directory)
+  const keep = new Set<string>()
+  let selected: string | undefined
+  async function select(index: number): Promise<void> {
+    const entry = entries[index]
+    if (!entry || keep.size >= 4) return
+    const source = path.join(directory, entry.state.file)
+    const session = path.join(directory, `session-${process.pid}-${randomUUID()}.sqlite`)
+    try {
+      await link(source, session)
+      openReference(session).close()
+      keep.add(entry.name)
+      keep.add(entry.state.file)
+      if (!selected) {
+        selected = session
+        process.once('exit', () => {
+          try {
+            unlinkSync(session)
+          } catch {
+            /* Windows may retain an open snapshot. */
+          }
+        })
+      } else await removeIfPossible(session)
+    } catch {
+      await removeIfPossible(session)
+    }
+    await select(index + 1)
+  }
+  await select(0)
+  const now = Date.now()
+  await Promise.all(
+    (await readdir(directory)).map(async (name) => {
+      if (keep.has(name)) return
+      const partial = /^(\d+)-[0-9a-f-]+\.(?:br|sqlite|json)\.partial$/.exec(name)
+      const session = /^session-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
+      const promoting = /^db-v\d+\.\d+\.\d+-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
+      const old =
+        /^state-\d+-[0-9a-f-]+\.json$/.test(name) ||
+        /^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/.test(name)
+      if (!partial && !session && !old) return
+      if ((partial || session) && processAlive(Number((partial ?? session)?.[1]))) return
+      if (promoting && processAlive(Number(promoting[1]))) return
+      const file = path.join(directory, name)
+      try {
+        // shortcut: retain recent orphans for a day; upgrade to coordinated cleanup if disk pressure demands it.
+        if (now - (await stat(file)).mtimeMs > 24 * 60 * 60 * 1000) await removeIfPossible(file)
+      } catch (error) {
+        if (errorCode(error) !== 'ENOENT') throw error
+      }
+    })
+  )
+  return selected
+}
+
 async function download(): Promise<string> {
   const response = await fetch(releasesUrl, { headers })
   if (!response.ok) throw new Error(`GitHub releases request returned HTTP ${response.status}`)
@@ -72,9 +178,10 @@ async function download(): Promise<string> {
   const directory = cacheDirectory()
   await mkdir(directory, { recursive: true })
   const id = randomUUID()
-  const compressed = path.join(directory, `${id}.br.partial`)
-  const partial = path.join(directory, `${id}.sqlite.partial`)
-  const final = path.join(directory, `${selected.release.tag_name}-${id}.sqlite`)
+  const compressed = path.join(directory, `${process.pid}-${id}.br.partial`)
+  const partial = path.join(directory, `${process.pid}-${id}.sqlite.partial`)
+  const final = path.join(directory, `${selected.release.tag_name}-${process.pid}-${id}.sqlite`)
+  const statePartial = path.join(directory, `${process.pid}-${id}.json.partial`)
   try {
     const assetResponse = await fetch(asset.browser_download_url, { headers })
     if (!assetResponse.ok || !assetResponse.body)
@@ -103,9 +210,26 @@ async function download(): Promise<string> {
     )
     openReference(partial).close()
     await rename(partial, final)
-    return final
+    const checked = Date.now()
+    await writeFile(
+      statePartial,
+      JSON.stringify({
+        file: path.basename(final),
+        version: selected.release.tag_name,
+        lastCheck: checked
+      } satisfies CacheState),
+      { flag: 'wx' }
+    )
+    await rename(statePartial, path.join(directory, `state-${checked}-${id}.json`))
+    const snapshot = await cached(directory)
+    if (!snapshot) throw new Error('verified cache could not be opened')
+    return snapshot
   } finally {
-    await Promise.all([rm(compressed, { force: true }), rm(partial, { force: true })])
+    await Promise.all([
+      removeIfPossible(compressed),
+      removeIfPossible(partial),
+      removeIfPossible(statePartial)
+    ])
   }
 }
 
@@ -122,6 +246,8 @@ const selected: Promise<string> = (async () => {
         { cause: error }
       )
     }
+  const snapshot = await cached(cacheDirectory())
+  if (snapshot) return snapshot
   try {
     return await download()
   } catch (error) {

@@ -1,7 +1,15 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { createServer } from 'node:http'
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync
+} from 'node:fs'
+import { createServer, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -10,6 +18,7 @@ import { brotliCompressSync } from 'node:zlib'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
+import * as z from 'zod'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-acquire-'))
 const dbPath = path.join(dir, 'reference.sqlite')
@@ -20,6 +29,7 @@ let scenario = 'good'
 let requests: string[] = []
 let authorization = ''
 const download = { finish: (): void => {} }
+const concurrent: ServerResponse[] = []
 const server = createServer((req, res) => {
   requests.push(req.url ?? '')
   authorization = req.headers.authorization ?? ''
@@ -51,6 +61,9 @@ const server = createServer((req, res) => {
       download.finish = (): void => {
         res.end(data.subarray(10))
       }
+    } else if (scenario === 'concurrent') {
+      concurrent.push(res)
+      if (concurrent.length === 2) for (const response of concurrent.splice(0)) response.end(data)
     } else res.end(data)
   }
 })
@@ -115,6 +128,45 @@ test('acquires the newest compatible published reference and uses optional token
     expect(authorization).toBe('Bearer example-token')
   } finally {
     await client.close()
+  }
+})
+
+test('shared cache survives concurrent first downloads and offline restarts', async () => {
+  const cache = mkdtempSync(path.join(dir, 'shared-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  scenario = 'concurrent'
+  const clients = await Promise.all([launch(env), launch(env)])
+  try {
+    const results = await Promise.all(clients.map(call))
+    expect(results.every((result) => !result.isError)).toBe(true)
+  } finally {
+    await Promise.all(clients.map((client) => client.close()))
+  }
+  scenario = 'offline'
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  const stateFiles = readdirSync(directory)
+    .filter((name) => name.startsWith('state-'))
+    .toSorted()
+  expect(stateFiles).toHaveLength(2)
+  const current = z
+    .object({ file: z.string(), version: z.string(), lastCheck: z.number() })
+    .parse(JSON.parse(readFileSync(path.join(directory, stateFiles[1]), 'utf8')))
+  expect(current.version).toBe('db-v1.2.0')
+  expect(current.lastCheck).toBeGreaterThan(0)
+  writeFileSync(path.join(directory, current.file), 'corrupt')
+  const abandoned = path.join(directory, '99999999-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.br.partial')
+  writeFileSync(abandoned, 'partial')
+  utimesSync(abandoned, new Date(0), new Date(0))
+  requests = []
+  const offline = await launch(env)
+  try {
+    expect((await call(offline)).isError).not.toBe(true)
+    expect(requests).toEqual([])
+    expect(readdirSync(directory)).not.toContain(path.basename(abandoned))
+  } finally {
+    await offline.close()
   }
 })
 
