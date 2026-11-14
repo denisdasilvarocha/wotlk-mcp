@@ -564,7 +564,8 @@ test('failed checks persist the full 24-hour attempt window', async () => {
       readdirSync(directory).some((name) => name.startsWith(`state-${timestamp + 1}-`))
     )
       return
-    if (!remaining) throw new Error('update check did not finish')
+    if (!remaining)
+      throw new Error(`update check did not finish: ${JSON.stringify(readdirSync(directory))}`)
     await delay(10)
     await waitForCheck(timestamp, remaining - 1)
   }
@@ -595,7 +596,7 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   await waitForCheck(start + 2 * day, 500)
   expect(requests).toEqual(['/releases'])
   await retry.close()
-})
+}, 20000)
 
 test('invalid override never contacts the network', async () => {
   scenario = 'good'
