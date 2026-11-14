@@ -13,6 +13,8 @@ WOTLK_MCP_DB="$PWD/reference.sqlite" node dist/index.mjs
 
 The last command starts an MCP server over stdio; connect an MCP client rather than typing commands into it. Without `WOTLK_MCP_DB`, the server downloads a compatible published database from GitHub Releases, verifies its compressed SHA-256 digest and schema, and stores it in the OS cache. First use requires a network connection; if the download is still in progress after 20 seconds, retry the tool call. Set `GITHUB_TOKEN` or `GH_TOKEN` optionally for authenticated GitHub requests. `WOTLK_MCP_DB` selects a compatible local database and disables network access; an invalid override fails rather than falling back. No database is bundled. The `get` tool accepts up to 20 kind-qualified IDs, such as `offset:Globals::PlayerName`.
 
+With a usable cached database, startup and queries do not wait for update metadata. The server checks at most once per 24 hours, including after a failed check, and keeps using its selected snapshot for the whole session. A verified update or rollback takes effect on the next start. If newer data requires a newer package major, the server logs guidance to stderr and adds it once to the first tool result after it becomes known.
+
 The package code is MIT licensed; the database contains source data with separate provenance recorded in its `source` table.
 
 ## Development
