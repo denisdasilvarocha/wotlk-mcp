@@ -4,6 +4,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import * as z from 'zod'
 
 import { getRecords, openReference } from './reference.js'
+import { getRelated, parseRelated, relatedTool } from './related.js'
 import { kinds } from './schema.js'
 
 const idPattern = `^(${kinds.join('|')}):.+$`
@@ -33,12 +34,22 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
         additionalProperties: false
       },
       annotations: { readOnlyHint: true, openWorldHint: false }
-    }
+    },
+    relatedTool
   ]
 }))
 server.setRequestHandler(CallToolRequestSchema, (request) => {
   try {
-    if (request.params.name !== 'get') throw new Error('unknown tool; use get')
+    if (request.params.name === 'related') {
+      const args = parseRelated(request.params.arguments)
+      const db = openReference()
+      try {
+        return { content: [{ type: 'text', text: getRelated(db, args) }] }
+      } finally {
+        db.close()
+      }
+    }
+    if (request.params.name !== 'get') throw new Error('unknown tool; use get or related')
     const parsed = input.safeParse(request.params.arguments)
     if (!parsed.success)
       throw new Error(`get requires 1–20 valid IDs; valid kinds: ${kinds.join(', ')}`)
