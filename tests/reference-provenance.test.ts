@@ -1,0 +1,90 @@
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
+import { expect, test } from 'vite-plus/test'
+import { schema } from '../src/schema.ts'
+
+const digest = (value: string | Buffer): string => createHash('sha256').update(value).digest('hex')
+
+test('final provenance hashes typed logical tables and emits notices from the embedded manifest', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'provenance-'))
+  try {
+    const database = path.join(dir, 'reference.sqlite')
+    const notice = path.join(dir, 'NOTICE.md')
+    const db = new DatabaseSync(database)
+    db.exec(schema)
+    db.exec("INSERT INTO meta VALUES ('input_pins', '{}'), ('hash.sample', 'original-export-proof'), ('count.sample', 'original-count'); CREATE TABLE sample (value); INSERT INTO sample VALUES (42); CREATE TABLE typed (value); INSERT INTO typed VALUES (NULL), (42), (42.5), ('42'), (x'3432')")
+    const source = db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)')
+    source.run('wowdbdefs', 'definition-pin', 'definition-hash', 'CC BY-SA 4.0', 'Definitions transformed into SQLite')
+    source.run('world', 'world-pin', 'world-hash', 'GPL-2.0-or-later', 'AzerothCore; modified; corresponding source https://example.test/source')
+    source.run('client-data', '12340 enGB', 'manifest-hash', 'Blizzard-derived', 'Client extraction')
+    source.run('codex', 'codex-pin', 'codex-hash', 'Unlicensed', 'Codex authors')
+    const manifestHash = digest(readFileSync('data/client-inputs/manifest.json'))
+    db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify({ client_inputs: manifestHash }))
+    db.close()
+    const run = () => spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+    const first = run()
+    expect(first.status, first.stderr).toBe(0)
+    const result = new DatabaseSync(database)
+    const meta = () => Object.fromEntries(result.prepare('SELECT key, value FROM meta').all().map((row) => [row.key, row.value]))
+    const initial = meta()
+    expect(initial['hash.sample']).toBe('original-export-proof')
+    expect(initial['count.sample']).toBe('original-count')
+    expect(initial['canonical_count.sample']).toBe('1')
+    expect(initial['canonical_hash.sample']).toBe(digest('v14:wotlk-table-v1c5:valueri2:42'))
+    expect(initial['canonical_count.typed']).toBe('5')
+    expect(initial['canonical_hash.source']).toMatch(/^[a-f0-9]{64}$/)
+    expect(initial['canonical_hash.meta']).toBeUndefined()
+    expect(initial['canonical_hash.record_fts']).toBeUndefined()
+    expect(initial['canonical_hash.record_fts_data']).toBeUndefined()
+    const text = readFileSync(notice, 'utf8')
+    expect(text).toContain(readFileSync('data/wowdbdefs-LICENSE.txt', 'utf8').trim())
+    expect(text).toContain(readFileSync('world/azerothcore-LICENSE.txt', 'utf8').trim())
+    expect(text).toContain(readFileSync('world/azerothcore-AUTHORS.txt', 'utf8').trim())
+    expect(text).toContain('not evidence of Blizzard permission')
+    expect(text).toContain('not proof of byte-identical enUS')
+    expect(text).toContain('client-inputs-12340-engb-1')
+    expect(text).toContain('9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136')
+    expect(text).toContain('aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8')
+    const second = run()
+    expect(second.status, second.stderr).toBe(0)
+    expect(meta()['canonical_hash.source']).toBe(initial['canonical_hash.source'])
+    expect(readFileSync(notice, 'utf8')).toBe(text)
+    result.exec("DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)")
+    const reordered = run()
+    expect(reordered.status, reordered.stderr).toBe(0)
+    expect(meta()['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
+    result.exec("UPDATE typed SET value = '42' WHERE typeof(value) = 'integer'")
+    const changed = run()
+    expect(changed.status, changed.stderr).toBe(0)
+    expect(meta()['canonical_hash.typed']).not.toBe(initial['canonical_hash.typed'])
+    result.close()
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a mismatched client pin fails without altering the manifest or writing a notice', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'provenance-invalid-'))
+  try {
+    const database = path.join(dir, 'reference.sqlite')
+    const notice = path.join(dir, 'NOTICE.md')
+    const db = new DatabaseSync(database)
+    db.exec(schema)
+    db.exec("INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')")
+    db.close()
+    const run = spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+    expect(run.status).not.toBe(0)
+    expect(run.stderr).toContain('Client manifest pin does not match')
+    const result = new DatabaseSync(database, { readOnly: true })
+    expect(result.prepare('SELECT name FROM source').all()).toEqual([{ name: 'client-data' }])
+    expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({ value: '{}' })
+    result.close()
+    expect(() => readFileSync(notice)).toThrow()
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})

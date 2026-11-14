@@ -67,6 +67,18 @@ For #52, the owner must first ensure the unscoped `wotlk-mcp` package exists and
 
 If npm publication succeeds but GitHub release creation fails, the package version cannot be published again; create the missing GitHub release for the existing tag after inspecting the failed job rather than retrying publication.
 
+## Build the complete reference
+
+Authenticate `gh` with read access to the private client-inputs release. On a Docker host with both linux/arm64 and linux/amd64 support, run from the repository root with a new output directory and sufficient disk space:
+
+```bash
+vp run build:complete-reference /absolute/path/to/new-output
+```
+
+The command downloads the pinned client asset, Codex, WoWDBDefs and AzerothCore sources and verifies their hashes before ingestion. It creates a fresh pinned MySQL service, runs the upstream updater, imports all sources and Links, generates the fidelity report and `NOTICE.md`, and writes `wotlk.sqlite`, `wotlk.sqlite.br` and `build-report.json`. The disposable MySQL service and network are removed after export. The output directory also contains the verified client inputs and must be handled according to their mixed rights.
+
+`fidelity.json` reports discrepancies without changing either source. The build report records measured sizes and timings; an asset above 250 MB requires an explicit scope decision, not removal of required source content. Building an artifact does not authorize publication: release integrity, previous-release comparisons, independent acceptance, and other approval gates remain separate.
+
 ## Reproduce World Data
 
 Requires Docker with linux/arm64 and linux/amd64 support, `curl`, `openssl`, `patch`, and a POSIX shell. Download the pinned AzerothCore archive and provide a new output directory:
