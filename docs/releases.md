@@ -10,15 +10,16 @@ Before enabling publication, the owner must configure the `database-publication`
 
 Automatic runs respond only to main-branch pins, data, source, pipeline or fixture changes; manual runs may explicitly request the count-shrink override. Runs are serialized and never repin inputs. A failed draft stays undiscoverable and reserves its version. After investigating, an authorized operator may delete that failed **draft** before retrying; never delete or replace an existing published asset to make a retry work. Release tags are never reused.
 
-The complete build uses `vp run build:complete-reference /absolute/path/to/new-directory`; it requires the verified pinned inputs and a fresh MySQL environment. Gate preparation computes and writes the schema version before compression. The commands below show the optional previous-database argument in brackets: replace it with a verified path, or omit it entirely for the first release.
+The complete build uses `vp run build:complete-reference /absolute/path/to/new-directory`; it requires the verified pinned inputs and a fresh MySQL environment. Gate preparation computes and writes the schema version before compression. Download the published comparison baseline and collect reserved versions first. The commands below show the optional previous-database argument in brackets: replace it with the downloaded path, or omit it if no published database remains.
 
 ```sh
-vpx scripts/release-gate.ts candidate/wotlk.sqlite candidate/wotlk.sqlite.br [previous.sqlite] --prepare
+node scripts/database-release.mjs previous previous.sqlite versions.json
+vpx scripts/release-gate.ts candidate/wotlk.sqlite candidate/wotlk.sqlite.br [previous.sqlite] --used-versions=versions.json --prepare
 # Recompress candidate/wotlk.sqlite to candidate/wotlk.sqlite.br here.
-vpx scripts/release-gate.ts candidate/wotlk.sqlite candidate/wotlk.sqlite.br [previous.sqlite]
+vpx scripts/release-gate.ts candidate/wotlk.sqlite candidate/wotlk.sqlite.br [previous.sqlite] --used-versions=versions.json
 ```
 
-The optional previous database must be downloaded from the newest published database release and verified against the GitHub asset digest before decompression. Omit it only for the first database release. `--allow-shrink` is an explicit maintainer override for count shrinkage only; it does not waive any other gate. Because preparation changes the database, recompression also changes the asset: replace the builder's pre-preparation compressed size and hash in the published report with the measurements of the final recompressed asset. Acceptance must use the actual uploaded draft asset after verifying its GitHub digest, not a local pre-upload copy. Every release must include the generated `NOTICE.md`, fidelity report, count and size report, and source and rights information.
+The optional previous database must be downloaded from the newest published database release and verified against the GitHub asset digest before decompression. Omit it only when no published database remains. The versions file includes every database release (including drafts and prereleases) and retained Git tag. The gate preserves the schema major required by comparison, then allocates above every reserved version in that major; publication independently refreshes and checks the same inputs. A rollback therefore keeps the surviving published database as the comparison baseline without reusing the withdrawn version. `--allow-shrink` is an explicit maintainer override for count shrinkage only; it does not waive any other gate. Because preparation changes the database, recompression also changes the asset: replace the builder's pre-preparation compressed size and hash in the published report with the measurements of the final recompressed asset. Acceptance must use the actual uploaded draft asset after verifying its GitHub digest, not a local pre-upload copy. Every release must include the generated `NOTICE.md`, fidelity report, count and size report, and source and rights information.
 
 ## Rollback
 

@@ -7,6 +7,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+
 function run(command: string, args: string[], cwd?: string): void {
   if (process.platform === 'win32') {
     const result = spawnSync(
@@ -48,12 +50,12 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     const installed = JSON.parse(
       readFileSync(path.join(directory, 'node_modules/wotlk-mcp/package.json'), 'utf8')
     )
-    expect(installed.version).toBe('1.0.0')
+    expect(installed.version).toBe(version)
     let command = 'npx'
-    let args = ['-y', 'wotlk-mcp@1']
+    let args = ['-y', `wotlk-mcp@${version}`]
     if (process.platform === 'win32') {
       command = 'cmd'
-      args = ['/d', '/s', '/c', 'npx -y wotlk-mcp@1']
+      args = ['/d', '/s', '/c', `npx -y wotlk-mcp@${version}`]
     }
     await client.connect(
       new StdioClientTransport({

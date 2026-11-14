@@ -62,6 +62,8 @@ test('release commands fail closed and only promote the verified draft after six
   const asset = brotliCompressSync(readFileSync(sqlite))
   const digest = `sha256:${createHash('sha256').update(asset).digest('hex')}`
   let release: Record<string, unknown> | undefined
+  let reservedReleases: Record<string, unknown>[] = []
+  let tags: { name: string }[] = []
   let failedCell = -1
   let protectedEnvironment = true
   let promotions = 0
@@ -84,11 +86,20 @@ test('release commands fail closed and only promote the verified draft after six
       return json({ protection_rules: rules })
     }
     if (url.pathname === '/repos/test/repo/releases' && request.method === 'GET') {
-      const releases = []
+      const releases = [...reservedReleases]
       if (release) releases.push(release)
-      return json(releases)
+      const page = Number(url.searchParams.get('page'))
+      return json(releases.slice((page - 1) * 100, page * 100))
     }
-    if (url.pathname === '/repos/test/repo/git/ref/tags/db-v1.0.0') return json({}, 404)
+    if (url.pathname === '/repos/test/repo/tags') {
+      const page = Number(url.searchParams.get('page'))
+      return json(tags.slice((page - 1) * 100, page * 100))
+    }
+    if (url.pathname.startsWith('/repos/test/repo/git/ref/tags/')) {
+      const name = url.pathname.split('/').at(-1)
+      if (tags.some((tag) => tag.name === name)) return json({ ref: `refs/tags/${name}` })
+      return json({}, 404)
+    }
     if (url.pathname === '/repos/test/repo/releases' && request.method === 'POST') {
       release = {
         id: 7,
@@ -219,6 +230,7 @@ test('release commands fail closed and only promote the verified draft after six
     expect((await run(['promote', '7', 'db-v1.0.0', digest], false)).status).not.toBe(0)
     expect((await run(['promote', '7', 'db-v1.0.1', digest])).status).not.toBe(0)
     expect((await run(['promote', '7', 'db-v1.0.0', digest])).status).toBe(0)
+    const published = { ...release }
     expect(promotions).toBe(1)
     expect((await run(['promote', '7', 'db-v1.0.0', digest])).status).not.toBe(0)
     expect((await run(['create', report, sqlite, ...files])).status).not.toBe(0)
@@ -232,6 +244,53 @@ test('release commands fail closed and only promote the verified draft after six
     expect(release?.prerelease).toBe(true)
     expect((await run(['rollback', '7', 'db-v1.0.0', 'delete'])).status).toBe(0)
     expect(release).toBeUndefined()
+    async function checkReservedVersion(withdrawn: string): Promise<void> {
+      release = { ...published }
+      reservedReleases = []
+      tags = [{ name: 'db-v1.0.0' }]
+      if (withdrawn === 'deleted') {
+        tags = Array.from({ length: 100 }, (_, index) => ({ name: `v0.0.${index}` }))
+        tags.push({ name: 'db-v1.0.1' })
+      } else {
+        reservedReleases = Array.from({ length: 100 }, (_, index) => ({
+          tag_name: `v0.0.${index}`,
+          draft: true
+        }))
+        reservedReleases.push({
+          tag_name: 'db-v1.0.1',
+          draft: withdrawn === 'draft',
+          prerelease: withdrawn === 'prerelease'
+        })
+      }
+      const baseline = path.join(dir, `${withdrawn}.sqlite`)
+      const versions = path.join(dir, `${withdrawn}.json`)
+      const result = await run(['previous', baseline, versions])
+      expect(result.status).toBe(0)
+      expect(result.stdout.trim()).toBe('db-v1.0.0')
+      expect(readFileSync(baseline)).toEqual(readFileSync(sqlite))
+      expect(JSON.parse(readFileSync(versions, 'utf8'))).toContain('1.0.1')
+      const candidate = path.join(dir, `${withdrawn}-candidate.sqlite`)
+      writeFileSync(candidate, readFileSync(sqlite))
+      const candidateDb = new DatabaseSync(candidate)
+      candidateDb.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
+      candidateDb.close()
+      const gateArgs = [
+        'scripts/release-gate.ts',
+        candidate,
+        file,
+        baseline,
+        `--used-versions=${versions}`
+      ]
+      execFileSync('vpx', [...gateArgs, '--prepare'])
+      writeFileSync(file, brotliCompressSync(readFileSync(candidate)))
+      writeFileSync(report, execFileSync('vpx', gateArgs))
+      expect(JSON.parse(readFileSync(report, 'utf8')).version).toBe('1.0.2')
+      expect((await run(['create', report, candidate, ...files])).status).toBe(0)
+      expect(release?.tag_name).toBe('db-v1.0.2')
+    }
+    await checkReservedVersion('prerelease')
+    await checkReservedVersion('deleted')
+    await checkReservedVersion('draft')
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => {

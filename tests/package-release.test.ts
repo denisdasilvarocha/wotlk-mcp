@@ -10,6 +10,8 @@ import { brotliCompressSync } from 'node:zlib'
 
 import { afterAll, expect, test } from 'vite-plus/test'
 
+const { version, wotlkSchemaMajor } = JSON.parse(readFileSync('package.json', 'utf8'))
+const tag = `v${version}`
 const run = promisify(execFile)
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-release-'))
 afterAll(() => rmSync(directory, { recursive: true, force: true }))
@@ -18,7 +20,7 @@ test('release guard permits only an aligned tag with a published, verified compa
   const dbPath = path.join(directory, 'reference.sqlite')
   const db = new DatabaseSync(dbPath)
   db.exec(
-    "CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '1.0.0')"
+    `CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '${wotlkSchemaMajor}.0.0')`
   )
   db.close()
   const compressed = brotliCompressSync(readFileSync(dbPath))
@@ -38,29 +40,29 @@ test('release guard permits only an aligned tag with a published, verified compa
   const address = server.address()
   if (!address || typeof address === 'string') throw new Error('No server address')
   const base = `http://127.0.0.1:${address.port}`
-  function command(tag: string): ReturnType<typeof run> {
+  function command(releaseTag: string): ReturnType<typeof run> {
     return run(process.execPath, [
       'scripts/check-package-release.mjs',
-      tag,
+      releaseTag,
       `${base}/releases`,
       `${base}/package`
     ])
   }
   try {
-    await expect(command('v1.0.1')).rejects.toThrow('tag')
-    await expect(command('v1.0.0')).rejects.toThrow('published')
+    await expect(command(version)).rejects.toThrow('tag')
+    await expect(command(tag)).rejects.toThrow('published')
     releases = [
       {
-        tag_name: 'db-v1.0.0',
+        tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: true,
         prerelease: false,
         assets: [{ name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }]
       }
     ]
-    await expect(command('v1.0.0')).rejects.toThrow('published')
+    await expect(command(tag)).rejects.toThrow('published')
     releases = [
       {
-        tag_name: 'db-v1.0.0',
+        tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: false,
         prerelease: false,
         assets: [
@@ -68,21 +70,21 @@ test('release guard permits only an aligned tag with a published, verified compa
         ]
       }
     ]
-    await expect(command('v1.0.0')).rejects.toThrow('digest')
+    await expect(command(tag)).rejects.toThrow('digest')
     releases = [
       {
-        tag_name: 'db-v1.0.0',
+        tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: false,
         prerelease: false,
         assets: [{ name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }]
       }
     ]
     versions = { '0.9.0': { wotlkSchemaMajor: 2 } }
-    await expect(command('v1.0.0')).resolves.toHaveProperty('stdout')
-    versions = { '1.0.0': { wotlkSchemaMajor: 2 } }
-    await expect(command('v1.0.0')).rejects.toThrow('already')
-    versions = { '0.9.0': { wotlkSchemaMajor: 1 }, '1.0.0': { wotlkSchemaMajor: 1 } }
-    await expect(command('v1.0.0')).rejects.toThrow('already')
+    await expect(command(tag)).resolves.toHaveProperty('stdout')
+    versions = { [version]: { wotlkSchemaMajor: wotlkSchemaMajor + 1 } }
+    await expect(command(tag)).rejects.toThrow('already')
+    versions = { '0.9.0': { wotlkSchemaMajor }, [version]: { wotlkSchemaMajor } }
+    await expect(command(tag)).rejects.toThrow('already')
   } finally {
     server.close()
   }
@@ -130,8 +132,8 @@ test('npm publishes the packed package only to an isolated controlled registry',
     )
     expect(publication).toBeDefined()
     const payload = JSON.parse(publication?.body ?? '{}')
-    expect(payload.versions['1.0.0'].bin['wotlk-mcp']).toBe('dist/index.mjs')
-    expect(payload['_attachments']['wotlk-mcp-1.0.0.tgz'].data.length).toBeGreaterThan(0)
+    expect(payload.versions[version].bin['wotlk-mcp']).toBe('dist/index.mjs')
+    expect(payload['_attachments'][`wotlk-mcp-${version}.tgz`].data.length).toBeGreaterThan(0)
   } finally {
     server.close()
   }

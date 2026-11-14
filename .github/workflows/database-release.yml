@@ -55,7 +55,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           vp run build:complete-reference "$RUNNER_TEMP/candidate"
-          node scripts/database-release.mjs previous "$RUNNER_TEMP/previous.sqlite"
+          node scripts/database-release.mjs previous "$RUNNER_TEMP/previous.sqlite" "$RUNNER_TEMP/versions.json"
       - name: Gate, recompress and measure final candidate
         env:
           ALLOW_SHRINK: ${{ inputs.allow-shrink }}
@@ -64,6 +64,7 @@ jobs:
           set -euo pipefail
           d="$RUNNER_TEMP/candidate"
           args=("$d/wotlk.sqlite" "$d/wotlk.sqlite.br")
+          args+=("--used-versions=$RUNNER_TEMP/versions.json")
           if test -f "$RUNNER_TEMP/previous.sqlite"; then args+=("$RUNNER_TEMP/previous.sqlite"); fi
           if test "$ALLOW_SHRINK" = true; then args+=(--allow-shrink); fi
           vpx scripts/release-gate.ts "${args[@]}" --prepare

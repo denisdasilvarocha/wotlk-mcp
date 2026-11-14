@@ -7,7 +7,8 @@ import {
   readFileSync,
   renameSync,
   rmSync,
-  statSync
+  statSync,
+  writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -40,11 +41,19 @@ async function request(url, options = {}) {
 async function json(url, options) {
   return (await request(url, options)).json()
 }
-async function listReleases(page = 1) {
-  const list = await json(`${base}/releases?per_page=100&page=${page}`)
-  if (!Array.isArray(list)) throw new Error('invalid release list')
-  if (list.length < 100) return list
-  return [...list, ...(await listReleases(page + 1))]
+async function list(endpoint, page = 1) {
+  const items = await json(`${base}/${endpoint}?per_page=100&page=${page}`)
+  if (!Array.isArray(items)) throw new Error(`invalid ${endpoint} list`)
+  if (items.length < 100) return items
+  return [...items, ...(await list(endpoint, page + 1))]
+}
+async function usedVersions(output) {
+  const [releases, tags] = await Promise.all([list('releases'), list('tags')])
+  const names = [...releases.map((release) => release.tag_name), ...tags.map((tag) => tag.name)]
+  writeFileSync(
+    output,
+    JSON.stringify(names.filter((name) => versionPattern.test(name)).map((name) => name.slice(4)))
+  )
 }
 async function authorize() {
   if (process.env.DATABASE_RELEASE_AUTHORIZATION !== 'owner-authorized')
@@ -113,7 +122,7 @@ function validRelease(release, id, tag, digest) {
     throw new Error('draft database digest changed')
 }
 async function previous(output) {
-  const releases = await listReleases()
+  const releases = await list('releases')
   const published = releases
     .filter(
       (release) => !release.draft && !release.prerelease && versionPattern.test(release.tag_name)
@@ -155,8 +164,9 @@ async function previous(output) {
   return undefined
 }
 if (command === 'previous') {
-  const [output] = args
-  if (!output || args.length !== 1) throw new Error('usage: previous OUTPUT.sqlite')
+  const [output, versions] = args
+  if (!output || args.length > 2) throw new Error('usage: previous OUTPUT.sqlite [VERSIONS.json]')
+  if (versions) await usedVersions(versions)
   const tag = await previous(output)
   if (tag) console.log(tag)
 } else if (command === 'create') {
@@ -180,7 +190,7 @@ if (command === 'previous') {
   ])
     if (!files.some((file) => path.basename(file) === name))
       throw new Error(`missing release asset: ${name}`)
-  const releases = await listReleases()
+  const releases = await list('releases')
   if (releases.some((release) => release.tag_name === tag))
     throw new Error('release tag already exists')
   const ref = await fetch(`${base}/git/ref/tags/${tag}`, { headers })
@@ -189,8 +199,15 @@ if (command === 'previous') {
   try {
     const old = path.join(temporary, 'previous.sqlite')
     const oldTag = await previous(old)
+    const versions = path.join(temporary, 'versions.json')
+    await usedVersions(versions)
     const asset = files.find((file) => path.basename(file) === 'wotlk.sqlite.br')
-    const argumentsForGate = ['scripts/release-gate.ts', database, asset]
+    const argumentsForGate = [
+      'scripts/release-gate.ts',
+      database,
+      asset,
+      `--used-versions=${versions}`
+    ]
     if (oldTag) argumentsForGate.push(old)
     if (gate.allow_shrink === true) argumentsForGate.push('--allow-shrink')
     const checked = JSON.parse(execFileSync('vpx', argumentsForGate, { encoding: 'utf8' }))
@@ -262,7 +279,7 @@ if (command === 'previous') {
     throw new Error('usage: promote ID TAG DIGEST')
   const release = await json(`${base}/releases/${id}`)
   validRelease(release, id, tag, digest)
-  const releases = await listReleases()
+  const releases = await list('releases')
   if (releases.some((item) => item.tag_name === tag && String(item.id) !== id))
     throw new Error('conflicting release tag')
   const { jobs } = await json(`${base}/actions/runs/${runId}/jobs?per_page=100`)

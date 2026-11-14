@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { createReadStream, statSync } from 'node:fs'
+import { createReadStream, readFileSync, statSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { createBrotliDecompress } from 'node:zlib'
 
@@ -9,15 +9,24 @@ import { canonicalTableHash } from './canonical-table-hash.ts'
 const args = process.argv.slice(2).filter((arg) => arg !== '--')
 const prepare = args.includes('--prepare')
 const allowShrink = args.includes('--allow-shrink')
+const usedVersionsFile = args.find((arg) => arg.startsWith('--used-versions='))?.slice(16)
 const options = args.filter((arg) => arg.startsWith('--'))
-if (options.some((arg) => !['--prepare', '--allow-shrink'].includes(arg)))
+if (
+  options.some(
+    (arg) => !['--prepare', '--allow-shrink'].includes(arg) && !arg.startsWith('--used-versions=')
+  )
+)
   throw new Error('Unknown option')
 const positional = args.filter((arg) => !arg.startsWith('--'))
 const [database, asset, previous] = positional
 if (!database || (!prepare && !asset) || positional.length > 3)
   throw new Error(
-    'Usage: release-gate <database> <asset.br> [previous.sqlite] [--prepare] [--allow-shrink]'
+    'Usage: release-gate <database> <asset.br> [previous.sqlite] [--prepare] [--allow-shrink] [--used-versions=versions.json]'
   )
+let usedVersions: unknown = []
+if (usedVersionsFile !== undefined)
+  usedVersions = JSON.parse(readFileSync(usedVersionsFile, 'utf8'))
+if (!Array.isArray(usedVersions)) throw new Error('Invalid used versions')
 function quote(s: string): string {
   return `"${s.replaceAll('"', '""')}"`
 }
@@ -269,6 +278,18 @@ try {
           fail(`Unchanged input pins with logical drift: ${name}`)
     }
   }
+  let [major, minor, patch] = version.split('.').map(Number)
+  for (const used of usedVersions) {
+    if (typeof used !== 'string') fail('Invalid used version')
+    const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(used)
+    if (!match) fail('Invalid used version')
+    const [usedMajor, usedMinor, usedPatch] = match.slice(1).map(Number)
+    if (usedMajor === major && (usedMinor > minor || (usedMinor === minor && usedPatch >= patch))) {
+      minor = usedMinor
+      patch = usedPatch + 1
+    }
+  }
+  version = `${major}.${minor}.${patch}`
   if (prepare) db.prepare("UPDATE meta SET value=? WHERE key='schema_version'").run(version)
   else if (metadata(db, 'schema_version') !== version)
     fail(

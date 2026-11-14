@@ -120,6 +120,43 @@ test('first release checks a real complete artifact and emits version 1.0.0', ()
   expect(JSON.parse(result.stdout).version).toBe('1.0.0')
 })
 test.each([
+  ['first', '', false, ['1.0.0'], '1.0.1'],
+  ['patch', '', true, ['1.0.1'], '1.0.2'],
+  ['patch', '', true, ['1.0.9', '1.0.2', '2.0.0'], '1.0.10'],
+  ['patch', '', true, ['1.2.0'], '1.2.1'],
+  ['minor', 'ALTER TABLE entity ADD COLUMN extra TEXT', true, ['1.1.0'], '1.1.1'],
+  ['major', 'ALTER TABLE entity DROP COLUMN ID', true, ['2.0.0'], '2.0.1']
+])(
+  'allocates a fresh %s version while preserving the published comparison baseline',
+  (change, sql, hasPrevious, used, expected) => {
+    const candidate = fixture()
+    const args = []
+    if (hasPrevious) {
+      const previous = `${candidate}.previous`
+      copyFileSync(candidate, previous)
+      args.push(previous)
+    }
+    const db = new DatabaseSync(candidate)
+    db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
+    if (sql) db.exec(sql)
+    db.close()
+    const versions = `${candidate}.versions.json`
+    writeFileSync(versions, JSON.stringify(used))
+    args.push(`--used-versions=${versions}`)
+    const prepared = gate(candidate, ...args, '--prepare')
+    expect(prepared.status).toBe(0)
+    const checked = gate(candidate, ...args)
+    expect(checked.status).toBe(0)
+    expect(JSON.parse(checked.stdout)).toMatchObject({ version: expected, change })
+  }
+)
+test.each([{}, ['invalid'], [1]])('rejects invalid used versions %j', (used) => {
+  const candidate = fixture()
+  const versions = `${candidate}.versions.json`
+  writeFileSync(versions, JSON.stringify(used))
+  expect(gate(candidate, `--used-versions=${versions}`, '--prepare').status).not.toBe(0)
+})
+test.each([
   ['missing source', "UPDATE record SET source_row=999 WHERE id='spell:1'"],
   ['missing link endpoint', "UPDATE link SET destination_id='item:missing' WHERE relation='drops'"],
   ['kind coverage', "DELETE FROM record WHERE kind='spell'"],
