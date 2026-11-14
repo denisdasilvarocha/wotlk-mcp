@@ -1,15 +1,29 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, execSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { createServer } from 'node:http'
+import { once } from 'node:events'
+import {
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync
+} from 'node:fs'
+import { createServer, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { setTimeout as delay } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
 import { brotliCompressSync } from 'node:zlib'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
+import * as z from 'zod'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-acquire-'))
 const dbPath = path.join(dir, 'reference.sqlite')
@@ -20,6 +34,7 @@ let scenario = 'good'
 let requests: string[] = []
 let authorization = ''
 const download = { finish: (): void => {} }
+const concurrent: ServerResponse[] = []
 const server = createServer((req, res) => {
   requests.push(req.url ?? '')
   authorization = req.headers.authorization ?? ''
@@ -51,17 +66,20 @@ const server = createServer((req, res) => {
       download.finish = (): void => {
         res.end(data.subarray(10))
       }
+    } else if (scenario === 'concurrent') {
+      concurrent.push(res)
+      if (concurrent.length === 2) for (const response of concurrent.splice(0)) response.end(data)
     } else res.end(data)
   }
 })
 
 beforeAll(async () => {
-  execFileSync('vpx', ['scripts/build-reference.ts', dbPath])
-  execFileSync('vp', ['pm', 'pack', '--pack-destination', dir])
+  execSync(`vpx scripts/build-reference.ts "${dbPath}"`)
+  execSync(`vp pm pack --pack-destination "${dir}"`)
   const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
   if (!archive) throw new Error('Package archive not created')
   execFileSync('tar', ['-xzf', path.join(dir, archive), '-C', dir])
-  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'dir')
+  symlinkSync(path.resolve('node_modules'), path.join(dir, 'package/node_modules'), 'junction')
   data = brotliCompressSync(readFileSync(dbPath))
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
@@ -77,7 +95,7 @@ afterAll(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
-async function launch(extra: Record<string, string> = {}): Promise<Client> {
+async function launch(extra: Record<string, string> = {}, homeCache = false): Promise<Client> {
   const cache = mkdtempSync(path.join(dir, 'cache-'))
   const client = new Client({ name: 'acquisition-test', version: '1' })
   const env: Record<string, string> = {
@@ -85,10 +103,11 @@ async function launch(extra: Record<string, string> = {}): Promise<Client> {
     HOME: cache,
     XDG_CACHE_HOME: cache,
     LOCALAPPDATA: cache,
-    NODE_OPTIONS: `--import=${preload}`,
+    NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
     TEST_RELEASES: `${base}/releases`,
     ...extra
   }
+  if (homeCache) delete env.XDG_CACHE_HOME
   delete env.WOTLK_MCP_DB
   if (extra.WOTLK_MCP_DB) env.WOTLK_MCP_DB = extra.WOTLK_MCP_DB
   await client.connect(
@@ -115,6 +134,196 @@ test('acquires the newest compatible published reference and uses optional token
     expect(authorization).toBe('Bearer example-token')
   } finally {
     await client.close()
+  }
+})
+
+test.skipIf(process.platform !== 'linux')(
+  'Linux uses the home cache when XDG_CACHE_HOME is absent',
+  async () => {
+    const home = mkdtempSync(path.join(dir, 'home-'))
+    scenario = 'good'
+    const first = await launch({ HOME: home }, true)
+    try {
+      expect((await call(first)).isError).not.toBe(true)
+    } finally {
+      await first.close()
+    }
+    expect(
+      readdirSync(path.join(home, '.cache', 'wotlk-mcp')).some((name) => name.startsWith('state-'))
+    ).toBe(true)
+    scenario = 'offline'
+    const second = await launch({ HOME: home }, true)
+    try {
+      expect((await call(second)).isError).not.toBe(true)
+    } finally {
+      await second.close()
+    }
+  }
+)
+
+test('shared cache survives concurrent first downloads and offline restarts', async () => {
+  const cache = mkdtempSync(path.join(dir, 'shared-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  scenario = 'concurrent'
+  const clients = await Promise.all([launch(env), launch(env)])
+  try {
+    const results = await Promise.all(clients.map(call))
+    expect(results.every((result) => !result.isError)).toBe(true)
+  } finally {
+    await Promise.all(clients.map((client) => client.close()))
+  }
+  scenario = 'offline'
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  const stateFiles = readdirSync(directory)
+    .filter((name) => name.startsWith('state-'))
+    .toSorted()
+  expect(stateFiles).toHaveLength(2)
+  const current = z
+    .object({ file: z.string(), version: z.string(), lastCheck: z.number() })
+    .parse(JSON.parse(readFileSync(path.join(directory, stateFiles[1]), 'utf8')))
+  expect(current.version).toBe('db-v1.2.0')
+  expect(current.lastCheck).toBeGreaterThan(0)
+  writeFileSync(path.join(directory, current.file), 'corrupt')
+  const abandoned = path.join(directory, '99999999-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.br.partial')
+  writeFileSync(abandoned, 'partial')
+  utimesSync(abandoned, new Date(0), new Date(0))
+  requests = []
+  const offline = await launch(env)
+  try {
+    expect((await call(offline)).isError).not.toBe(true)
+    expect(requests).toEqual([])
+    expect(readdirSync(directory)).not.toContain(path.basename(abandoned))
+  } finally {
+    await offline.close()
+  }
+})
+
+test('another process pruning old copies preserves a live session snapshot', async () => {
+  const cache = mkdtempSync(path.join(dir, 'active-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  scenario = 'good'
+  const active = await launch(env)
+  try {
+    expect((await call(active)).isError).not.toBe(true)
+    const names = readdirSync(directory)
+    const snapshot = names.find((name) => name.startsWith('session-'))
+    const stateName = names.find((name) => name.startsWith('state-'))
+    if (!snapshot || !stateName) throw new Error('missing active snapshot or state')
+    const state = z
+      .object({ file: z.string(), version: z.string(), lastCheck: z.number() })
+      .parse(JSON.parse(readFileSync(path.join(directory, stateName), 'utf8')))
+    for (const suffix of [
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    ]) {
+      const file = `db-v1.2.0-99999999-${suffix}.sqlite`
+      copyFileSync(path.join(directory, state.file), path.join(directory, file))
+      writeFileSync(
+        path.join(directory, `state-${Date.now() + 10000}-${suffix}.json`),
+        JSON.stringify({ ...state, file })
+      )
+    }
+    utimesSync(path.join(directory, stateName), new Date(0), new Date(0))
+    utimesSync(path.join(directory, state.file), new Date(0), new Date(0))
+    scenario = 'offline'
+    const other = await launch(env)
+    try {
+      expect((await call(other)).isError).not.toBe(true)
+      expect(existsSync(path.join(directory, snapshot))).toBe(true)
+      expect((await call(active)).isError).not.toBe(true)
+    } finally {
+      await other.close()
+    }
+  } finally {
+    await active.close()
+  }
+})
+
+test.skipIf(process.platform !== 'win32')(
+  'Windows sharing violations do not prevent offline startup',
+  async () => {
+    const cache = mkdtempSync(path.join(dir, 'locked-'))
+    const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+    scenario = 'good'
+    const initial = await launch(env)
+    expect((await call(initial)).isError).not.toBe(true)
+    await initial.close()
+    const directory = path.join(cache, 'wotlk-mcp')
+    const locked = path.join(
+      directory,
+      'db-v1.0.0-99999999-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.sqlite'
+    )
+    writeFileSync(locked, 'locked')
+    utimesSync(locked, new Date(0), new Date(0))
+    const holder = spawn(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        "$f=[System.IO.File]::Open($env:LOCK_FILE,'Open','Read','None'); [Console]::WriteLine('ready'); [Console]::ReadLine() | Out-Null; $f.Dispose()"
+      ],
+      { env: { ...process.env, LOCK_FILE: locked }, stdio: ['pipe', 'pipe', 'inherit'] }
+    )
+    try {
+      const [ready] = await once(holder.stdout, 'data')
+      expect(String(ready)).toContain('ready')
+      scenario = 'offline'
+      const client = await launch(env)
+      try {
+        expect((await call(client)).isError).not.toBe(true)
+        expect(existsSync(locked)).toBe(true)
+      } finally {
+        await client.close()
+      }
+    } finally {
+      holder.stdin.end('\n')
+      await once(holder, 'exit')
+    }
+    const afterRelease = await launch(env)
+    try {
+      expect((await call(afterRelease)).isError).not.toBe(true)
+      expect(existsSync(locked)).toBe(false)
+    } finally {
+      await afterRelease.close()
+    }
+  }
+)
+
+test('an interrupted download leaves no usable partial and a later start recovers', async () => {
+  const cache = mkdtempSync(path.join(dir, 'interrupted-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  let root = cache
+  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
+  const directory = path.join(root, 'wotlk-mcp')
+  scenario = 'slow'
+  const client = await launch(env)
+  async function waitForPartial(remaining: number): Promise<string> {
+    if (existsSync(directory)) {
+      const partial = readdirSync(directory).find((name) => name.endsWith('.br.partial'))
+      if (partial) return partial
+    }
+    if (!remaining) throw new Error('download partial was not created')
+    await delay(20)
+    return waitForPartial(remaining - 1)
+  }
+  const partial = await waitForPartial(250)
+  await client.close()
+  download.finish()
+  expect(readdirSync(directory).some((name) => name.startsWith('state-'))).toBe(false)
+  utimesSync(path.join(directory, partial), new Date(0), new Date(0))
+  scenario = 'good'
+  const restarted = await launch(env)
+  try {
+    expect((await call(restarted)).isError).not.toBe(true)
+    expect(readdirSync(directory)).not.toContain(partial)
+  } finally {
+    await restarted.close()
   }
 })
 
