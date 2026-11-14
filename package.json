@@ -32,6 +32,7 @@
     "import:codex": "node scripts/import-codex.ts",
     "import:interface": "vpx scripts/import-interface.ts",
     "import:native": "vpx scripts/import-native.ts",
+    "import:world-enums": "vpx scripts/import-world-enums.ts",
     "prepare": "vp config",
     "prepublishOnly": "vp run build",
     "test": "vp test",
