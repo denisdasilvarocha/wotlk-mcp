@@ -1,9 +1,13 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  type CallToolResult
+} from '@modelcontextprotocol/sdk/types.js'
 import * as z from 'zod'
 
-import { getReferencePath } from './acquire.js'
+import { getReferencePath, takeUpdateWarning } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated, parseRelated, relatedTool } from './related.js'
 import { kinds } from './schema.js'
@@ -90,59 +94,69 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
   ]
 }))
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  try {
-    if (request.params.name === 'sql') {
-      const parsed = sqlInput.safeParse(request.params.arguments)
-      if (!parsed.success) throw new Error('sql requires a query and an integer limit of 1–1000')
-      const path = await getReferencePath()
-      return {
-        content: [{ type: 'text', text: await runSql(path, parsed.data.query, parsed.data.limit) }]
+  const result = await (async (): Promise<CallToolResult> => {
+    try {
+      if (request.params.name === 'sql') {
+        const parsed = sqlInput.safeParse(request.params.arguments)
+        if (!parsed.success) throw new Error('sql requires a query and an integer limit of 1–1000')
+        const path = await getReferencePath()
+        return {
+          content: [
+            { type: 'text', text: await runSql(path, parsed.data.query, parsed.data.limit) }
+          ]
+        }
       }
-    }
-    if (request.params.name === 'related') {
-      const args = parseRelated(request.params.arguments)
-      const db = openReference(await getReferencePath())
-      try {
-        return { content: [{ type: 'text', text: getRelated(db, args) }] }
-      } finally {
-        db.close()
+      if (request.params.name === 'related') {
+        const args = parseRelated(request.params.arguments)
+        const db = openReference(await getReferencePath())
+        try {
+          return { content: [{ type: 'text', text: getRelated(db, args) }] }
+        } finally {
+          db.close()
+        }
       }
-    }
-    if (request.params.name === 'search') {
-      const parsed = searchInput.safeParse(request.params.arguments)
+      if (request.params.name === 'search') {
+        const parsed = searchInput.safeParse(request.params.arguments)
+        if (!parsed.success)
+          throw new Error(
+            `search requires a nonempty query, valid kinds (${kinds.join(', ')}), limit 1–100 and nonnegative integer offset`
+          )
+        const db = openReference(await getReferencePath())
+        try {
+          return { content: [{ type: 'text', text: searchRecords(db, parsed.data) }] }
+        } finally {
+          db.close()
+        }
+      }
+      if (request.params.name !== 'get')
+        throw new Error('unknown tool; use get, related, search or sql')
+      const parsed = input.safeParse(request.params.arguments)
       if (!parsed.success)
         throw new Error(
-          `search requires a nonempty query, valid kinds (${kinds.join(', ')}), limit 1–100 and nonnegative integer offset`
+          `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`
         )
       const db = openReference(await getReferencePath())
       try {
-        return { content: [{ type: 'text', text: searchRecords(db, parsed.data) }] }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: getRecords(db, parsed.data.ids, parsed.data.from, parsed.data.to)
+            }
+          ]
+        }
       } finally {
         db.close()
       }
-    }
-    if (request.params.name !== 'get')
-      throw new Error('unknown tool; use get, related, search or sql')
-    const parsed = input.safeParse(request.params.arguments)
-    if (!parsed.success)
-      throw new Error(
-        `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`
-      )
-    const db = openReference(await getReferencePath())
-    try {
+    } catch (error) {
       return {
-        content: [
-          { type: 'text', text: getRecords(db, parsed.data.ids, parsed.data.from, parsed.data.to) }
-        ]
+        isError: true,
+        content: [{ type: 'text', text: String(error).replace(/[\r\n]+/g, ' ') }]
       }
-    } finally {
-      db.close()
     }
-  } catch (error) {
-    return {
-      isError: true,
-      content: [{ type: 'text', text: String(error).replace(/[\r\n]+/g, ' ') }]
-    }
-  }
+  })()
+  const warning = takeUpdateWarning()
+  if (warning) result.content.push({ type: 'text', text: warning })
+  return result
 })
 await server.connect(new StdioServerTransport())

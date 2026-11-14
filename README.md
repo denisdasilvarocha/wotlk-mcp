@@ -13,6 +13,8 @@ WOTLK_MCP_DB="$PWD/reference.sqlite" node dist/index.mjs
 
 The last command starts an MCP server over stdio; connect an MCP client rather than typing commands into it. Without `WOTLK_MCP_DB`, the server downloads a compatible published database from GitHub Releases, verifies its compressed SHA-256 digest and schema, and stores it in the OS cache. First use requires a network connection; if the download is still in progress after 20 seconds, retry the tool call. Set `GITHUB_TOKEN` or `GH_TOKEN` optionally for authenticated GitHub requests. `WOTLK_MCP_DB` selects a compatible local database and disables network access; an invalid override fails rather than falling back. No database is bundled. The `get` tool accepts up to 20 kind-qualified IDs, such as `offset:Globals::PlayerName`.
 
+With a usable cached database, startup and queries do not wait for update metadata. The server checks at most once per 24 hours, including after a failed check, and keeps using its selected snapshot for the whole session. A verified update or rollback takes effect on the next start. If newer data requires a newer package major, the server logs guidance to stderr and adds it once to the first tool result after it becomes known.
+
 The package code is MIT licensed; the database contains source data with separate provenance recorded in its `source` table.
 
 ## Development
@@ -35,7 +37,13 @@ vp test
 vp run validate:offsets
 ```
 
-The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry.
+The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry. Release acceptance runs the actual packed executable against a candidate SQLite database:
+
+```bash
+vp run acceptance -- /path/to/wotlk-mcp.tgz /path/to/candidate.sqlite tests/fixtures/acceptance.json
+```
+
+The cited fixtures include **unapproved** World Data candidates. The command fails until a maintainer reviews the exact assertions in `docs/world-data-facts.md` and records approval in `data/world-acceptance-approval.json`: `status` must be `approved`, with `reviewer`, ISO `date`, a URL `record` to the durable review, `fixtures_sha256` for the exact fixture file, and `world_cases` listing every approved World case ID. Changes to any fixture require a new approval digest. This is not a publication command. A local candidate is not a substitute for the verified draft asset and six-cell release matrix.
 
 To add the pinned Codex Lua API to a freshly built local reference, check out `https://github.com/Shard-MW/milkyway-codex` at `e4e31fb62be318fd7403152aa73b33ef6c70f5fa`, then run:
 
@@ -145,6 +153,14 @@ vp run import:world-enums -- reference.sqlite azerothcore.tar.gz
 ```
 
 This command validates mapped columns and pinned header definitions, and fails if the Client Data required for English reference names is missing. `get` presents mapped names after raw values; SQL and search remain raw. Unknown values, unknown flag bits, sentinel `-1`, and missing referenced rows are not invented. The parsed header definitions are from AzerothCore at commit `2948c203faa0d23c4772441119ebe98e5b7cad95` and retain its GPL-2.0-or-later licence and attribution in `world/azerothcore-LICENSE.txt` and `world/azerothcore-AUTHORS.txt`.
+
+After those imports, add the Spell enum families and build-specific Client Data foreign-key annotations with the same archive:
+
+```bash
+vp run import:spell-enums -- reference.sqlite azerothcore.tar.gz
+```
+
+The command validates Spell columns and pinned AzerothCore enums, and materializes available English reference names into the shared decoder tables. References whose target table or named row is unavailable retain their raw values; neither command changes source rows.
 
 WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
 

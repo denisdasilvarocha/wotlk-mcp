@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/22-ticket-43-cache
+      - feature/22-ticket-44-updates
       - main
 
 permissions:

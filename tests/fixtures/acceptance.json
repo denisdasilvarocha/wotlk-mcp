@@ -1,0 +1,300 @@
+[
+  {
+    "id": "O01",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:4 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DBItemCache::GetInfoBlockByID"] },
+    "contains": ["va: 0x0067CA30", "note: get item by ID"]
+  },
+  {
+    "id": "O02",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:5 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DBItemCache::GetItemNameByIndex"] },
+    "contains": ["va: 0x004FD200", "note: get item name by index"]
+  },
+  {
+    "id": "O03",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:9 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DbItemCache::Load"] },
+    "contains": ["va: 0x0067CDD0"]
+  },
+  {
+    "id": "O04",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:10 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DbItemCache::Unpack"] },
+    "contains": ["va: 0x0098D910"]
+  },
+  {
+    "id": "O05",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:14 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DbCreatureCache::GetInfoBlockById"] },
+    "contains": ["va: 0x0067B6A0"]
+  },
+  {
+    "id": "O06",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:15 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DbCreatureCache::Load"] },
+    "contains": ["va: 0x0067BA40"]
+  },
+  {
+    "id": "O07",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:16 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::DbCreatureCache::Unpack"] },
+    "contains": ["va: 0x0098D4C0"]
+  },
+  {
+    "id": "O08",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:20 (commit 34504ad)",
+    "tool": "get",
+    "args": { "ids": ["offset:Cache::CreatureStats::GetName"] },
+    "contains": ["va: 0x0053B8E0"]
+  },
+  {
+    "id": "O09",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:4 (commit 34504ad)",
+    "tool": "search",
+    "args": { "query": "Cache::DBItemCache::GetInfoBlockByID", "kind": ["offset"] },
+    "contains": ["offset:Cache::DBItemCache::GetInfoBlockByID"]
+  },
+  {
+    "id": "O10",
+    "domain": "offsets",
+    "citation": "tests/fixtures/original-offsets.txt:4 (commit 34504ad)",
+    "tool": "sql",
+    "args": {
+      "query": "SELECT va FROM offsets_entry WHERE path = 'Cache::DBItemCache::GetInfoBlockByID'"
+    },
+    "contains": ["va\n0x0067CA30"]
+  },
+  {
+    "id": "L01",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/api-functions.ts#L5-L24",
+    "tool": "get",
+    "args": { "ids": ["fn:AbandonQuest"] },
+    "contains": ["Confirms abandoning a quest.", "Quest functions", "0x005E4060"]
+  },
+  {
+    "id": "L02",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/api-functions.ts#L27-L46",
+    "tool": "get",
+    "args": { "ids": ["fn:AbandonSkill"] },
+    "contains": ["Unlearns a skill", "0x005CE2C0"]
+  },
+  {
+    "id": "L03",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/events.ts#L5-L13",
+    "tool": "get",
+    "args": { "ids": ["event:ACHIEVEMENT_EARNED"] },
+    "contains": ["Fires when the player earns an achievement", "Achievement"]
+  },
+  {
+    "id": "L04",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/widgets.ts#L5-L11",
+    "tool": "get",
+    "args": { "ids": ["widget:Alpha"] },
+    "contains": ["smoothly changes the opacity", "GetChange", "SetChange"]
+  },
+  {
+    "id": "L05",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/widgets.ts#L10",
+    "tool": "get",
+    "args": { "ids": ["method:Alpha:GetChange"] },
+    "contains": ["Returns the animation's amount of alpha"]
+  },
+  {
+    "id": "L06",
+    "domain": "lua",
+    "citation": "https://github.com/Shard-MW/milkyway-codex/blob/e4e31fb62be318fd7403152aa73b33ef6c70f5fa/src/data/api-functions.ts#L5-L16",
+    "tool": "search",
+    "args": { "query": "AbandonQuest", "kind": ["fn"] },
+    "contains": ["fn:AbandonQuest"]
+  },
+  {
+    "id": "L07",
+    "domain": "lua",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, Interface/FrameXML/Constants.lua:10",
+    "tool": "get",
+    "args": { "ids": ["file:FrameXML/Constants.lua"], "from": 10, "to": 10 },
+    "contains": ["NORMAL_FONT_COLOR_CODE", "|cffffd200"]
+  },
+  {
+    "id": "L08",
+    "domain": "lua",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, Interface/FrameXML/Constants.lua:11",
+    "tool": "search",
+    "args": { "query": "HIGHLIGHT_FONT_COLOR_CODE", "kind": ["file"] },
+    "contains": ["FrameXML/Constants.lua"]
+  },
+  {
+    "id": "C01",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 0",
+    "tool": "get",
+    "args": { "ids": ["map:0"] },
+    "contains": ["Eastern Kingdoms"]
+  },
+  {
+    "id": "C02",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 1",
+    "tool": "get",
+    "args": { "ids": ["map:1"] },
+    "contains": ["Kalimdor"]
+  },
+  {
+    "id": "C03",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 30",
+    "tool": "get",
+    "args": { "ids": ["map:30"] },
+    "contains": ["Alterac Valley"]
+  },
+  {
+    "id": "C04",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 33",
+    "tool": "get",
+    "args": { "ids": ["map:33"] },
+    "contains": ["Shadowfang Keep"]
+  },
+  {
+    "id": "C05",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 34",
+    "tool": "get",
+    "args": { "ids": ["map:34"] },
+    "contains": ["Stormwind Stockade"]
+  },
+  {
+    "id": "C06",
+    "domain": "client",
+    "citation": "verified enGB client inputs manifest e5db5940f6e7ca8b3862c5c27b1a08cdc45571d79bd2ba9607540a5e432f3235, DBFilesClient/Map.dbc row ID 1",
+    "tool": "search",
+    "args": { "query": "Kalimdor", "kind": ["map"] },
+    "contains": ["map:1"]
+  },
+  {
+    "id": "W01",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W01, S1: https://www.engadget.com/2008-06-23-midsummer-festival-quest-shards-of-ahune.html; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["gameobject:187892"] },
+    "contains": ["Ice Chest"]
+  },
+  {
+    "id": "W02",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W02, S1-S2; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["item:35723"] },
+    "contains": ["Shards of Ahune"]
+  },
+  {
+    "id": "W03",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W03, S1-S2; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["creature:25697"] },
+    "contains": ["Luma Skymother"]
+  },
+  {
+    "id": "W04",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W04, S2: https://ravenholdtmanor.blogspot.com/2010/06/midsummer-fire-festival-guide.html; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["quest:11972"] },
+    "contains": ["Shards of Ahune"]
+  },
+  {
+    "id": "W05",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W05, S1-S2; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["item:35279", "item:35280"] },
+    "contains": ["Tabard of Summer Skies", "Tabard of Summer Flames"]
+  },
+  {
+    "id": "W06",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W06, S1-S2; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "gameobject:187892", "rel": "drops" },
+    "contains": ["drops item:35723"]
+  },
+  {
+    "id": "W06i",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W06, S1-S2; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "item:35723", "rel": "dropped by" },
+    "contains": ["dropped by gameobject:187892"]
+  },
+  {
+    "id": "W07",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W07, S1-S2; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "creature:25697", "rel": "ends" },
+    "contains": ["ends quest:11972"]
+  },
+  {
+    "id": "W07i",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W07, S1-S2; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "quest:11972", "rel": "ended by" },
+    "contains": ["ended by creature:25697"]
+  },
+  {
+    "id": "W08",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W08, S1-S2; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "quest:11972", "rel": "rewards" },
+    "contains": ["item:35279", "item:35280"]
+  },
+  {
+    "id": "W09",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W09, S3-S5; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["quest:783", "creature:197", "creature:823"] },
+    "contains": ["A Threat Within", "Marshal McBride", "Deputy Willem"]
+  },
+  {
+    "id": "W10",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W10, S3-S5; UNAPPROVED",
+    "tool": "related",
+    "args": { "id": "creature:823", "rel": "starts" },
+    "contains": ["starts quest:783"]
+  },
+  {
+    "id": "W11",
+    "domain": "world",
+    "citation": "docs/world-data-facts.md W11, S4: https://worldofwarcraft.blizzard.com/en-us/news/24013834/wrath-of-the-lich-king-classic-the-way-into-the-icecrown-citadel-is-open; UNAPPROVED",
+    "tool": "get",
+    "args": { "ids": ["item:49623"] },
+    "contains": ["Shadowmourne"]
+  }
+]
