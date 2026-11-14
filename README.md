@@ -37,7 +37,13 @@ vp test
 vp run validate:offsets
 ```
 
-The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry.
+The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry. Release acceptance runs the actual packed executable against a candidate SQLite database:
+
+```bash
+vp run acceptance -- /path/to/wotlk-mcp.tgz /path/to/candidate.sqlite tests/fixtures/acceptance.json
+```
+
+The cited fixtures include **unapproved** World Data candidates. The command fails until a maintainer reviews the exact assertions in `docs/world-data-facts.md` and records approval in `data/world-acceptance-approval.json`: `status` must be `approved`, with `reviewer`, ISO `date`, a URL `record` to the durable review, `fixtures_sha256` for the exact fixture file, and `world_cases` listing every approved World case ID. Changes to any fixture require a new approval digest. This is not a publication command. A local candidate is not a substitute for the verified draft asset and six-cell release matrix.
 
 To add the pinned Codex Lua API to a freshly built local reference, check out `https://github.com/Shard-MW/milkyway-codex` at `e4e31fb62be318fd7403152aa73b33ef6c70f5fa`, then run:
 
@@ -135,6 +141,14 @@ vp run build:client-faction-spawn-links -- reference.sqlite
 ```
 
 The command uses existing Records only and leaves all source rows intact. Creature spawn counts include stored alternate entries in `world_creature_multispawn`, counting each spawn once per creature and map. Counts are stored rows, not probabilities or inferred areas. Item-set members absent from World Data are omitted from Links and remain a report-only fidelity discrepancy.
+
+After importing both World Data and Client Data into the same reference, populate the World Data enum and reference mappings using the same hash-verified AzerothCore archive used for reproduction:
+
+```bash
+vp run import:world-enums -- reference.sqlite azerothcore.tar.gz
+```
+
+This command validates mapped columns and pinned header definitions, and fails if the Client Data required for English reference names is missing. `get` presents mapped names after raw values; SQL and search remain raw. Unknown values, unknown flag bits, sentinel `-1`, and missing referenced rows are not invented. The parsed header definitions are from AzerothCore at commit `2948c203faa0d23c4772441119ebe98e5b7cad95` and retain its GPL-2.0-or-later licence and attribution in `world/azerothcore-LICENSE.txt` and `world/azerothcore-AUTHORS.txt`.
 
 WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
 

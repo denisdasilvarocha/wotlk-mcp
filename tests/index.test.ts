@@ -24,6 +24,15 @@ beforeAll(async () => {
   db.exec(`CREATE TABLE world_example (name TEXT, description TEXT, empty TEXT, zero INTEGER);
     INSERT INTO world_example VALUES ('Example', 'first line' || char(10) || 'second line', '', 0);
     INSERT INTO record VALUES ('item:123', 'item', 'Example', 'world_example', 1, '', '')`)
+  db.exec(`CREATE TABLE world_decoding (class INTEGER, subclass INTEGER, flags INTEGER, sentinel INTEGER, unknown INTEGER);
+    INSERT INTO world_decoding VALUES (2, 3, 9, -1, 99);
+    INSERT INTO record VALUES ('item:124', 'item', 'Decoding', 'world_decoding', 1, '', '');
+    INSERT INTO enum_field VALUES
+      ('world_decoding', 'subclass', 'Subclass', 0, 'class', 2),
+      ('world_decoding', 'flags', 'Flags', 1, NULL, NULL),
+      ('world_decoding', 'sentinel', 'Flags', 1, NULL, NULL),
+      ('world_decoding', 'unknown', 'Subclass', 0, NULL, NULL);
+    INSERT INTO enum_value VALUES ('Subclass', 3, 'AXE'), ('Flags', 1, 'KNOWN')`)
   db.close()
   await client.connect(
     new StdioClientTransport({
@@ -83,6 +92,19 @@ test('wide source rows retain full text and omit empty fields only in rendering'
   expect(result.content).toEqual([
     { type: 'text', text: 'item:123\nname: Example\ndescription: first line\n  second line' }
   ])
+})
+
+test('get decodes conditional enums and retains unknown bits and sentinels while SQL stays raw', async () => {
+  const get = await client.callTool({ name: 'get', arguments: { ids: ['item:124'] } })
+  expect(JSON.stringify(get)).toContain('subclass: 3 (AXE)')
+  expect(JSON.stringify(get)).toContain('flags: 9 (KNOWN, 8)')
+  expect(JSON.stringify(get)).toContain('sentinel: -1')
+  expect(JSON.stringify(get)).toContain('unknown: 99')
+  const sql = await client.callTool({
+    name: 'sql',
+    arguments: { query: 'SELECT subclass, flags, sentinel FROM world_decoding' }
+  })
+  expect(JSON.stringify(sql)).toContain('3\\t9\\t-1')
 })
 
 test('invalid local overrides are actionable errors', async () => {
