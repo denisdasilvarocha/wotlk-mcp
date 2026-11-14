@@ -54,6 +54,17 @@ sh world/reproduce.sh azerothcore.tar.gz world-output
 
 The command verifies the archive, builds the pinned upstream database importer, creates isolated fresh databases, applies upstream updates, and compares the selected World Data schema to the committed manifests. The output contains the importer log, observed schema, and a report; it does not publish data. On success the report names the running MySQL container and its private network for the export step. Remove both with `docker rm -f <container>` and `docker network rm <network>` when finished.
 
+To add World Data to a newly built reference, pass the container name from the report and the reference database path:
+
+```bash
+vp run build:reference -- reference.sqlite
+vpx scripts/export-world.ts <container> reference.sqlite
+```
+
+The exporter checks the selected schema, stores the source tables with the `world_` prefix, and indexes creature, item, quest and gameobject Records. The source's `*_dbc` overrides remain separate from Client Data. Spawn rows retain their stored map, coordinates, zone and area values; no area is inferred. The reference's source and metadata tables record the pin and export evidence. The pinned AzerothCore [licence](world/azerothcore-LICENSE.txt) and [authors notice](world/azerothcore-AUTHORS.txt) accompany these sources. The database also contains data with separate rights; the package's MIT licence does not apply to the database as a whole.
+
+Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
+
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 
 ## Extracting maintainer client inputs
