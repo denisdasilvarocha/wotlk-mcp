@@ -1,30 +1,29 @@
 {
   "name": "wotlk-mcp",
   "version": "0.0.0",
-  "description": "A starter for creating a TypeScript package.",
-  "homepage": "https://github.com/author/library#readme",
+  "description": "Read-only MCP reference for World of Warcraft 3.3.5a build 12340.",
+  "homepage": "https://github.com/denisdasilvarocha/wotlk-mcp#readme",
   "bugs": {
-    "url": "https://github.com/author/library/issues"
+    "url": "https://github.com/denisdasilvarocha/wotlk-mcp/issues"
   },
   "license": "MIT",
-  "author": "Author Name <author.name@mail.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/author/library.git"
+    "url": "git+https://github.com/denisdasilvarocha/wotlk-mcp.git"
+  },
+  "bin": {
+    "wotlk-mcp": "./dist/index.mjs"
   },
   "files": [
     "dist"
   ],
   "type": "module",
-  "exports": {
-    ".": "./dist/index.mjs",
-    "./package.json": "./package.json"
-  },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "vp pack",
+    "build:reference": "vpx scripts/build-reference.ts",
     "check": "vp check",
     "dev": "vp pack --watch",
     "prepare": "vp config",
@@ -33,6 +32,7 @@
     "validate:offsets": "vpx scripts/validate-offsets.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -46,5 +46,8 @@
       "version": "12.18.0",
       "onFail": "download"
     }
+  },
+  "engines": {
+    "node": ">=24.15.0"
   }
 }
