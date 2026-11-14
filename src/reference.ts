@@ -81,6 +81,25 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
           continue
         lines.push(`${key}: ${String(value).replace(/\r?\n/g, '\n  ')}`)
       }
+      if (
+        (id.startsWith('fn:') || id.startsWith('method:')) &&
+        db
+          .prepare(
+            "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'lua_native_registration'"
+          )
+          .get()
+      ) {
+        const native = db
+          .prepare(
+            'SELECT va, context, registration_table, registration_index, call_sites, widget FROM lua_native_registration WHERE record_id = ? ORDER BY registration_table, registration_index, context'
+          )
+          .all(id)
+        for (const fact of native) {
+          let line = `native: ${String(fact.va)} ${String(fact.context)} ${String(fact.registration_table)}[${String(fact.registration_index)}] call sites ${String(fact.call_sites)}`
+          if (fact.widget) line += ` widget ${String(fact.widget)}`
+          lines.push(line)
+        }
+      }
       return lines.join('\n')
     })
     .join('\n\n')
