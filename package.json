@@ -11,16 +11,13 @@
     "type": "git",
     "url": "git+https://github.com/denisdasilvarocha/wotlk-mcp.git"
   },
+  "bin": {
+    "wotlk-mcp": "./dist/index.mjs"
+  },
   "files": [
     "dist"
   ],
   "type": "module",
-  "bin": {
-    "wotlk-mcp": "./dist/index.mjs"
-  },
-  "engines": {
-    "node": ">=24.15.0"
-  },
   "publishConfig": {
     "access": "public"
   },
@@ -49,5 +46,8 @@
       "version": "12.18.0",
       "onFail": "download"
     }
+  },
+  "engines": {
+    "node": ">=24.15.0"
   }
 }

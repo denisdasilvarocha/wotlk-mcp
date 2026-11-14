@@ -1,5 +1,45 @@
-export const kinds = ['spell', 'talent', 'itemset', 'skillline', 'map', 'area', 'faction', 'class', 'race', 'achievement', 'creature', 'item', 'quest', 'gameobject', 'fn', 'event', 'widget', 'method', 'cvar', 'type', 'cle', 'template', 'slash', 'offset', 'file']
-export const relations = [['drops', 'dropped by'], ['starts', 'started by'], ['ends', 'ended by'], ['rewards', 'rewarded by'], ['sells', 'sold by'], ['teaches', 'taught by'], ['casts', 'cast by'], ['contains', 'contained in'], ['grants', 'granted by'], ['belongs to', 'includes'], ['faction', 'faction of'], ['spawns in', 'spawns'], ['implemented by', 'implements']]
+export const kinds = [
+  'spell',
+  'talent',
+  'itemset',
+  'skillline',
+  'map',
+  'area',
+  'faction',
+  'class',
+  'race',
+  'achievement',
+  'creature',
+  'item',
+  'quest',
+  'gameobject',
+  'fn',
+  'event',
+  'widget',
+  'method',
+  'cvar',
+  'type',
+  'cle',
+  'template',
+  'slash',
+  'offset',
+  'file'
+]
+export const relations = [
+  ['drops', 'dropped by'],
+  ['starts', 'started by'],
+  ['ends', 'ended by'],
+  ['rewards', 'rewarded by'],
+  ['sells', 'sold by'],
+  ['teaches', 'taught by'],
+  ['casts', 'cast by'],
+  ['contains', 'contained in'],
+  ['grants', 'granted by'],
+  ['belongs to', 'includes'],
+  ['faction', 'faction of'],
+  ['spawns in', 'spawns'],
+  ['implemented by', 'implements']
+]
 export const schema = `
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE source (name TEXT PRIMARY KEY, pin TEXT NOT NULL, sha256 TEXT NOT NULL, licence TEXT NOT NULL, attribution TEXT NOT NULL);
