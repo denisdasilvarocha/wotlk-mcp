@@ -35,7 +35,13 @@ vp test
 vp run validate:offsets
 ```
 
-The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry.
+The 13 documents in `data/offsets` use the schema in `data/offsets.schema.json`. After changing the Zod schema in `src/offsets.ts`, regenerate it with `vpx scripts/validate-offsets.ts --schema > data/offsets.schema.json`. Topic names have no semantic significance; paths omit only `WoWOffsets::`. The migration test compares against the original C++ declarations preserved in `tests/fixtures/original-offsets.txt` from commit `34504ad`. See [address conventions](docs/offsets/address-conventions.md) and [Windows x86 provenance](docs/offsets/windows-x86.md) before using an entry. Release acceptance runs the actual packed executable against a candidate SQLite database:
+
+```bash
+vp run acceptance -- /path/to/wotlk-mcp.tgz /path/to/candidate.sqlite tests/fixtures/acceptance.json
+```
+
+The cited fixtures include **unapproved** World Data candidates. The command fails until a maintainer reviews the exact assertions in `docs/world-data-facts.md` and records approval in `data/world-acceptance-approval.json`: `status` must be `approved`, with `reviewer`, ISO `date`, a URL `record` to the durable review, `fixtures_sha256` for the exact fixture file, and `world_cases` listing every approved World case ID. Changes to any fixture require a new approval digest. This is not a publication command. A local candidate is not a substitute for the verified draft asset and six-cell release matrix.
 
 To add the pinned Codex Lua API to a freshly built local reference, check out `https://github.com/Shard-MW/milkyway-codex` at `e4e31fb62be318fd7403152aa73b33ef6c70f5fa`, then run:
 

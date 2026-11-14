@@ -22,6 +22,7 @@
     "access": "public"
   },
   "scripts": {
+    "acceptance": "vpx scripts/acceptance.ts",
     "build": "vp pack",
     "build:client-faction-spawn-links": "vpx scripts/build-client-faction-spawn-links.ts",
     "build:reference": "vpx scripts/build-reference.ts",
