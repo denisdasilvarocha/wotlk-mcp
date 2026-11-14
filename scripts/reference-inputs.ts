@@ -25,8 +25,8 @@ async function sha256(file: string): Promise<string> {
 async function verify(file: string, expected: string): Promise<void> {
   if (await sha256(file) !== expected) throw new Error(`SHA-256 mismatch: ${file}`)
 }
-function run(command: string, args: string[]): string {
-  return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim()
+function run(command: string, commandArgs: string[]): string {
+  return execFileSync(command, commandArgs, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim()
 }
 
 // Never reuse a directory that might contain unverified or unrelated files.
@@ -49,9 +49,9 @@ try {
   run('git', ['-C', codex, 'fetch', '-q', '--depth', '1', 'https://github.com/Shard-MW/milkyway-codex.git', pins.revision])
   run('git', ['-C', codex, 'checkout', '-q', '--detach', 'FETCH_HEAD'])
   if (run('git', ['-C', codex, 'rev-parse', 'HEAD']) !== pins.revision) throw new Error('Codex revision mismatch')
-  for (const file of codexFiles) await verify(path.join(codex, file), pins.files[file])
+  await Promise.all(codexFiles.map((file) => verify(path.join(codex, file), pins.files[file])))
   const result = { client, clientManifestHash, clientBundle: bundle, wowdbdefs: wow, azerothcore: world, codex, codexRevision: pins.revision }
-  writeFileSync(path.join(output, 'inputs.json'), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+  writeFileSync(path.join(output, 'inputs.json'), `${JSON.stringify(result, undefined, 2)}\n`, { flag: 'wx' })
   console.log(JSON.stringify(result))
 } catch (error) {
   rmSync(output, { recursive: true, force: true })

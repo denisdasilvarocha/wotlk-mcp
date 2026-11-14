@@ -1,5 +1,5 @@
 import { existsSync, realpathSync, statSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 const args = process.argv.slice(2)
@@ -7,7 +7,7 @@ if (args[0] === '--') args.shift()
 const [database, output] = args
 if (args.length !== 2 || !database || !output || !existsSync(database))
   throw new Error('Usage: reference-fidelity <existing-reference.sqlite> <report.json>')
-if (resolve(database) === resolve(output) || (existsSync(output) && (realpathSync(database) === realpathSync(output) || (statSync(database).dev === statSync(output).dev && statSync(database).ino === statSync(output).ino))))
+if (path.resolve(database) === path.resolve(output) || (existsSync(output) && (realpathSync(database) === realpathSync(output) || (statSync(database).dev === statSync(output).dev && statSync(database).ino === statSync(output).ino))))
   throw new Error('Report path must not be the reference database')
 
 const db = new DatabaseSync(database, { readOnly: true })
@@ -20,7 +20,7 @@ try {
     ['material', 'Material', 'Material'],
     ['sheath', 'sheath', 'SheatheType']
   ] as const
-  const itemMismatches = Object.fromEntries(fields.map(([name]) => [name, { count: 0, examples: [] as object[] }]))
+  const itemMismatches: Record<string, { count: number; examples: object[] }> = Object.fromEntries(fields.map(([name]) => [name, { count: 0, examples: [] }]))
   const items = new Map<number, Record<string, unknown>>()
   for (const row of db.prepare('SELECT entry, class, subclass, displayid, InventoryType, Material, sheath FROM world_item_template').iterate())
     items.set(Number(row.entry), row)
@@ -89,29 +89,28 @@ try {
     for (const column of columns)
       if (!available.has(column)) throw new Error(`Missing reference column world_${table}.${column}`)
     const select = columns.map((column) => `"${column}"`).join(', ')
-    for (const row of db.prepare(`SELECT rowid AS source_rowid, ${select} FROM "world_${table}" ORDER BY rowid`).iterate()) {
+    for (const row of db.prepare(`SELECT rowid AS source_rowid, ${select} FROM "world_${table}" ORDER BY rowid`).iterate())
       for (const column of columns) {
         const value = Number(row[column])
-        const spell = signed ? Math.abs(value) : value
+        let spell = value
+        if (signed) spell = Math.abs(value)
         if (spell <= 0 || spells.has(spell)) continue
         missingSpells.count++
         if (missingSpells.examples.length < 20)
           missingSpells.examples.push({ table: `world_${table}`, rowid: Number(row.source_rowid), column, value, spell })
       }
-    }
   }
 
   const missingSetItems: { count: number; examples: { itemset: number; slot: number; item: number }[] } = { count: 0, examples: [] }
   const slots = Array.from({ length: 17 }, (_, i) => `ItemID_${i + 1}`)
-  for (const row of db.prepare(`SELECT ID, ${slots.join(', ')} FROM dbc_ItemSet ORDER BY ID`).iterate()) {
+  for (const row of db.prepare(`SELECT ID, ${slots.join(', ')} FROM dbc_ItemSet ORDER BY ID`).iterate())
     for (let i = 0; i < slots.length; i++) {
       const item = Number(row[slots[i]])
       if (item <= 0 || items.has(item)) continue
       missingSetItems.count++
       if (missingSetItems.examples.length < 20) missingSetItems.examples.push({ itemset: Number(row.ID), slot: i + 1, item })
     }
-  }
-  writeFileSync(output, `${JSON.stringify({ commonItems, itemMismatches, missingWorldSpellReferences: missingSpells, missingItemsetItems: missingSetItems }, null, 2)}\n`)
+  writeFileSync(output, `${JSON.stringify({ commonItems, itemMismatches, missingWorldSpellReferences: missingSpells, missingItemsetItems: missingSetItems }, undefined, 2)}\n`)
 } finally {
   db.close()
 }

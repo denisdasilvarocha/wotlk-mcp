@@ -34,7 +34,7 @@ try {
     db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify(pins))
   }
   const append = db.prepare('UPDATE source SET attribution = attribution || ? WHERE name = ? AND instr(attribution, ?) = 0')
-  const addNotice = (name: string, heading: string, text: string): void => {
+  function addNotice(name: string, heading: string, text: string): void {
     append.run(`\n\n${heading}\n${text.trim()}\n`, name, heading)
   }
   const sources = new Set(db.prepare('SELECT name FROM source').all().map((row) => String(row.name)))
@@ -44,17 +44,16 @@ try {
     addNotice('world', 'AzerothCore authors:', readFileSync('world/azerothcore-AUTHORS.txt', 'utf8'))
     addNotice('world', 'AzerothCore licence text:', readFileSync('world/azerothcore-LICENSE.txt', 'utf8'))
   }
-  for (const name of ['client-data', 'interface', 'native-registrations']) {
+  for (const name of ['client-data', 'interface', 'native-registrations'])
     if (sources.has(name))
       addNotice(name, 'Client rights and locale:', 'The owner accepts the redistribution risk; this is not evidence of Blizzard permission. The verified enGB extraction is an English stand-in for enUS, not proof of byte-identical enUS content.')
-  }
   if (sources.has('codex'))
     addNotice('codex', 'Codex rights:', 'The owner accepts the unlicensed Codex redistribution risk; permission has not been established.')
 
   const manifest = db.prepare('SELECT name, pin, sha256, licence, attribution FROM source ORDER BY name COLLATE BINARY').all()
   if (!manifest.length) throw new Error('Source manifest is empty')
-  const output = '# Database source notices\n\nThe reference database contains mixed-rights data; the package MIT licence does not grant rights to all database contents.\n\n' +
-    manifest.map((row) => `## ${row.name}\n\nPin: ${row.pin}\n\nSHA-256: ${row.sha256}\n\nLicence: ${row.licence}\n\nAttribution and notices:\n\n${row.attribution}\n`).join('\n')
+  const details = manifest.map((row) => `## ${String(row.name)}\n\nPin: ${String(row.pin)}\n\nSHA-256: ${String(row.sha256)}\n\nLicence: ${String(row.licence)}\n\nAttribution and notices:\n\n${String(row.attribution)}\n`).join('\n')
+  const output = `# Database source notices\n\nThe reference database contains mixed-rights data; the package MIT licence does not grant rights to all database contents.\n\n${details}`
 
   const metadata = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
   const tables = db.prepare("SELECT name FROM pragma_table_list WHERE schema = 'main' AND type = 'table' AND name NOT LIKE 'sqlite_%' AND name <> 'meta' ORDER BY name COLLATE BINARY").all()

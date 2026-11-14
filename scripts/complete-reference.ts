@@ -60,7 +60,7 @@ try {
     compressed_sha256: hash.digest('hex'),
     compressed_250_mb_gate_passed: statSync(compressed).size <= 250_000_000
   }
-  writeFileSync(path.join(output, 'build-report.json'), `${JSON.stringify(summary, null, 2)}\n`)
+  writeFileSync(path.join(output, 'build-report.json'), `${JSON.stringify(summary, undefined, 2)}\n`)
   if (!summary.compressed_250_mb_gate_passed) console.error('Compressed asset exceeds 250 MB; an explicit scope decision is required before publication.')
 } finally {
   if (container) {

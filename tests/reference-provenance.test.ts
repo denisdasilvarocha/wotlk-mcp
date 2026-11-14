@@ -1,13 +1,15 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { expect, test } from 'vite-plus/test'
 import { schema } from '../src/schema.ts'
 
-const digest = (value: string | Buffer): string => createHash('sha256').update(value).digest('hex')
+function digest(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex')
+}
 
 test('final provenance hashes typed logical tables and emits notices from the embedded manifest', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'provenance-'))
@@ -25,11 +27,15 @@ test('final provenance hashes typed logical tables and emits notices from the em
     const manifestHash = digest(readFileSync('data/client-inputs/manifest.json'))
     db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify({ client_inputs: manifestHash }))
     db.close()
-    const run = () => spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+    function run(): ReturnType<typeof spawnSync> {
+      return spawnSync(process.execPath, ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice], { encoding: 'utf8' })
+    }
     const first = run()
-    expect(first.status, first.stderr).toBe(0)
+    expect(first.status).toBe(0)
     const result = new DatabaseSync(database)
-    const meta = () => Object.fromEntries(result.prepare('SELECT key, value FROM meta').all().map((row) => [row.key, row.value]))
+    function meta(): Record<string, unknown> {
+      return Object.fromEntries(result.prepare('SELECT key, value FROM meta').all().map((row) => [row.key, row.value]))
+    }
     const initial = meta()
     expect(initial['hash.sample']).toBe('original-export-proof')
     expect(initial['count.sample']).toBe('original-count')
@@ -50,16 +56,16 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(text).toContain('9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136')
     expect(text).toContain('aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8')
     const second = run()
-    expect(second.status, second.stderr).toBe(0)
+    expect(second.status).toBe(0)
     expect(meta()['canonical_hash.source']).toBe(initial['canonical_hash.source'])
     expect(readFileSync(notice, 'utf8')).toBe(text)
     result.exec("DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)")
     const reordered = run()
-    expect(reordered.status, reordered.stderr).toBe(0)
+    expect(reordered.status).toBe(0)
     expect(meta()['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
     result.exec("UPDATE typed SET value = '42' WHERE typeof(value) = 'integer'")
     const changed = run()
-    expect(changed.status, changed.stderr).toBe(0)
+    expect(changed.status).toBe(0)
     expect(meta()['canonical_hash.typed']).not.toBe(initial['canonical_hash.typed'])
     result.close()
   } finally {
@@ -83,7 +89,7 @@ test('a mismatched client pin fails without altering the manifest or writing a n
     expect(result.prepare('SELECT name FROM source').all()).toEqual([{ name: 'client-data' }])
     expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({ value: '{}' })
     result.close()
-    expect(() => readFileSync(notice)).toThrow()
+    expect(existsSync(notice)).toBe(false)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

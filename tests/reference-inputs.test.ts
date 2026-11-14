@@ -13,7 +13,7 @@ function executable(dir: string, name: string, body: string): void {
   chmodSync(file, 0o755)
 }
 
-function run(output: string, bin: string) {
+function run(output: string, bin: string): ReturnType<typeof spawnSync> {
   return spawnSync(process.execPath, [script, output], {
     encoding: 'utf8',
     env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` }

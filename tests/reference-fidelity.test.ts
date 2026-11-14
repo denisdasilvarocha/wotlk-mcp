@@ -20,10 +20,11 @@ test('reports cross-source discrepancies with bounded evidence without changing 
     for (const line of readFileSync('world/schema-columns.tsv', 'utf8').split('\n')) {
       const [table, , column] = line.split('\t')
       if (!tables.includes(table)) continue
-      if (!columns.has(table)) columns.set(table, [])
-      columns.get(table)!.push(`"${column}" INTEGER`)
+      const existing = columns.get(table) ?? []
+      existing.push(`"${column}" INTEGER`)
+      columns.set(table, existing)
     }
-    for (const table of tables) db.exec(`CREATE TABLE "world_${table}" (${columns.get(table)!.join(',')})`)
+    for (const table of tables) db.exec(`CREATE TABLE "world_${table}" (${(columns.get(table) ?? []).join(',')})`)
     db.exec(`
       CREATE TABLE dbc_Item (ID INTEGER, ClassID INTEGER, SubclassID INTEGER, DisplayInfoID INTEGER, InventoryType INTEGER, Material INTEGER, SheatheType INTEGER);
       CREATE TABLE dbc_Spell (ID INTEGER);
