@@ -1,0 +1,3512 @@
+{
+  "format": 1,
+  "client": {
+    "build": 12340,
+    "locale": "enGB",
+    "provenance": "English stand-in for enUS; byte identity is not verified",
+    "original_executable_sha256": "aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8"
+  },
+  "extractor": {
+    "stormlib_revision": "6bb1882bd00ddbc3729cac5dac0fda81a61e5514",
+    "library_sha256": "fccf813a37b3e323f9ab97339e0c6eb8bcda98e22bfd7265eb02ecec6725c235",
+    "python": "3.15.2",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "cmake": "cmake version 4.5.0",
+    "compiler": "Apple clang version 21.0.0 (clang-2100.4.1.1)"
+  },
+  "inventory": {
+    "paths_sha256": "686dcc93b174144265d885ffdd28cf73c64afd64a550170aa995accb39f60493",
+    "research_commit": "6aaec0a94f70848127c155aa627554e5e9cad3b6",
+    "excluded": [
+      {
+        "path": "Interface/LCDXML/LCDColorLayout.xml",
+        "reason": "outside FrameXML, GlueXML and Blizzard addons"
+      },
+      {
+        "path": "Interface/LCDXML/LCDLayout.xml",
+        "reason": "outside FrameXML, GlueXML and Blizzard addons"
+      }
+    ]
+  },
+  "archives": [
+    {
+      "path": "common.MPQ",
+      "sha256": "4e6d38e01e5b7beb3c6aae0aa033d95a0a9b6bf90abfd8427a92dd13d66b0955"
+    },
+    {
+      "path": "common-2.MPQ",
+      "sha256": "783a2f88d145c973b555aa07652459ee865a06ef5f372e917aeed0a8275e1da8"
+    },
+    {
+      "path": "expansion.MPQ",
+      "sha256": "2c563ad4cf8f82c7695ae815b3e5972aa36e9c5b56f13dad829eee0f66887dec"
+    },
+    {
+      "path": "lichking.MPQ",
+      "sha256": "8a581a386ecb5c5a6bae14e13565c3b4500090616ba14bff4eb8461418a80142"
+    },
+    {
+      "path": "enGB/locale-enGB.MPQ",
+      "sha256": "9fef0b9d5383c63d85acc95ea44f2f176c8879dcff66700748ebd1c7b28b4650"
+    },
+    {
+      "path": "enGB/expansion-locale-enGB.MPQ",
+      "sha256": "f647677c9e85f32edca2231fac0e9ef4cc04500ff01bb44c5457b245e9fd27ad"
+    },
+    {
+      "path": "enGB/lichking-locale-enGB.MPQ",
+      "sha256": "89b1eba015927e321683a3867be1b8a76e593c438527eb42f4934d03484f1b04"
+    },
+    {
+      "path": "patch.MPQ",
+      "sha256": "92b4a94a6c7a23c0b9fd88c47823e41792879a7ee1f70c2349a255153ca25d54"
+    },
+    {
+      "path": "patch-2.MPQ",
+      "sha256": "40798b242484ab52f26512bbd46ea8bb48bba81a57b38df353b9c4cce0426ba3"
+    },
+    {
+      "path": "patch-3.MPQ",
+      "sha256": "56dbbfc8f9ce7182ca88538d75284e738020138a7ca4217d72d8168865510dd3"
+    },
+    {
+      "path": "enGB/patch-enGB.MPQ",
+      "sha256": "830b0a591eaf69ea6263d13a0b277182ecc9345ec446a8bc85eb5e8aa6ae56c5"
+    },
+    {
+      "path": "enGB/patch-enGB-2.MPQ",
+      "sha256": "6ddd1a5e40e89bd4ad304f3046964f33c635254278581a2ecdcae851dafb6441"
+    },
+    {
+      "path": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9658b915be4f6d5a4403392f8ec357f71999d5018dd29a8bbe63d736725c2357"
+    }
+  ],
+  "files": [
+    {
+      "path": "DBFilesClient/Achievement.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "aaf20be5f21604de7a8b2ad9512b80761e01877e40bab48ec644541a8e860822"
+    },
+    {
+      "path": "DBFilesClient/Achievement_Category.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b9e2240eae751ec7171a53fa1abf04e4fc01923833ce6ed81f20dd3cc41a4d50"
+    },
+    {
+      "path": "DBFilesClient/Achievement_Criteria.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "cc2458b30773d874bfb98d79c668a0b6d4cff1059b019f0fbfd4d358c54a515a"
+    },
+    {
+      "path": "DBFilesClient/AnimationData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "5c694f178114b6e55e50ac9fa1045a69ff859ddf6dbd934e0334a4cda0172a3f"
+    },
+    {
+      "path": "DBFilesClient/AreaGroup.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "aa50dc68f20007d3823e6413b2f5158dd83ade85c5aa59afdd870cf5d871b036"
+    },
+    {
+      "path": "DBFilesClient/AreaPOI.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ff0b639b0fc7b96c18035c46156fe23b344a89fcbecaeae908173cd8eadc77fa"
+    },
+    {
+      "path": "DBFilesClient/AreaTable.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "eb4bcfa77b03aed853c4783ac260a4259970effaad5b8a74d868783b4dbdc44e"
+    },
+    {
+      "path": "DBFilesClient/AreaTrigger.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c043300ffae75d78374bcdde57c397ef8d07c2269d1d81d57acab44567d9866c"
+    },
+    {
+      "path": "DBFilesClient/AttackAnimKits.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "9b9a43f367aed2d98436cc9e57f8cb398b4a75c40ecca530b607370135096b0c"
+    },
+    {
+      "path": "DBFilesClient/AttackAnimTypes.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "330aaeb83908885a21dd9b9262cbf8423ac8802467234baab1caa24d0f682c88"
+    },
+    {
+      "path": "DBFilesClient/AuctionHouse.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "bb8b096723b7f9fa44f0c89818c8d9b3683e4a439510fc9ea70fa497038dd123"
+    },
+    {
+      "path": "DBFilesClient/BankBagSlotPrices.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "ad79ced9ec6588abd9d6041c6d509f78d94cf4924c0519d3bf79a1a5c4281105"
+    },
+    {
+      "path": "DBFilesClient/BannedAddOns.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "8ce8191e12723a8038d1bb29c80def826493882ca084d56c4541b5c018ead4fe"
+    },
+    {
+      "path": "DBFilesClient/BarberShopStyle.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "17e447b184cb058b04e5b0ad559dae35eaab3587253a9a68dd6a6d38b87f9cbd"
+    },
+    {
+      "path": "DBFilesClient/BattlemasterList.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4fe0e9f594a660fbcfcea38a768c8b59a2b8bca5546592fe42b3d7ae9e1d7f13"
+    },
+    {
+      "path": "DBFilesClient/CameraShakes.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e95249073f694c7c4e8f71dd9a7d1289265b71a8e688b1bb22db83d5afb63ee3"
+    },
+    {
+      "path": "DBFilesClient/Cfg_Categories.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "73d7a335cc92ebb9cd6be7e7e0be6c2b0775c8594e29528623b6457c86f35b36"
+    },
+    {
+      "path": "DBFilesClient/Cfg_Configs.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "3b5c427d8b1cd4169a59ab16ce73d1e4dfa29c9bed88caa5ba6ae31384a682d1"
+    },
+    {
+      "path": "DBFilesClient/CharacterFacialHairStyles.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d67bfb0a674af83dab5301ab686a534ec888fae7b52a91045213e111a2399554"
+    },
+    {
+      "path": "DBFilesClient/CharBaseInfo.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "1e81c6f8a218b187187c9f13e65cad39920aab56a57f2955d72385d94fee2e25"
+    },
+    {
+      "path": "DBFilesClient/CharHairGeosets.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "02421880eff0960acd722324a57546612edd05d76be9a0d77d273cffe9fba843"
+    },
+    {
+      "path": "DBFilesClient/CharHairTextures.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "61bb25999617ffc8007e6046122da09dd585a727fda55ba9aa8a1f52ccc97daa"
+    },
+    {
+      "path": "DBFilesClient/CharSections.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "18fc8d23f6e66598ab1681a74f90239ebdf84b76f300db0865cdad7d042b833f"
+    },
+    {
+      "path": "DBFilesClient/CharStartOutfit.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a026407cd4fa60867ac2eda1070e89679e811774b476980902125f6d5af61540"
+    },
+    {
+      "path": "DBFilesClient/CharTitles.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e2d3f13def04de9a1e55eaf985f817ea2bda5c530ec756dfc3dab99741076f49"
+    },
+    {
+      "path": "DBFilesClient/ChatChannels.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4088979141d38b6f413b62a28ffe61b53d0484becb75d6d73e747c54c889ddaf"
+    },
+    {
+      "path": "DBFilesClient/ChatProfanity.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2128d9cbc3a86bff9cc5265c027882ce58de6927de6b54edd801dd8e25d161f6"
+    },
+    {
+      "path": "DBFilesClient/ChrClasses.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "5b2bfc7dab577f48cafe86db1d6148515569507b273f0c95b5ae86713ff5b3e2"
+    },
+    {
+      "path": "DBFilesClient/ChrRaces.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3d3e1443e8e97b1810275a45bc3f0588c83d876d04121401cc5adaa02f507bcd"
+    },
+    {
+      "path": "DBFilesClient/CinematicCamera.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "8c750b78e0a7c22951d1ed53e4e4c679fb17c647286aed902b54254a400480ff"
+    },
+    {
+      "path": "DBFilesClient/CinematicSequences.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "efa52f0c55bd8a9e5663b2f259bd0dd5a3f2bb385a56d901f3ebae253b83dd71"
+    },
+    {
+      "path": "DBFilesClient/CreatureDisplayInfo.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "a12109c610ca82af993d7c8562617ad88ab538293649f89ee0e4bed7ce85a37a"
+    },
+    {
+      "path": "DBFilesClient/CreatureDisplayInfoExtra.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fcc19e68414c4abf5a790fc327cad0f724e3b70fdc1ec8e69eebb8664a467522"
+    },
+    {
+      "path": "DBFilesClient/CreatureFamily.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9f9d22cf0b213c45789266751dbdf2ee9162ba2be01eb2d89dd9c88cacefd5e2"
+    },
+    {
+      "path": "DBFilesClient/CreatureModelData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2ff650f7a1b20a7edb088ffaa88f13b747b63a2a29ee6e3dc3c0d475d5ccdfe2"
+    },
+    {
+      "path": "DBFilesClient/CreatureMovementInfo.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a7cf4bb5546b872679272cd3503a10f758a75a3086a117fd605c0907a3a8d6b9"
+    },
+    {
+      "path": "DBFilesClient/CreatureSoundData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c929b29d51245c6acdc4b70761a0785644c3bb0e342203d03e24094211552f32"
+    },
+    {
+      "path": "DBFilesClient/CreatureSpellData.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5f7bfdb14f966677ec18cd8b8572e0bd44eb3b12aa8e28fa420ea7a45420a9b9"
+    },
+    {
+      "path": "DBFilesClient/CreatureType.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "27b5a33c0293122e87263871597f222abe8b9b98e4520acbd89cbeb7240fc0a4"
+    },
+    {
+      "path": "DBFilesClient/CurrencyCategory.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b4e06d0e72925144b7668487c3439c778d35f997197f135ccd63cb7de027fb12"
+    },
+    {
+      "path": "DBFilesClient/CurrencyTypes.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "61ed134510b11f4c010e505d3167240924e4c105839c15c5ec473cbc51f1844d"
+    },
+    {
+      "path": "DBFilesClient/DanceMoves.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "f5d29ee88b659aa33ce4627ac7b581571a7fc6931081c5c63bfa8a93cffd74ee"
+    },
+    {
+      "path": "DBFilesClient/DeathThudLookups.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "8db1d2d037a23a257e8057832481015654d21402d396aa74244e2f990e19b7c0"
+    },
+    {
+      "path": "DBFilesClient/DeclinedWord.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "bcb59c262020f1c6dc1efae67e69bfd77d5405f2b6b395009bcd43a5313090fc"
+    },
+    {
+      "path": "DBFilesClient/DeclinedWordCases.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "47c5b9adb49e1d1c5431fff8a7047c8a2f2c8f4fc85a0f8d678fd9f8975cf959"
+    },
+    {
+      "path": "DBFilesClient/DestructibleModelData.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "9a942150457dd4159aa76653c5ee3e94949e4b9b65d3ea06b36bf953221d1432"
+    },
+    {
+      "path": "DBFilesClient/DungeonEncounter.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "af174dff3933fc5263be204f6ccfa9388dfb7f19ad54563ae65e1a1a1aa95e73"
+    },
+    {
+      "path": "DBFilesClient/DungeonMap.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5"
+    },
+    {
+      "path": "DBFilesClient/DungeonMapChunk.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c9fda294ce565501518aa782957a5fe45d92147a79c34a5f29493194a8d318c3"
+    },
+    {
+      "path": "DBFilesClient/DurabilityCosts.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "9c76fe46133a6bf2f169bd2e435b09cbe5cc4915aa93d7a75cf3cb4444f3f4ba"
+    },
+    {
+      "path": "DBFilesClient/DurabilityQuality.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "293ac1f60e9d834accb869631e8fe42c9d13dd9454cefdfefc2f076cae8f5be7"
+    },
+    {
+      "path": "DBFilesClient/Emotes.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f76e66c57bd355870a315d116dfa83304f1b7d21636fd1ca6cbf65e1f012e4cc"
+    },
+    {
+      "path": "DBFilesClient/EmotesText.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "54b6004b8cdf547387530151976c612724ebe4d6389c4a5c1d98647bb730bff6"
+    },
+    {
+      "path": "DBFilesClient/EmotesTextData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3278cfe26ee5a4c9fd22e6eacd5acf7196bfb8318bf2963de11b735b96ebd47b"
+    },
+    {
+      "path": "DBFilesClient/EmotesTextSound.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a4838f123580dbec5ae858bea51c3d8cc6ffed924203ceb50e81c196eebb1916"
+    },
+    {
+      "path": "DBFilesClient/EnvironmentalDamage.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "81f4a158d904fd04a6eac16dd5bbdd3fcba54e6711b935a5f7a0e6de98f5036e"
+    },
+    {
+      "path": "DBFilesClient/Exhaustion.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "c87430b03c5094715b604ec2f10d006087cdff1c34501d1199d6b0fdee68b79d"
+    },
+    {
+      "path": "DBFilesClient/Faction.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "74563a2735f5523613c2cc88de97c8bee96c01c174b4f5fbb3d85db1e20c0ad1"
+    },
+    {
+      "path": "DBFilesClient/FactionGroup.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "aa34965330500c5b57092d344cfd94cb75aeaa8d1f33cb183f869a2af648e791"
+    },
+    {
+      "path": "DBFilesClient/FactionTemplate.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "0e5aae3ec23aea267afcff265386c78719c17ada1cc443d010372fb0e3e63f8a"
+    },
+    {
+      "path": "DBFilesClient/FileData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d19a330c7748182df2b606b66d47bc4af838b08a6ee644b87b24c88bc62655a5"
+    },
+    {
+      "path": "DBFilesClient/FootprintTextures.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "139c946cf2ae36d142bd067460d490750a5ca4cce496c5e58d45ee0d1c34e57e"
+    },
+    {
+      "path": "DBFilesClient/FootstepTerrainLookup.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ab1c8252f7827877bdbffb67bf0900738a2f92c813dfddb2161891f881dd0e05"
+    },
+    {
+      "path": "DBFilesClient/GameObjectArtKit.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "bb93023df469cd48452e0e8068721177550068fdafc25f383fa83c65f842e60f"
+    },
+    {
+      "path": "DBFilesClient/GameObjectDisplayInfo.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "98affbc38e647afe1318f9a92cf05ed1b4823ee9b406c72a9a13e9cbf8b55a55"
+    },
+    {
+      "path": "DBFilesClient/GameTables.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fa4930d02d448c74eaaa79e097d4b5d202a43ea50514905693e96579e16913b3"
+    },
+    {
+      "path": "DBFilesClient/GameTips.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2b81e63c7a97925659db4ad5940b4b6f68b2522dbe5127d73b266a84f1039058"
+    },
+    {
+      "path": "DBFilesClient/GemProperties.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f8ec92e43ad7dacea5f94f1b19acca67f1c803d727da17099c10e66f04f19e3f"
+    },
+    {
+      "path": "DBFilesClient/GlyphProperties.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "11237852179c218efdba4ddbb899c835a63770505c5dd383b710a3d8c01c1d50"
+    },
+    {
+      "path": "DBFilesClient/GlyphSlot.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "80e1076f884a69c3c6ca0e1f77170ed5517e1c41a6b8cc2f7c6ac2aa5a821701"
+    },
+    {
+      "path": "DBFilesClient/GMSurveyAnswers.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e9da9d9252d3d3961f7325dda2c08129e1a6c29e96a77985190f444c7b8eca74"
+    },
+    {
+      "path": "DBFilesClient/GMSurveyCurrentSurvey.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b468c54bf7e6db404eaaabe3fb8db3f4644d541e4fd7f96ee9d41037ada05521"
+    },
+    {
+      "path": "DBFilesClient/GMSurveyQuestions.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5d94fb6968b1ce7a384641c8c22186d43bf768c43d0751b8133fc92ca1099b1e"
+    },
+    {
+      "path": "DBFilesClient/GMSurveySurveys.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9b0edc0dc2af9e4349813ecf1f5532acb3ed050d89a20cfb083456b0ac4a731c"
+    },
+    {
+      "path": "DBFilesClient/GMTicketCategory.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f98fcf8b80768f484a62f64750a9955517fcb158a32d85f45a6a7989e05908ad"
+    },
+    {
+      "path": "DBFilesClient/GroundEffectDoodad.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "af50bbf22f8119008f325abd6fbc474388727dfbb171c0cddede8d65e3ec4a2d"
+    },
+    {
+      "path": "DBFilesClient/GroundEffectTexture.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "28b4cb73981f329f89c84d4265bde6fee80910b7e777f317fb4e6e91d5ee3341"
+    },
+    {
+      "path": "DBFilesClient/gtBarberShopCostBase.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "67f516e72d709a74ad5e4e9a58297b495bd6ebb4a3052978ed6da16ca883be69"
+    },
+    {
+      "path": "DBFilesClient/gtChanceToMeleeCrit.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2acb54ef9c47418bea48e557503b7e9a03cfd1365ee2b7be4bc8c5cee5de7f30"
+    },
+    {
+      "path": "DBFilesClient/gtChanceToMeleeCritBase.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e2a82b78cb1ac14b697312b1dad6ca85dcd25fe993e56be9aca9326f52c35ddf"
+    },
+    {
+      "path": "DBFilesClient/gtChanceToSpellCrit.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "8ec9ba0579200283619491509618f2a176a52bcbaf60f4d5a885e2c7d90ef4de"
+    },
+    {
+      "path": "DBFilesClient/gtChanceToSpellCritBase.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "45963fe68a4293216a5345fb8cc5ba9acace8d93175d008148e11465416ffc5b"
+    },
+    {
+      "path": "DBFilesClient/gtCombatRatings.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "92f4ef0247f6a23c7911e1a51ae0e9648e5d1ed1b5cbc1b01e646ddcae13f280"
+    },
+    {
+      "path": "DBFilesClient/gtNPCManaCostScaler.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "3b33c96f97acefa9b15aebfbbe311dc4db02fd32933d9e2e84bd59fd81cb306e"
+    },
+    {
+      "path": "DBFilesClient/gtOCTClassCombatRatingScalar.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7a4f0d2bdf163ab83f7e9260d6f4c577477053847e5df3fc14df9e4248b680fa"
+    },
+    {
+      "path": "DBFilesClient/gtOCTRegenHP.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8ccff60891dd4c45c0ffcea56fe652e28163d3c39f9261541ec1d9bcb3e94dd2"
+    },
+    {
+      "path": "DBFilesClient/gtOCTRegenMP.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "503758abb3cece2dded98a62adbf665a8c04d77fabc3bed77f6cae51f7849109"
+    },
+    {
+      "path": "DBFilesClient/gtRegenHPPerSpt.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f4681e7686c9e2b8199634adf18f7fe18538557caf968d6f451613ec293419fc"
+    },
+    {
+      "path": "DBFilesClient/gtRegenMPPerSpt.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "06b8000be88ce9795bff44a2bd3e31e519ea11e78c16c2e2a36eb144c5d24cfd"
+    },
+    {
+      "path": "DBFilesClient/HelmetGeosetVisData.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "d27deb50a7ed7ec5b8841d7569616a41d1ff734030c0233d90a3a0a38955ca81"
+    },
+    {
+      "path": "DBFilesClient/HolidayDescriptions.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2c50f12253003a037a11b1b53729b91b033f46de1e622d8db26c6556b0929b78"
+    },
+    {
+      "path": "DBFilesClient/HolidayNames.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "24843983115b9251db4ad9c2619b464809d8b7f75549b37c428feb2f44432431"
+    },
+    {
+      "path": "DBFilesClient/Holidays.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "89136b7ece127547916d5b6c57d44d10c4c87729229a191656273e6bbd1ebb62"
+    },
+    {
+      "path": "DBFilesClient/Item.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d455bc30b59bc368b2a972a913864dd092d50695140b9513582100dc56ed777d"
+    },
+    {
+      "path": "DBFilesClient/ItemBagFamily.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "39ec1262c4daf48bd4111288671ac9d3c4b266a06b83b52ac05b6806c775b24c"
+    },
+    {
+      "path": "DBFilesClient/ItemClass.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f14b09254010765ab75c3c04ddf55a4b03e75163655c5015d188b04e31fa1b20"
+    },
+    {
+      "path": "DBFilesClient/ItemCondExtCosts.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4271c7df2f6d7733da687adb61b0cc873641272264beb44c4f9e25bdea9cd3c5"
+    },
+    {
+      "path": "DBFilesClient/ItemDisplayInfo.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "42d2c67fb12cb79e1e62fee2839f5f8f8239abe4ecfd45ed6fee1021642d19bc"
+    },
+    {
+      "path": "DBFilesClient/ItemExtendedCost.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "606622955569b472e9c9de13b352242f5f0ec8d8bda6c0c3667b9d07feffac8a"
+    },
+    {
+      "path": "DBFilesClient/ItemGroupSounds.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "34d370ab0b77017a9d9f083067f5ea2649deadcf7936ebe8aa2e04c7eaa97503"
+    },
+    {
+      "path": "DBFilesClient/ItemLimitCategory.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3c9f8e72a3b08a887b3f5b380ace8f0bf9ee5364239e26fc140897b0980f5626"
+    },
+    {
+      "path": "DBFilesClient/ItemPetFood.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "3dcd77b1585b59e8db123e11cce80e6665402a4bd70313d0cc0ee716cd47859f"
+    },
+    {
+      "path": "DBFilesClient/ItemPurchaseGroup.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2d98d7213db0ed5f370a1b6147dcc54ccae37eb07e85e469a15f1c47b40d3c7d"
+    },
+    {
+      "path": "DBFilesClient/ItemRandomProperties.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "1fbe2fe7de694bc0fac4d2f3687c38fb3a1b7b175a3d59fec9f00e15ecdebeca"
+    },
+    {
+      "path": "DBFilesClient/ItemRandomSuffix.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1a1c061c5b27970dc6e1680d6e448d51e89bfbc99f5ef88056eca93d44e9ba5e"
+    },
+    {
+      "path": "DBFilesClient/ItemSet.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "28c285ea7cab86b74c06ad30138c62c26d5ea5303f1fd2bccb9b3285a95d3467"
+    },
+    {
+      "path": "DBFilesClient/ItemSubClass.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ed037619b6277fb2b05c3cf05233b19687a4004427d5e63a12d038804bc8b0e5"
+    },
+    {
+      "path": "DBFilesClient/ItemSubClassMask.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "4fa10195733e30c0821b7c705674dc2e9ec22cc1c0f1800d391e78417f678804"
+    },
+    {
+      "path": "DBFilesClient/ItemVisualEffects.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "761649aab0d8a4fb3786c83c17bbf55f84b73cd4b96e736010031ee18d49a5ee"
+    },
+    {
+      "path": "DBFilesClient/ItemVisuals.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "d2af5a29c78b10a3a366641de2785c15cb093d5e5f46fc740772a29b90164091"
+    },
+    {
+      "path": "DBFilesClient/Languages.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "35b5d2750e86773f8e9c0ebad4e29ff6c82e0f889dee280c56c2ac7c6999caec"
+    },
+    {
+      "path": "DBFilesClient/LanguageWords.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "00382b3c391386297647c2391d5dcbf51ede11b0575b961980ddadb46d599589"
+    },
+    {
+      "path": "DBFilesClient/LFGDungeonExpansion.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f596277a9e1b321da3b674fbada5d38b742d7d55ee8cc3ed3f41cc61f0195da9"
+    },
+    {
+      "path": "DBFilesClient/LFGDungeonGroup.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3db11915e0ce818135a3ffaa1efb4a8142c16857a0b6b50c433df8ad2c67f9ba"
+    },
+    {
+      "path": "DBFilesClient/LFGDungeons.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "99937ac9c700668bda26f5b01c8d611f3563f4dc07881a5cddbba7381d4fa3ae"
+    },
+    {
+      "path": "DBFilesClient/Light.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0387a608e1f4b353434ee8a72427692538c64fd11eb07e697e826e85008629b7"
+    },
+    {
+      "path": "DBFilesClient/LightFloatBand.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "05cb9f3f41994929b1f7989b76e691b63254a13a834f8e1ef4f049561a103065"
+    },
+    {
+      "path": "DBFilesClient/LightIntBand.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e86e662d3bd520125bae6f3028254936b9611b6ad21ee64fcf8a34afb63e21af"
+    },
+    {
+      "path": "DBFilesClient/LightParams.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0be83f26444fd886b6acbe61297ac0538aa36cb31151f66c591e3508ce2660d8"
+    },
+    {
+      "path": "DBFilesClient/LightSkybox.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ed9b9c23fac25cc3d57dcea14c98026d47d2a0d23002da1b1a8fa6ebd3d68803"
+    },
+    {
+      "path": "DBFilesClient/LiquidMaterial.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "103b8daa4f2b7d683ff95c19ffe03160ba684eb05e035491033b463911a23d0b"
+    },
+    {
+      "path": "DBFilesClient/LiquidType.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a511b7ffb5b6b20a0a45a57f71fa1c8e9d37616496d9ef8df1e38ba8573e40f4"
+    },
+    {
+      "path": "DBFilesClient/LoadingScreens.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "8640ce1430c37182794ed331cbcc6fb890a0b22eb9616681503ba1a4ac9e4ac4"
+    },
+    {
+      "path": "DBFilesClient/LoadingScreenTaxiSplines.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9f1374425f76368b76fb1e284d70e24b28b3dc45a455c73417c04cb7bfc52553"
+    },
+    {
+      "path": "DBFilesClient/Lock.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c49bd7ed970583a3660d5d16d6917e91e46aafc9e9ed7926281f4889d45904d0"
+    },
+    {
+      "path": "DBFilesClient/LockType.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "ff3f0db00e828ad02b4fc34fe9fd4560f720aea210cb3db5f73bb7eacadac22d"
+    },
+    {
+      "path": "DBFilesClient/MailTemplate.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "672d4e835e9016e1581a41c763d5d62b100b6bd23ed572d491b6b2690bbe237a"
+    },
+    {
+      "path": "DBFilesClient/Map.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "261bd7c2c9dbdba1f2966ca21106673ed722c2e3681d227f1eed261b6ce870d5"
+    },
+    {
+      "path": "DBFilesClient/MapDifficulty.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1ae8728a20a8ee236b4683a34886a2f16dd6402a83ab8768870321b2ea748c9c"
+    },
+    {
+      "path": "DBFilesClient/Material.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0c30ba608a985d0b773a52b50e288789231206923b6120464646bd71286e265b"
+    },
+    {
+      "path": "DBFilesClient/Movie.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6f3afe6f65b7559c46436ed2a0cda2d0ab72e7fe7c85c35ff825bc45a40b1da8"
+    },
+    {
+      "path": "DBFilesClient/MovieFileData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "24664c98e9b1a1540dfed4dbb54c7a9ec1a1d8b93a386a3865741ee4c5a1aaf0"
+    },
+    {
+      "path": "DBFilesClient/MovieVariation.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1e6f7135fced80340fa4a684c93b25e3c3e75d7f6fe8b6e58aed3276ee73fcdb"
+    },
+    {
+      "path": "DBFilesClient/NameGen.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "01b0bcbd0aafe8a51527739fc77dfa9c385a30b54a0b7d03d5dbb503b8a30652"
+    },
+    {
+      "path": "DBFilesClient/NamesProfanity.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ef5467847af400e29ca973b3f99e42fdb6110aae954559fb49f4299ba97e3d99"
+    },
+    {
+      "path": "DBFilesClient/NamesReserved.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "75bd7a7aa1efb9b26a6e3eb1b96ba54b478083c54b9f45843a2ebefdc9b759f5"
+    },
+    {
+      "path": "DBFilesClient/NPCSounds.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d8ccaebee4b73c15421856e0d052f8551f24a839086a0f64eef53b5ffc81aee7"
+    },
+    {
+      "path": "DBFilesClient/ObjectEffect.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "986686ae6bb157d0197ee8b03bd0511f2ff987fe354f148712a97515659b6370"
+    },
+    {
+      "path": "DBFilesClient/ObjectEffectGroup.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "7a27f5bbef272308f8774a1670ef72a3d3e8df5e27b788b9c5f4c5f90833fee3"
+    },
+    {
+      "path": "DBFilesClient/ObjectEffectModifier.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ba0b40da11ecc02e02bf20473ddb978589fe654307d951fe0aea71c8e7e60efc"
+    },
+    {
+      "path": "DBFilesClient/ObjectEffectPackage.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "10074c08823bc6d7efac2fa10456bf15f3166a1ed8578d25a2d5f2789b1c6891"
+    },
+    {
+      "path": "DBFilesClient/ObjectEffectPackageElem.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "294df40848d0458e3ffa22243e7db1fd315e1ca98fc4f5ad77e957b48406f4e4"
+    },
+    {
+      "path": "DBFilesClient/OverrideSpellData.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e18d721e743d3a2ba5353837ec1012d0ad120d7ac2039ddb54ecfff98b0413db"
+    },
+    {
+      "path": "DBFilesClient/Package.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "6708613d6f229c3b32efb37b591e2d1adca46ed4e022a715ef5bf4befefaaf6b"
+    },
+    {
+      "path": "DBFilesClient/PageTextMaterial.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "25f19f032c0ced6824d0e43296e27428767e64822d9954d12c89eec10ad2a560"
+    },
+    {
+      "path": "DBFilesClient/PaperDollItemFrame.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "43c40ee0a4ea5bd9046056a18062e01ef7aafeea62fb2c5022421ef760642817"
+    },
+    {
+      "path": "DBFilesClient/ParticleColor.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5813e3a16315e150df1e571955b5e412281f211df3ce9cb65621639fb486f82f"
+    },
+    {
+      "path": "DBFilesClient/PetitionType.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "bf33b20226b455536ffb7b78b4f2f9eb7b143782a8c2ae98d82d51c7ac7e7ae4"
+    },
+    {
+      "path": "DBFilesClient/PetPersonality.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "31e0be3e060d7b7bb67ddbdb484669a66b9a895c5ab9a7d67cce7617187897c8"
+    },
+    {
+      "path": "DBFilesClient/PowerDisplay.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b9dd3d7066ce8af3d102b28d424eb8cbc15f2a0bcbfbd2058cdf60fc35c11124"
+    },
+    {
+      "path": "DBFilesClient/PvpDifficulty.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "deabd15566ec7cd00e456460e8fae387f5969fb9c6d0f167ec208314cda997e2"
+    },
+    {
+      "path": "DBFilesClient/QuestFactionReward.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b77370593e354d6d58f30ede9faf4327fa418931b91a6bc4ccdead5d2a9c6dc5"
+    },
+    {
+      "path": "DBFilesClient/QuestInfo.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f76eb735b078198b8c529b1622e41f25d84800054968c473833cc061b8292a81"
+    },
+    {
+      "path": "DBFilesClient/QuestSort.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "d2707e3478d973f28c5714fb34ba525b624f5d3cb43375225b6fa43357cf984a"
+    },
+    {
+      "path": "DBFilesClient/QuestXP.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ae88d842e994dccad08d58983f8c524c0aa51a3557ebbb5aa687098298a7b8d5"
+    },
+    {
+      "path": "DBFilesClient/RandPropPoints.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0ad51c07a6c4fb08af50fd9b135bce18a5d15ff12d72fc441e5da3b3589b7048"
+    },
+    {
+      "path": "DBFilesClient/Resistances.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "7a6c88b2bbc951f9605081bb36b85502f169ec829acbfccbef25d0170c4e6e0a"
+    },
+    {
+      "path": "DBFilesClient/ScalingStatDistribution.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "87d8f6e8a9e4b047f8b3d32987ac3948da75e3370f5cc4df94f88f0ba9803256"
+    },
+    {
+      "path": "DBFilesClient/ScalingStatValues.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "4dbe737264f6652f7a4378e018caeb7db8def0fb8c116756a8887d2bbfdfee86"
+    },
+    {
+      "path": "DBFilesClient/ScreenEffect.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b345b319d8e214af28658b6ee310549525ee4b2d45d0f821317fea631a09b2d9"
+    },
+    {
+      "path": "DBFilesClient/ServerMessages.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "62c9082bc5caf05c46dc67c846514269a0f8d0741fa6ab6c8090925e0026149a"
+    },
+    {
+      "path": "DBFilesClient/SheatheSoundLookups.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "49dbe76506ea656d216911ceeaff70527d6430ae658f9870ad131bcd9bc79249"
+    },
+    {
+      "path": "DBFilesClient/SkillCostsData.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "8c22981dc5c7cdccbe0905733a0c064871e90af7972048d2eda55317253499e8"
+    },
+    {
+      "path": "DBFilesClient/SkillLine.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "276824940b7a38e1639e974571e5cb1ad0a1ecbaf3d7d14ebf02ab0294edcadb"
+    },
+    {
+      "path": "DBFilesClient/SkillLineAbility.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4154b833d6a26b9b9ce53851d56cb594f0813c0936a72ec89f933cc69abe42c3"
+    },
+    {
+      "path": "DBFilesClient/SkillLineCategory.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "f3a0649d15a770cac5f900115d6390186729cb90202325de45a4992725edd93b"
+    },
+    {
+      "path": "DBFilesClient/SkillRaceClassInfo.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "341a42678faee5f208e0874ab154ee174b99ba469306df7458bdaf0ffcf76967"
+    },
+    {
+      "path": "DBFilesClient/SkillTiers.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "7bf8c5f87fc7917fa3bb42b459246fd8c5870e5223d24d66ae16e27e730c7e49"
+    },
+    {
+      "path": "DBFilesClient/SoundAmbience.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "48597600c376f0bd55d24ecd14702d8a0276904e4e0d3d74b5cbd9f4c917594b"
+    },
+    {
+      "path": "DBFilesClient/SoundEmitters.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "8c6c2f6b000184837d7c4d08e768b6e0d7eecdd66f6f81b83269c601bdc92f5d"
+    },
+    {
+      "path": "DBFilesClient/SoundEntries.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6ed8ea6fcb90fa35d0ad8f709b8c7a27b37fa917cb64215128a49afe6c4e95a5"
+    },
+    {
+      "path": "DBFilesClient/SoundEntriesAdvanced.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fff9c28caabb83266450d971c4d3fbe5a3292b1a25ee22d5b092dacbdabac72c"
+    },
+    {
+      "path": "DBFilesClient/SoundFilter.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "c4d0554bc4df842cad0c67a6ab96d6e218a238f2a2c74d51ba09f9299b8a4a49"
+    },
+    {
+      "path": "DBFilesClient/SoundFilterElem.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "4eee838189a6ab5fc62f0e3b746c0e02d99bad388948d701480667e6435cd357"
+    },
+    {
+      "path": "DBFilesClient/SoundProviderPreferences.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "995bd3d155ad2e4aac54216b3fcbf84dfb9426d85a023d6a32fbf70fccd744a6"
+    },
+    {
+      "path": "DBFilesClient/SoundSamplePreferences.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "94ed41f35196a91480ff91f2909322d9fabb0956bdeb7c4d0265af6decc29966"
+    },
+    {
+      "path": "DBFilesClient/SoundWaterType.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "5702931f6f68b38c5805b7a4720ebe6adf187054c99976fe5c5f000b90047cf7"
+    },
+    {
+      "path": "DBFilesClient/SpamMessages.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "aeecd470d1c8a7c3a99e1aca17b5984e99454714a8c4d8bf6e49f6ba99b6c648"
+    },
+    {
+      "path": "DBFilesClient/Spell.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d5cce1a83550dcfa9eb2f0251dbb11fd24c272534b2b1a9b230924a44d817ab3"
+    },
+    {
+      "path": "DBFilesClient/SpellCastTimes.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "919ca9b65cb144a3a9cf0ce10d2a25fcc7cdccf33c752ed376e086ff62f8ccec"
+    },
+    {
+      "path": "DBFilesClient/SpellCategory.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "0026cb005df9a7bc5f48c55fa453fc531c89fd28f50f217ffbc35684490b70c1"
+    },
+    {
+      "path": "DBFilesClient/SpellChainEffects.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "df76c5f9e54584c494187e7d168e64689da6c3e885b259f910566dc227929e17"
+    },
+    {
+      "path": "DBFilesClient/SpellDescriptionVariables.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "8b7179ad7561b920ebcba721c1efefb7fc5697f4e7cb8eb30ce30a542daa6d85"
+    },
+    {
+      "path": "DBFilesClient/SpellDifficulty.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9173f9a8c97e690fb5a7ce1d6730c1449da214752c52a3885f79d58952bb95a4"
+    },
+    {
+      "path": "DBFilesClient/SpellDispelType.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "c642ffcf522828b436eff6ce68e568288fbe0eb2ab1cd69f7671d3566f0f6cad"
+    },
+    {
+      "path": "DBFilesClient/SpellDuration.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "caa2cbec7fa711bba180af10c253ab0d111609ec2bda1c354fef09e54bc279e4"
+    },
+    {
+      "path": "DBFilesClient/SpellEffectCameraShakes.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "183d0b8d0e5cbd3722db535fbb33a856f21b05f21450c6f7f2e31c5e9ebd8817"
+    },
+    {
+      "path": "DBFilesClient/SpellFocusObject.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "48173023cbf1f20b3a307d90b8ef95c910c0f7bb64d6738ee3c9ff605abfa3fb"
+    },
+    {
+      "path": "DBFilesClient/SpellIcon.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2b12326641dba1554878b3f53c993e1211e50b3839ccdbeca378a23e7b3248db"
+    },
+    {
+      "path": "DBFilesClient/SpellItemEnchantment.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6c8e8c7d6bc2030500a0687a2975e7f81eb1dc2a1da6939f7ddc64e55ce964de"
+    },
+    {
+      "path": "DBFilesClient/SpellItemEnchantmentCondition.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5907c2dc8c590a9d7a5e0ba124575201cd254a75c944d10494372386fd6310e4"
+    },
+    {
+      "path": "DBFilesClient/SpellMechanic.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4330fae827795e1b79a9ba576a45ae740e137d92d6ab312ac85a983368445a89"
+    },
+    {
+      "path": "DBFilesClient/SpellMissile.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "a049e09d4027e7b0c7992aca3a0b002d522a25b4fed11de9ef88ab22b9511495"
+    },
+    {
+      "path": "DBFilesClient/SpellMissileMotion.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "f24c81f36de34eab396eaf4771828c88c2a3fd0ff7d2a1c90682bec14cd20e64"
+    },
+    {
+      "path": "DBFilesClient/SpellRadius.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "409b1612d19bb7860de2a2ea0f18669be1cf40477f85f5c6e12c4758277f3475"
+    },
+    {
+      "path": "DBFilesClient/SpellRange.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "82d261be5e42d90f62a13642a3fd8f421fe1b0056ad8ed7dea73cdf4f8c8cb7f"
+    },
+    {
+      "path": "DBFilesClient/SpellRuneCost.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "731a884c3f92fd51da5ff1e942c02cf8a2c1bb15e027378326c1271694af7339"
+    },
+    {
+      "path": "DBFilesClient/SpellShapeshiftForm.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "beebbd19d2d3e758496c0e5535fd3f301450b1fd984930841a9f120afcaa1dc5"
+    },
+    {
+      "path": "DBFilesClient/SpellVisual.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "966db0c9944068475b31d2584d5db88456d1ab26d0ca0658d75d048f1e00a601"
+    },
+    {
+      "path": "DBFilesClient/SpellVisualEffectName.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0556356171ea424666e0b42961bc5d6997a1c6c08242b2eee799bf75ba3559e8"
+    },
+    {
+      "path": "DBFilesClient/SpellVisualKit.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3fd35945ed732ccc88ff9bdce91be05abb94bcd030a9cb84ce08e932dc5d24a1"
+    },
+    {
+      "path": "DBFilesClient/SpellVisualKitAreaModel.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b7639042e3baa591be60de145696d3cbc8a55ce13c132ed0b2d1bb6bf505c716"
+    },
+    {
+      "path": "DBFilesClient/SpellVisualKitModelAttach.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "01bdac91ce21525ffa4c527b9a0d227bd0a97d93f4a9f223c0b637c1ede17a6b"
+    },
+    {
+      "path": "DBFilesClient/SpellVisualPrecastTransitions.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "3f81455326df9c6568ce34bb8afe81b9d66694e5b763e0909380a9f184dd98ee"
+    },
+    {
+      "path": "DBFilesClient/StableSlotPrices.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "a74561d21b1878ae5f4587960ca749fdf132040c90555dfeddbe4dff5822bc4c"
+    },
+    {
+      "path": "DBFilesClient/Startup_Strings.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "dbd35336bc773fe2947119d2f6ddd62b18869b29279ffd78d41e83845d36ad62"
+    },
+    {
+      "path": "DBFilesClient/Stationery.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "70fec42fc99542b6864df2d2d8a8f65bc966a22cab72724e47a60f4b3ef046cc"
+    },
+    {
+      "path": "DBFilesClient/StringLookups.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "06b2aef8087125463554e30d1fac1ebeedceed491fd0e7947081b3aacf41ce30"
+    },
+    {
+      "path": "DBFilesClient/SummonProperties.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6679ab0a596ecb3b7d5e220e3c1b482935f5b14bb6c38c19941b1bb4355ae367"
+    },
+    {
+      "path": "DBFilesClient/Talent.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "23aefff3add151bf504c4d0bab247e2e622f9cf29a473d091cb9f11127d99d68"
+    },
+    {
+      "path": "DBFilesClient/TalentTab.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b9249642e06b2baa17793e50e6719f33b1f89729f6c31ea623d4a39e84660e31"
+    },
+    {
+      "path": "DBFilesClient/TaxiNodes.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ba2d0c16985a5e561afa8424e1dc826ead6c8db425af127490c5f58d45429b7f"
+    },
+    {
+      "path": "DBFilesClient/TaxiPath.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1af5ba71fca5684a432b9d3f449aaeb21e4c091532e4b5795335be200d88dd5d"
+    },
+    {
+      "path": "DBFilesClient/TaxiPathNode.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9e330838d1a50170354485514bf2d94395339070cde883fa8d18a5a7e7ed6214"
+    },
+    {
+      "path": "DBFilesClient/TeamContributionPoints.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1e05cc6f44185da8bb03d4e0fcb8eeda54a8af1818eb224b620b03ce0337c74e"
+    },
+    {
+      "path": "DBFilesClient/TerrainType.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "6f01e690efb37b2154afa52d7d2e9a614c287ed746d7e37af63891873288fe27"
+    },
+    {
+      "path": "DBFilesClient/TerrainTypeSounds.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9164cf6f524240baaf48cf99306d7e75eaadd832af64cc2977abc1dc401928c6"
+    },
+    {
+      "path": "DBFilesClient/TotemCategory.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2e4daffaa75bc36d84c43ea4e78adb6725e4d52f99538dfe5826f8bae68badf9"
+    },
+    {
+      "path": "DBFilesClient/TransportAnimation.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3495ae27ffe61a63f8ce3dcbb9c72cd6716e6861c31c6b6e217be180910b52c2"
+    },
+    {
+      "path": "DBFilesClient/TransportPhysics.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4a07002714c39dfe6e3834ff673796b7ff3db2f3a5d668d2bc8b138d6f1c9fa2"
+    },
+    {
+      "path": "DBFilesClient/TransportRotation.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "60b9bb29d197f6a255c5b9700fe409d606887ac77274b62a0a05dc2d17af7cee"
+    },
+    {
+      "path": "DBFilesClient/UISoundLookups.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "d10ee19f27a606bd072f0072767b3d7c551a7e637d515bb7d63641a39553150e"
+    },
+    {
+      "path": "DBFilesClient/UnitBlood.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "679d5846baf989e86dc089b477353867f359876d78b865550fc38d09c5522c2e"
+    },
+    {
+      "path": "DBFilesClient/UnitBloodLevels.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "6bdb8ae59e1fa45e313334503824d0a2fcf1bdd6c8265521b0fdf4f295f965cb"
+    },
+    {
+      "path": "DBFilesClient/Vehicle.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "eed7c488c207acc0d9c122d17de00b52c6b8c212782d56bb50c8de62eeda72f7"
+    },
+    {
+      "path": "DBFilesClient/VehicleSeat.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "5ebebcdeff2e0062a59a7e7fa3417cd0ec2f902482c5d3437cc820248bf94fef"
+    },
+    {
+      "path": "DBFilesClient/VehicleUIIndicator.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e1d1f2e5c1b1f671c1ecfcde17927159f4921d27b86268a4938051a49374922b"
+    },
+    {
+      "path": "DBFilesClient/VehicleUIIndSeat.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b2404079947f5e95193cd091c3ccf901f958fff102850de003b0588fd8516047"
+    },
+    {
+      "path": "DBFilesClient/VideoHardware.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "729c24d4eb59baebc18f8e827d4c07f8a23bc3c2ce461d4f58d1f1558f9a4b46"
+    },
+    {
+      "path": "DBFilesClient/VocalUISounds.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "ee73f867eb6f5523e7dfe8ec6b3be6eb163368b61e83c204a67ceeeaf3cbef76"
+    },
+    {
+      "path": "DBFilesClient/WeaponImpactSounds.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "adde2b6e8e205d60e8f7c4feee0169b2fdd8f77ac15ae49fc9a6bf297bdef428"
+    },
+    {
+      "path": "DBFilesClient/WeaponSwingSounds2.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0c75521451dd4a28a32697aa546bf53738fcef7c3faff8d75c6b5372b893a928"
+    },
+    {
+      "path": "DBFilesClient/Weather.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "302587d91ffc2b16ae81c437deb588ff80f3e1f78ade271a95d89c739ab48e95"
+    },
+    {
+      "path": "DBFilesClient/WMOAreaTable.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ba36633b10518d438ce5af207f1b10278019505026aba7364a142362eecfbeca"
+    },
+    {
+      "path": "DBFilesClient/WorldChunkSounds.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0a2fef88d13e28c4956b517a193364e3413183013e1cbd185d176cfcb25b88a2"
+    },
+    {
+      "path": "DBFilesClient/WorldMapArea.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "90e1ec678c8226c76f4dd9f7904f05a4cb0a58c8b4d386719b24949bd55925bb"
+    },
+    {
+      "path": "DBFilesClient/WorldMapContinent.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "2aa85f78acfd2431a9782389161df6597bd440ffae0d758c0bb51f5c9a0ebe05"
+    },
+    {
+      "path": "DBFilesClient/WorldMapOverlay.dbc",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "afd7b71415fe0406e6817c3a15ab2f8ba173d58de9f118d8f4ea4f4ed6b19650"
+    },
+    {
+      "path": "DBFilesClient/WorldMapTransforms.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ba3f2a65c35ba0ab158f4a336c6195b0dcf4754d2e4f53fea5dbe5acf1ad479c"
+    },
+    {
+      "path": "DBFilesClient/WorldSafeLocs.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9a6e6280ae4d0c226b06df3bee1a4aa90d84a2a029bf2175b8a0b5520a9b89ef"
+    },
+    {
+      "path": "DBFilesClient/WorldStateUI.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "a411e2a85c4df5e0a0e52b9bab370a514520e0f7e7dea1a113db22174053160d"
+    },
+    {
+      "path": "DBFilesClient/WorldStateZoneSounds.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "74ccf1fc688e3d7ed0d02a935f52e803a14213b8ec12570fed4dd7d375543526"
+    },
+    {
+      "path": "DBFilesClient/WowError_Strings.dbc",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0aef55a0771c6fc7324c11322c72a600386ecf984b9572df9747e1cfeb3cbb86"
+    },
+    {
+      "path": "DBFilesClient/ZoneIntroMusicTable.dbc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f393d6a5fade9a9b051132bbd0f1f0970b9da214c33c9d3f8a3d70a628531e07"
+    },
+    {
+      "path": "DBFilesClient/ZoneMusic.dbc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "754ad12cecab0ee38bdcad5b92fe45394aaff72655bbd95af40a3c0a6dd4c964"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AchievementUI/Blizzard_AchievementUI.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "910db0f7359b979287fb566f574c482ce9c48eda9f978edba1a46e8ace633139"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AchievementUI/Blizzard_AchievementUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b9ba44f00e9e28c53c77b8294ec917be78aec238878afe2d1a1416e52b47e9b4"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AchievementUI/Blizzard_AchievementUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "cb604d83c3f41296f0faea1520b0092a27342a73041ba90af0b9e201f712975e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AchievementUI/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "6be016b2e5a0ec9487642782d8638338821e8569f806466559430a2b7ad76fcf"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ArenaUI/Blizzard_ArenaUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8485590991bca83ffcdd8a8b9e702c8677bb5107a8c5c4db5a65d6e820950412"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ArenaUI/Blizzard_ArenaUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a13d3ef81faa02791c2260141fa43c729b064525e12902a3381ed33326ca5b2d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ArenaUI/Blizzard_ArenaUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "742fb41f599a51e134808454ee7f3d07fe9686056cd379cc2a004f83152a8c1f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ArenaUI/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionDressUp.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "02a7dd3cb487d13eb7c3d42b6eae6aa68c2fa0efd908513760c1cd8c4783ea56"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionDressUp.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2bfdbcbdeb09b8973810b3b601cf91538681270d07e80a0400b7e9d8e2b49bf4"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionUI.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "78f77b033b2b4d504130468a60297d9416fb19d6b9869c917411b82368a60c6a"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c90e7ac9981faab49eaab43b1b4f983ce0a808a8e6167f57ac5f66fa5514036f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionUI.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "432ed9aefecfd25ce0cec315e04dfdbd30bd5760d6267fea1f9c54a50071e0ab"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Blizzard_AuctionUITemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a199d30947f90ca4dacf0ac0ca14ebb4493a42c1f10a643d256c8fde860d025b"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_AuctionUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BarbershopUI/Blizzard_BarberShopUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b7e461c7cb6076527e0f3ace8cce4124fbbb18ed69e464f27c4841dbdae24064"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BarbershopUI/Blizzard_BarberShopUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "af657f105f2763dc24f85bfe7d22585e5f21ed2dd26b2bcb7aa203641114149d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BarbershopUI/Blizzard_BarberShopUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2f203d37e227a53357838f7e0bcea7a679574d381a3d1e068303748118913ca0"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BarbershopUI/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BattlefieldMinimap/Blizzard_BattlefieldMinimap.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "0836d19ac86e3163a03031b53019678b263589b6969d156a389df5cb7965261c"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BattlefieldMinimap/Blizzard_BattlefieldMinimap.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3077e0c380ff2a14f4176c5015ed8f60f0a98b1fca7eb64ada631fb1c1da77ad"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BattlefieldMinimap/Blizzard_BattlefieldMinimap.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b331df8de31253bbe23d18e2ac36439c11c78f40ae04a21694001dff49c040dd"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BattlefieldMinimap/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BindingUI/Blizzard_BindingUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "d7c5d18a94e92bfe2dd819c12f600be8e37ac29639b61834d6400eba95e333d4"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BindingUI/Blizzard_BindingUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "38f73524a8f845fcfd1952c681cf9e432d7f4e57a3b4679ec4a8f7a860c8d1a3"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BindingUI/Blizzard_BindingUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "adbaffbb7834def3d0234275a9d304ceab3c3d7a6da880e0c12b381b07911dfe"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_BindingUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_Calendar/Blizzard_Calendar.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "532d0f6faa602841cfc12930d3f18aa6f5fcc6d24c5f60328eba2b7eb4909421"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_Calendar/Blizzard_Calendar.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e6ae7a2be163456fece07423496753d54d49f700333487543aa4f0ec03c85095"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_Calendar/Blizzard_Calendar.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "4d492a502cb705fbf313424d3cef547772f19ce532cdd94021b1a16bccc6c22b"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_Calendar/Blizzard_CalendarTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "cb1afc9b0668acb04f3bbaebd1961775282865e3ccd572bf41c040ea9ce2ab05"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_Calendar/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "611c002f5a450a45a9312c0881c893f27ac933f4d09d019c62744ba437bae200"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatLog/Blizzard_CombatLog.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "993ae921ef5ea29974bcbd2a340fa6923366a114a71a54625c4043f6de60ccb7"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatLog/Blizzard_CombatLog.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "6d69a7f8cd51d830fc58cd49ce7fe4c066433289b6e52c9c27d403d89096b418"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatLog/Blizzard_CombatLog.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "28c8c6704f3585c9307e8b068dbb678473f067bc9fe0b8584d6175537e39942f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatLog/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatText/Blizzard_CombatText.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "da8210a1f49860a2525b9beed13c3095cdee19e4c0d70595e731b2c7b5f38206"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatText/Blizzard_CombatText.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ad8ef7725848c799b8f668a6a0224d7b5fcb932eaefbd7c8a6b4a3c2ef153271"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatText/Blizzard_CombatText.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4f82c87e25b3c6b618dc9f3f2af5decbdc75c0a172f8132864bb8cae55722f48"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_CombatText/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_DebugTools/Blizzard_DebugTools.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "4d0bb015cdd1894cdf6345a4f7f4998056da98364b935a0c2606f9c123e8e983"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_DebugTools/Blizzard_DebugTools.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "159fa224ec79fb7fd2f2d6e231e4f1fb051691d57c998944330d2c6aec72cf4a"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_DebugTools/Blizzard_DebugTools.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "8190776595cff10e2ad3f9736ef3e3e62765ecbe9979890db8345c6c763832e6"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_DebugTools/Dump.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "9a3eb6c45056ee51c14caceb8484f13154f0b6729bc2c5278a44e08abecc57c6"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_DebugTools/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GlyphUI/Blizzard_GlyphUI.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "80f52d9f6ccea2ca55d05912b23fbc2e89a32fb148841f5428d023544358835d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GlyphUI/Blizzard_GlyphUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ea6ac813598ecd23e73ef10ebf96650ba8dae169c96b74de0f130058c3d469a9"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GlyphUI/Blizzard_GlyphUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c0d4474a43f16efac64533c0c3d6e04c8425de50b23a051b4ffbce2fd97de4cf"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GlyphUI/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMChatUI/Blizzard_GMChatUI.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "7e665f3ef8a0e5198d2e81eee950f41a20128eb411aefc8fba9e45b1c7b2d410"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMChatUI/Blizzard_GMChatUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c62a85d32ff68b4575a6acbd9015f55e009de5e80b377c8fe6aa5837197c876c"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMChatUI/Blizzard_GMChatUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "1db10e4e8e29865f0a3bec5b1f068b495a2f587f812c5996a78cef78f2cc80ad"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMChatUI/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMSurveyUI/Blizzard_GMSurveyUI.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "288ff38d2647b60d6c898bc0500aee912a569a3188157dcee52188aa3a9ff012"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMSurveyUI/Blizzard_GMSurveyUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7dfcd94e313be1fe76e54715d3b9e663c461218d5b7f7e7ab2c69a88a0a08c25"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMSurveyUI/Blizzard_GMSurveyUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "abd2eb7dd8c526c6937800bd1439419201c3386af88334fa1d6036aa88eb3bf9"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GMSurveyUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GuildBankUI/Blizzard_GuildBankUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e87321d1f403106d9863052115a04d4355ffc3a59776912eab0513e1dc3aa2f8"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GuildBankUI/Blizzard_GuildBankUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7167d469c6688088b9342c2a832cf46a4d18c8dc52fc3e12d5d2b6e8b355cf4f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GuildBankUI/Blizzard_GuildBankUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7d9c36fa784af5987995b7b804b0ac69bbdfd3f4b5172be76517b72f81b9811b"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_GuildBankUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/Blizzard_InspectUI.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fb809af70294912ff0083efe762f4f54549238f1814af6b181526ff03acf88a4"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/Blizzard_InspectUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "80955cd5b2a32965c7b42f0cb26c42c1441d47a2f8936609c22208ee64f5494e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/Blizzard_InspectUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c47b19b3c5926e072dea786bcd74ab5b3ca29ebc948d15c268f7218a563c35c9"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectHonorFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "f6505d894385920e19f8f9bd328e6c2313e2b2c489b2e0119418821e5c3c164c"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectHonorFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "ea701fffb85c87b9d0b65dfed99f5f2125618a17e32d68f33eef87293eece80b"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectPaperDollFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4875082c918d5c13b04e9e5c44bdaa8c63b218929054a0c05f2335056e5d21f3"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectPaperDollFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "227a653d683427521134bda774abd3cb79e540589027fcae2936912a0a44ae0c"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectPVPFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0a74bd553effde063c83fa306b00367faa0ab0a34a297c6139b3e376ede7836f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectPVPFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "635c72eac8c67244036fd2aa8686df38900f9eaf2b3e174a94086633b86957fe"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectTalentFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b32bd2ccce5d426d7eeef2c7436a76bb8a50a053bc24fe50822dc5bac61c2412"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/InspectTalentFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fa7095c503cb71f1ac52ddc615c21a5dc40a62b30541e8a5153bcbd0929a5395"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_InspectUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ItemSocketingUI/Blizzard_ItemSocketingUI.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b9f951df28c57588dbb22da3261e47ac8604a67f98abaf787a93498615fbdd0c"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ItemSocketingUI/Blizzard_ItemSocketingUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7e2215be37f5608a4ff7cd46b86a60a088a9c2b6aef468e293c37b493bd2249d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ItemSocketingUI/Blizzard_ItemSocketingUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "9dcf4ba56b1b56a555ec2edbb726795f796c328d57a49a5ae3464ae81aa0d2b6"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_ItemSocketingUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_MacroUI/Blizzard_MacroUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b166f2ba90d6dd09b21b3f29de7c2ceb258869ff35cf1df3b9dfd872654fad92"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_MacroUI/Blizzard_MacroUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "29d32c8973b4a707552203aeb54746541b23e4e9230e07938a8158502913e495"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_MacroUI/Blizzard_MacroUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f1e9e3a4cfc0b94f87bbad8b7f093b4559cb485c82f6473ec56da1f80cf5c715"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_MacroUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_RaidUI/Blizzard_RaidUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "aadb85398a2a5e17c42f83c4b46d2cac6037288f93385704518649f85389429a"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_RaidUI/Blizzard_RaidUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7969fbc8ea5dd87347db4e5e7df9902aabcb1a8fffe551af7cc8c881ebe023d5"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_RaidUI/Blizzard_RaidUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e56cea872bfb40a08f509c2e68de8a1d905fc796f3ecf4335ec9dd53d37b9d29"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_RaidUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TalentUI/Blizzard_TalentUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3058bbae9f87a20111bdcccf35717f1dddc633933a131eb0d80dc403d1541e5f"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TalentUI/Blizzard_TalentUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "21d25eddf0fbd0b655a8b16a381b8e9a8f397251475613d921066123e105bf54"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TalentUI/Blizzard_TalentUI.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "ceb2530e4f48e7ca26804a19d08d2bbbfd078a095d01f8f847df9b3eb78cdf68"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TalentUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TimeManager/Blizzard_TimeManager.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "21d1eff7c021e03583220e568a0d579860c85bde3747293f77e2da7b7225417e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TimeManager/Blizzard_TimeManager.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c27589ea34734ee0a5b1b8d102196b45a08f673b24b27781fb24c6a8c44cd0ee"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TimeManager/Blizzard_TimeManager.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "95284b09925a2d2454d1f3723c2bc40c35a3d67ec41cc304aaa8cdd9a6ef0f19"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TimeManager/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TokenUI/Blizzard_TokenUI.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "1e89f0f6023b159e0dd322ab1cbda72a325dc3c7c12df580a5ab48619d444027"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TokenUI/Blizzard_TokenUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "675f6a31492438a8ad8cb8d16b83c32e48c824bec47bc92e1c3db8eb81704e1d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TokenUI/Blizzard_TokenUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "657abfeb1d8f1e766420be1209223a85e1a2f97a1f29cbc1a0e8297eaed4bb4d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TokenUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2b4cb7fa0e66388bf791d38498dfbfd0926482969990afa98b85219af850b152"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b0583c3add1828d90e68b2965b7f719bc0f7c2b13a16d4cfe30273a57bc7e3ca"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "bffacb549c30e607e8168066be1c136d62a0f5474bee2427a09948469d416e7b"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TradeSkillUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "62320965963587a46768178a35bdef6019d597964b2e93d2d7c508c0c1ff4108"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b8a9add29e1de4c579acdf8dd9b2dcede8c6ea7eac002b184a15b8a298100159"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c2816068c98e36e3097897fca081143b174b37cd218c388779bee10df08ce59d"
+    },
+    {
+      "path": "Interface/AddOns/Blizzard_TrainerUI/Localization.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83a4db4dee61da9ed8ab05ed01d978c65a1c0c6ab8e24ac4c51f88e5a87fd93e"
+    },
+    {
+      "path": "Interface/FrameXML/ActionBarFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b9098a3bbb7b6759aa759d2546bb9c4b8bd5a06e78f4b1264275bf2ce899c748"
+    },
+    {
+      "path": "Interface/FrameXML/ActionButton.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8a16fcc5915f6db601ca27c8901051d01b24bb7d1adcbc8d10d1ce3cfa63a0dd"
+    },
+    {
+      "path": "Interface/FrameXML/ActionButtonTemplate.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "c4869b9e840a0cbca7a8e8c0cd1a3d62ed32096b6692685614959e481ff84bf0"
+    },
+    {
+      "path": "Interface/FrameXML/AlertFrames.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "15e07ca25f800ef0bc73ab52f47174b1a7a69e7b612b4c7dc16076bcf01a504e"
+    },
+    {
+      "path": "Interface/FrameXML/AlertFrames.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5535bcc3f43b1e12735e248b3f8b16683c97e1b87746f17c0fdc84942b054c72"
+    },
+    {
+      "path": "Interface/FrameXML/AlternatePowerBar.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "1182eb5bce8e42681e91dbfed24243a85d8f0f9a2a42e11316673e8072e2351f"
+    },
+    {
+      "path": "Interface/FrameXML/AlternatePowerBar.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "51a8c9bd083394207980f5458e6dcd70edcd0c03c994b4c24f415ea4f0b1cdc8"
+    },
+    {
+      "path": "Interface/FrameXML/AnimationSystem.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "001ccafe96fea7919caf0a94214973eaa3ea14a51583e1102b47278a92bafc98"
+    },
+    {
+      "path": "Interface/FrameXML/AnimTimerFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d01349cae6ae5a144a27704b30a40aaa564b5188d5ee40934fb08e35a0955935"
+    },
+    {
+      "path": "Interface/FrameXML/ArenaFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fdbe2c1e0dbd8ff205611c0278777e351f8d5f1d0dbe6e587dd8ef78011f3f86"
+    },
+    {
+      "path": "Interface/FrameXML/ArenaFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7f67f0d651216ea882034f2b5bca48e0e97c9f2e8f21049258c36dea0952d934"
+    },
+    {
+      "path": "Interface/FrameXML/ArenaRegistrarFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "034a5a09f67dd7837d51c8585b58bd39fbf6a630dad19e19324f8ea854ef48db"
+    },
+    {
+      "path": "Interface/FrameXML/ArenaRegistrarFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2c23769189c20d08b2091b9ae8f4b548581e80d68d3459e249cc72e7ef3da227"
+    },
+    {
+      "path": "Interface/FrameXML/AudioOptionsFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d7b73cd2568c238cb75e10d4a7618e7607af5efe82c747623f5274eccc7c50a7"
+    },
+    {
+      "path": "Interface/FrameXML/AudioOptionsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "1501afbe914775098473d7eda85e705c91484095478f2cd15ab7282437358319"
+    },
+    {
+      "path": "Interface/FrameXML/AudioOptionsPanels.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "57cf8819cc600f13af158657f89a034beebcf88c10ba03b640fa392fed48b4af"
+    },
+    {
+      "path": "Interface/FrameXML/AudioOptionsPanels.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "315eca9dcba64085a39f5983e67292800475d4709ddeb05d66ec37c46504ada8"
+    },
+    {
+      "path": "Interface/FrameXML/AutoComplete.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9d135f6aeb56140a5ab3505de48bbafd50d742d887b1d5e605f6fa53a1dc4cca"
+    },
+    {
+      "path": "Interface/FrameXML/AutoComplete.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c1b9e12d3c9ea8d431ae442a31d90b5269ed57abe0d4cc659c341ff6ff93b6e9"
+    },
+    {
+      "path": "Interface/FrameXML/BankFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b15798080cf1770ffb2d01153a84e339d789675b02e5d4d6b48ba3bd48382f64"
+    },
+    {
+      "path": "Interface/FrameXML/BankFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b618d46599ae85c71b96d1d167bb0d169f1bf30d8ec9400341fa9001b5f8f176"
+    },
+    {
+      "path": "Interface/FrameXML/BasicControls.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "af2715b24a59140e58d58d576d68e9c2463089b1e92dfbc760b8a8dba62742c3"
+    },
+    {
+      "path": "Interface/FrameXML/BattlefieldFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "194b2a6b72c789b2eaff9a781cd9c9b77c5b18bb8c687ee56d9a75e2ea9c3f66"
+    },
+    {
+      "path": "Interface/FrameXML/BattlefieldFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4175d3e371486cb99b947012bf50e6b4095a7964fe3bb57a702b060bcdbd46ed"
+    },
+    {
+      "path": "Interface/FrameXML/Bindings.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2e01276afb7462f1417710f13b4bf1a456341f7f28cc8ae0d6d9c7442d7f6793"
+    },
+    {
+      "path": "Interface/FrameXML/BNConversations.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "846da01c566f2831edd5b55a5e5c7743b51008588223a7402f4c74d3eff9c2e1"
+    },
+    {
+      "path": "Interface/FrameXML/BNConversations.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4c294527f07f0e4c780544ddc2208a4178b2e25fa8122589c1b16a0a442d0807"
+    },
+    {
+      "path": "Interface/FrameXML/BNet.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "aab3202413e8c7eaacc55ad7cf2d5e86d00ec6828b448e5f63e7b31233de3f6f"
+    },
+    {
+      "path": "Interface/FrameXML/BNet.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "178d8a884b695faab43b6bb6468789dd11ae386b9409db655f8af4a5e896a7c4"
+    },
+    {
+      "path": "Interface/FrameXML/BonusActionBarFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "debfcc42135560e910574df8eb3f30a6fd58f5d4ea28f093d4b49f065fc1da38"
+    },
+    {
+      "path": "Interface/FrameXML/BonusActionBarFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "993590532942c85f6feda8794dd1dad6b4c3442218ba0cf3f1d0bd0dca5dd419"
+    },
+    {
+      "path": "Interface/FrameXML/BuffFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a03a93119e9ee9449d00574393c62ce129fdfbf067446f6d8cb908db42d48685"
+    },
+    {
+      "path": "Interface/FrameXML/BuffFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5d481e98255f9cc5bc97076550126795e69f36b6d27342ed3e33fb4048aa2c90"
+    },
+    {
+      "path": "Interface/FrameXML/CastingBarFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e72f707dee07bcbd949500a4fc87c9440b3d9e895e061d873d74ecd41c026ec6"
+    },
+    {
+      "path": "Interface/FrameXML/CastingBarFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5728ae1dcb8712761a862de85c0a8d5df8ee65a2f869a237348a323e0bf4f85a"
+    },
+    {
+      "path": "Interface/FrameXML/ChannelFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "63168a0a2cbdd144e91c2afc3800631fd4d3c7b9f294086f02794f83b5121309"
+    },
+    {
+      "path": "Interface/FrameXML/ChannelFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6737c41f7c95690a0049eb0e4e6528d74be279fa19fc66fa4eec2c7c1fa47da1"
+    },
+    {
+      "path": "Interface/FrameXML/CharacterFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0f3c09e47e060b1e8e299b5e8e8bb8a15803156b074039b62f57829872cf57cd"
+    },
+    {
+      "path": "Interface/FrameXML/CharacterFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7bf1a20fd3b59f7d02d2b1bdd034ea1667a37383d9b1049d757ac68af1fe5df4"
+    },
+    {
+      "path": "Interface/FrameXML/CharacterFrameTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0237e89c8e4b0f4f5d2ed1e4e2d0ceeb0e3ab22882974774cbb6fb0d1e70e916"
+    },
+    {
+      "path": "Interface/FrameXML/ChatConfigFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "03b7d4fd102271170131364a44ebcb0d5182e0b8ed82bff80c1e8dd8db063b70"
+    },
+    {
+      "path": "Interface/FrameXML/ChatConfigFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1ba6de7d264d8f4f424b7bc07f4306c9c4e863615c3f9540dc3de800aec31e36"
+    },
+    {
+      "path": "Interface/FrameXML/ChatFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2506a6ec7db6c3af66a279b963940360395a1680137b8570988f4dc824c87029"
+    },
+    {
+      "path": "Interface/FrameXML/ChatFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fbc5a81e2d07a6ef42f1d33c8d5748d1617c697df898985978e81b19aa720c69"
+    },
+    {
+      "path": "Interface/FrameXML/CinematicFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "91d682db2d1c541a44181784814540e598e627d8bfcb7f6e5470f488ae8f3b0f"
+    },
+    {
+      "path": "Interface/FrameXML/CinematicFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c1674bbd0e9ba30c79ac379cc8e2df87c91281fc8faeb7719f5dada7ee3ba314"
+    },
+    {
+      "path": "Interface/FrameXML/ClassTrainerFrameTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0dfa3ed243aa0379326be514365f0dcaa528fbcc9b5eacaafce577e6eb1e013e"
+    },
+    {
+      "path": "Interface/FrameXML/CoinPickupFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2214a00fc6719ca96d97d831c3dd7c8ca46e76a8ae7e69e354e510b08d7a5289"
+    },
+    {
+      "path": "Interface/FrameXML/CoinPickupFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5248bafbc22759cb5e67e0d9d162071d3076d7d102c4298148f7e2b51569366d"
+    },
+    {
+      "path": "Interface/FrameXML/ColorPickerFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "0d5940bd86a1781594939b303ab69a542b9b3acaa68c01d509156800a9a54668"
+    },
+    {
+      "path": "Interface/FrameXML/CombatFeedback.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fe5b96046acbdfd72501b8191a1cf23b8ce82da79145d60e62f3854b4263b1aa"
+    },
+    {
+      "path": "Interface/FrameXML/CombatFeedback.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "aa5ca0655dfcd6b22d007020d0abce9b531e579dd82eb5d8e200145f757a4176"
+    },
+    {
+      "path": "Interface/FrameXML/ComboFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0c6ed2a722efbb09c2df92bba85f0fe0fc861d9b93ba418239fdcf472806ace5"
+    },
+    {
+      "path": "Interface/FrameXML/ComboFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f2661acc863f31cfa8f3363eb7cf24b649161f52a1327cebac3455417703b58d"
+    },
+    {
+      "path": "Interface/FrameXML/Constants.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e8685d15e54a88da0ed3da7eaff7897ae2d49bd2b05a23d8b32a49ddb4fcebf2"
+    },
+    {
+      "path": "Interface/FrameXML/ContainerFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "027cf4a6a1fc94dac9ca70ec60491b7ac0bce23ecb582b4639261222fcc7742b"
+    },
+    {
+      "path": "Interface/FrameXML/ContainerFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "7e42faf9d8d7b519912962c6401ccd85a9755edfefb9202ccae3741cff110c2d"
+    },
+    {
+      "path": "Interface/FrameXML/Cooldown.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5"
+    },
+    {
+      "path": "Interface/FrameXML/Cooldown.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "4a4df9bea9917862a0623c3acb0e8428bda84ae1727432142342fb1253fd5ec1"
+    },
+    {
+      "path": "Interface/FrameXML/DressUpFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "eb25e4562de5b6033d60585865c830e49f1744637c0cbeece12f3bbf9886b80f"
+    },
+    {
+      "path": "Interface/FrameXML/DressUpFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "3753f8c43d5ff541541ec3636ab3b6622839b94b6192ecf1669bac66673f649a"
+    },
+    {
+      "path": "Interface/FrameXML/DurabilityFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a939a49fc447a9f50301490898ad59dd06b63313ae5d0ef7a7fa253b2e0273a1"
+    },
+    {
+      "path": "Interface/FrameXML/DurabilityFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "caae5a1c0e5d4e9974e4b29cad6764c0be35bff3df34269dc1bf24e30f5ff7fc"
+    },
+    {
+      "path": "Interface/FrameXML/EasyMenu.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "6ee137fef57f3829665dce3faaccc13f5f64cc126749db295a44b95f30c38302"
+    },
+    {
+      "path": "Interface/FrameXML/EquipmentManager.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a65f0b6dc0693ad75a5be070efb2f19f827894f0dd51d3880b979a34cb645054"
+    },
+    {
+      "path": "Interface/FrameXML/FadingFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "70387fcec1a93bcf88cb52dcbb90f926ce47229b5a5d9047791f49a6613ff7cb"
+    },
+    {
+      "path": "Interface/FrameXML/FadingFrame.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "f9d35e1757b6fa534c83128d6863a6582c20314f7528732ee92f2bf79cb3520c"
+    },
+    {
+      "path": "Interface/FrameXML/FloatingChatFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "7c018efb33f0a35366f50c00cd81dfa69f5ad694e0e97b8ea824f27245e7f000"
+    },
+    {
+      "path": "Interface/FrameXML/FloatingChatFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "15b990f64027ac3bb707c1315e37c8bd4293854c457de91d1e4b201b6088c65c"
+    },
+    {
+      "path": "Interface/FrameXML/FocusFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "59107678fe11a3912b08b5462a665b8f51e37b64726d77a1525d996e48c63e46"
+    },
+    {
+      "path": "Interface/FrameXML/FocusFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "6c9f4e8a2c3f93708e19fc4b77ee5193e045d9f99f3f63890ce256fa6957eb51"
+    },
+    {
+      "path": "Interface/FrameXML/Fonts.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "5dedf8fd311607915048e2c3d0e37201f755c146b69f2b05a0096fb26c87bfc3"
+    },
+    {
+      "path": "Interface/FrameXML/FontStyles.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b82816657f61a4b66a2fd7242b82e23b332e5eb19cd175533ecef5a65fa5aec7"
+    },
+    {
+      "path": "Interface/FrameXML/FrameXML.toc",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "3158bea13225ae51137a389f0f3ab8566e94b6be84196dd2c1fda27024677754"
+    },
+    {
+      "path": "Interface/FrameXML/FriendsFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d222a597f678591f432641244c9488f81dc05cfd7c2917ec0d18d1c6b5ce781a"
+    },
+    {
+      "path": "Interface/FrameXML/FriendsFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "dbc7251174a2ac6a13b0cee9120f13cd47e7f4c71a736b96fb625c18fedb4da5"
+    },
+    {
+      "path": "Interface/FrameXML/GameMenuFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5e2b76b4b3f23c6e4ddff1d356ef972a5a3636aed94227e8d7ec4423a1f2d546"
+    },
+    {
+      "path": "Interface/FrameXML/GameTime.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7c866eb804365fe3c0912f5bea71ea745f22b3aaa35435fd9ade1369f3694916"
+    },
+    {
+      "path": "Interface/FrameXML/GameTime.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3055736676e017b1b1855e6f4d0aa2aa73366c58be872cdc2a7cecd220712db6"
+    },
+    {
+      "path": "Interface/FrameXML/GameTooltip.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0fa5aace1474d3720da40ad78239696f846a6bd28941a80c604e9ef20d71a891"
+    },
+    {
+      "path": "Interface/FrameXML/GameTooltip.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "1dbb0f872edbc1b8172dd90c6d1538d6912b78386301aaa97e59d20537728d6d"
+    },
+    {
+      "path": "Interface/FrameXML/GameTooltipTemplate.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "86df18cc7ee606a8295ff1e715de27cee2f7dfc7647750176f66ed72b8ea7f8d"
+    },
+    {
+      "path": "Interface/FrameXML/GlobalStrings.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "cc26f14e77720023c5b6e9ca25321b7cbfd49333faed8facc8b9f9083a5632a7"
+    },
+    {
+      "path": "Interface/FrameXML/GossipFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "62975c951db4ba15e826b62634b2794599fd0f8c33cfe8f61ba3238ed8cd7c42"
+    },
+    {
+      "path": "Interface/FrameXML/GossipFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "799352dc29a89df0839ac1ca7df0fa602d9a5c09c0d5ce1bd8be305077a0032f"
+    },
+    {
+      "path": "Interface/FrameXML/GraphicsQualityLevels.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "bdc4bcfc556e7130400e085d03709ace15ddaa5e22d332854b0445e8ec79893c"
+    },
+    {
+      "path": "Interface/FrameXML/GuildRegistrarFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "5fab11d2c546991ff7479f4b4fe01e76c67c8c18f96ec312f292b6e31a754a05"
+    },
+    {
+      "path": "Interface/FrameXML/GuildRegistrarFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "a0cf5c67f9bf919c5a127cd15fbc3b1aeb763d4265aeb684eecdfc8583b46ce0"
+    },
+    {
+      "path": "Interface/FrameXML/HealthBar.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "647bb10faea1935bb1b5b280d1622160f8405c1cb05bb00ca8055780420d74ec"
+    },
+    {
+      "path": "Interface/FrameXML/HelpFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e030b86263f24afce46181455f68132867da679be1b20a7405f552a27b4c0bac"
+    },
+    {
+      "path": "Interface/FrameXML/HelpFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "67bc3a6479af917fb5ff61a1c9b9ab6b2002c19f1f9c1134bc13f95663002034"
+    },
+    {
+      "path": "Interface/FrameXML/HistoryKeeper.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "cef5fd44ff990a7274bf21c88689542ee975ab4adc4de9858a2af5e593268266"
+    },
+    {
+      "path": "Interface/FrameXML/HonorFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "99d66e3cfbca909ccb3dfdb1f8cbaf2abb7d530e4df11334a16b1b7dc4daa301"
+    },
+    {
+      "path": "Interface/FrameXML/HonorFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "3cd0e7bf64ad8de4341d2b061c0f197770ee9220c6ccffc16318054485afb94e"
+    },
+    {
+      "path": "Interface/FrameXML/HonorFrameTemplates.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "c16224b17b0e0ff417b7f8cf5c4b2e06fd151c9deda8f6e62e78d20c035bccff"
+    },
+    {
+      "path": "Interface/FrameXML/HybridScrollFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ab6ceff4eef4f3d3b33a01c4a059fe0babf3f64475c64810a626d9e2c5be8ad7"
+    },
+    {
+      "path": "Interface/FrameXML/HybridScrollFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8fdd7b0b19e3ac4126f9a44553e2e75c7603c8a4299ce4c3ab4dc299c2eae7a3"
+    },
+    {
+      "path": "Interface/FrameXML/InterfaceOptionsFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1178f32909080a7bf0180e9081e6c2b5ed785c3bb52da501e368126f8b0385be"
+    },
+    {
+      "path": "Interface/FrameXML/InterfaceOptionsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "66f908d7e8f4f10eb5d0c4b0d7aea95ba52667eda9218594a462736e4e6d52a7"
+    },
+    {
+      "path": "Interface/FrameXML/InterfaceOptionsPanels.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "35f2aba93a8f283c9e723777022c1efba0e0218e3d9ff217bfd340322c3e23e4"
+    },
+    {
+      "path": "Interface/FrameXML/InterfaceOptionsPanels.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "58d0cfbe6376178c6b2df0ada4b08e29867d77b101eb3698ecc36fe715b2b877"
+    },
+    {
+      "path": "Interface/FrameXML/ItemButtonTemplate.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "54761893e1d124eac1efe9a3e71fb3974c1d680f0a9e6722d952031dcfc6c645"
+    },
+    {
+      "path": "Interface/FrameXML/ItemButtonTemplate.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f25de196b0f9386cd33b01470f051c954ffca72464a51b38548a192e4c7f27d8"
+    },
+    {
+      "path": "Interface/FrameXML/ItemRef.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "79dabb7577a6650158b97439bee4d30802617633509f24dd1b7c54721f1fa7f9"
+    },
+    {
+      "path": "Interface/FrameXML/ItemRef.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "03183c2411840b77321b7c4a2874d79c31c413a611a47180e37bc645d99dbe18"
+    },
+    {
+      "path": "Interface/FrameXML/ItemTextFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "e0413025e6efca46372894f21497b04a2bc2dc1cab15d5457de8b695e8459e81"
+    },
+    {
+      "path": "Interface/FrameXML/ItemTextFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b4c1558e37e1ab685ec8735a85c05548de4e00206b0c9f05e55f9154f7c0951a"
+    },
+    {
+      "path": "Interface/FrameXML/KnowledgeBaseFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c1c7673af70f905c37c0673da8a6cb3b5c336bc3965f71529274e5cd267502a4"
+    },
+    {
+      "path": "Interface/FrameXML/KnowledgeBaseFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "cea6a55091a089e7f180f2f3bdfee185ffdd0996562b3a701ab6ce028e7cb20e"
+    },
+    {
+      "path": "Interface/FrameXML/LFDFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "09f963c257c2ce633c072f078f4170c970f054972ee9409f63d68d38833b133c"
+    },
+    {
+      "path": "Interface/FrameXML/LFDFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "cbb539a5a58b522b2b7bdacaf70ddbdfdf3332ad4b8c590d226460b70e209ee4"
+    },
+    {
+      "path": "Interface/FrameXML/LFGFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ef66a1b5df50f6a334b8ca988434c436d263e4440599b8b4606a44eeb2675c78"
+    },
+    {
+      "path": "Interface/FrameXML/LFGFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "24177edeb88d7ab879a402711076dd87c91bc69b319dc760a8b89aec0bd63cbb"
+    },
+    {
+      "path": "Interface/FrameXML/LFRFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "776d2d6002cb17cc57958ae6c665f435b82c0a6ea8a396aa8efd1a7759e7d0f3"
+    },
+    {
+      "path": "Interface/FrameXML/LFRFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "a65b8f7d41c274e0cdbaa19ec21d3fb70daf23b6c5cc933b196b0a836f41584f"
+    },
+    {
+      "path": "Interface/FrameXML/Localization.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2b2d0c7625d381e198c1cac246e4b2691931b9286ada7bde9cd841b5b47b266c"
+    },
+    {
+      "path": "Interface/FrameXML/Localization.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "865dcda27459448f7fcfb4718194675318a92c03c24ae21ea637a503c4bef7f5"
+    },
+    {
+      "path": "Interface/FrameXML/LocalizationPost.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "70733935a982fa294b5db5cd8273c3e1d9bb9e65ab3f272e27f46344052f0989"
+    },
+    {
+      "path": "Interface/FrameXML/LocalizationPost.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0c6d3298297c2fea110d3ecee82a7eb41d8d1c141ddb2c53b06ff05f6627c733"
+    },
+    {
+      "path": "Interface/FrameXML/LootFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "69900b5a28552b22774d68738d0429ed033b1cf113299f835616bc149259ef4f"
+    },
+    {
+      "path": "Interface/FrameXML/LootFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fb8b97965ae852564c13ce94a44e493e86789d8f54718c1ae1a911f19e1bc2ab"
+    },
+    {
+      "path": "Interface/FrameXML/MacOptionsFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9d13058d4a91460146e48cfe45435b2eea1b0fdfc10ff805e42e63d17d29ed7b"
+    },
+    {
+      "path": "Interface/FrameXML/MacOptionsFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a3caf9b1cbf46bcfd8a5f35a27a67bef4aff632c973643d5b2d1a39b898f336f"
+    },
+    {
+      "path": "Interface/FrameXML/MailFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d1d5e4c5166f76eb2299f6e5aa683a9c410fa0421231923b0cb2d6a6dec534a9"
+    },
+    {
+      "path": "Interface/FrameXML/MailFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4d9ba89ee3e8cf53f9f846891c627e376d1904250eb7a3b531aac967a986f15a"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBar.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "b9d2ef6ee7877384fecdf4cbae58d6d981725edce510ba20f5f32ee6e6ffcee4"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBar.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d3db4e1192bedbbdc134123d2ee7e5d928d151980e1b593b68094f24f84c480a"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBarBagButtons.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "656ebf4cf9c1f80e8e2ebc50fc1f70f0d33d79e95e42f0d2d59ef954da058e0e"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBarBagButtons.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "f19bb2e104e482a7a0a6b6324d73ce59b9fe941ecdc7a5a449e10be6968f42cf"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBarMicroButtons.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e59c36669fa2aa21fa00ed2c3b116d719829d2fdf675e5c287b555294c1e96a6"
+    },
+    {
+      "path": "Interface/FrameXML/MainMenuBarMicroButtons.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2826aa2b4a7c726c83654a792a77d348bc18782080438dd51c045f642fd051bf"
+    },
+    {
+      "path": "Interface/FrameXML/MerchantFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c9e48da74245ad74464c6b9ee3da02bfffd2a1a86786ce9e7bb7cf787264cd69"
+    },
+    {
+      "path": "Interface/FrameXML/MerchantFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e2a8e15dfaf715b002c757b51b1398ab7db3f6caf7c8bab2f4593f5fc3e86cbe"
+    },
+    {
+      "path": "Interface/FrameXML/MinigameFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7391f543280edb76c910fbf897560afb77cdbd7d4ffb63e99355d6e1af878bee"
+    },
+    {
+      "path": "Interface/FrameXML/MinigameFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a6ffa78ee5e294d6febbef20a3dd286615f01b488254261692136bd54ea9dab5"
+    },
+    {
+      "path": "Interface/FrameXML/Minimap.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e6d1fa05b22388bd8e449c24ed3584fd2490b64da38a21c301493789cdfdd646"
+    },
+    {
+      "path": "Interface/FrameXML/Minimap.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2d8a96a781cdbf0937832ea2e0b03ed5c220e13e2deedd14a0fa07d84eb94c2d"
+    },
+    {
+      "path": "Interface/FrameXML/MirrorTimer.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c605fd5dbb3570ab9a7edd21b02ea0a9abc8b4082baae40662fdfaa7d6efdc8a"
+    },
+    {
+      "path": "Interface/FrameXML/MirrorTimer.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fd87208cc9c162b700e4fb2679fe0ef867d1dadf813edcb47f90a4d5f12ba087"
+    },
+    {
+      "path": "Interface/FrameXML/MoneyFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "82ff8282507efe4d2809c5220eb64bbf10ef798e993a7fde5f5fb953abbe72ac"
+    },
+    {
+      "path": "Interface/FrameXML/MoneyFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "ff6020de8579576a076610386ec1c501139a7bcacc7702a3c79a4a4187a6cae3"
+    },
+    {
+      "path": "Interface/FrameXML/MoneyInputFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4ed15550dd0003a20af41246e45c913aefc33c793ba92eb4f7906f1b68b83dcd"
+    },
+    {
+      "path": "Interface/FrameXML/MoneyInputFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "58f3900313c18b9fbf9331152fd1dfd9969703b94c1f0d5e8a8c3ee983cdad39"
+    },
+    {
+      "path": "Interface/FrameXML/MovieFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0c82782c851f9bff2a622ba1e9ff61ce3e3b123df0e7cba209831eeba472f206"
+    },
+    {
+      "path": "Interface/FrameXML/MovieFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4414c6aae3bbf7d0ef9d8d64b596b27300e9467250b7b6d2cdca4c8e7452d3c2"
+    },
+    {
+      "path": "Interface/FrameXML/MovieRecordingProgress.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "3964e415524c2cdb593513a770088acdfced3b52cab410277c970ca1ddcc3681"
+    },
+    {
+      "path": "Interface/FrameXML/MovieRecordingProgress.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fa804e00e035aec655e7d5f1d7c5dccc52234ce2c54bc5fb557007f73567b54b"
+    },
+    {
+      "path": "Interface/FrameXML/MultiActionBars.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9a686b03709d3895bc290941f7741ee3b2b6275d87b207841db94a603858c694"
+    },
+    {
+      "path": "Interface/FrameXML/MultiActionBars.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "4bbf05035715e6c96526fde66e7a322dcc47e176d505953f182795941c0d3f16"
+    },
+    {
+      "path": "Interface/FrameXML/MultiCastActionBarFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3c1926d27156ccda9871806065c25f3ae8f5e7ea6be4d24c209b147420410070"
+    },
+    {
+      "path": "Interface/FrameXML/MultiCastActionBarFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9bc82d474e205f1dc80da6ee517ef7659432f362952737a8fe2b44b555bfa7bd"
+    },
+    {
+      "path": "Interface/FrameXML/OpacitySliderFrame.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "863db31b59ab87c391a5fff27017596ce4ad1441b84c59054a5344f310e4e6f9"
+    },
+    {
+      "path": "Interface/FrameXML/OptionsFrameTemplates.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fe75ab0853a4a31933c45c5b771288d2998be04e4059ec9110aa089969ae528a"
+    },
+    {
+      "path": "Interface/FrameXML/OptionsFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e8b12b796fd7d04602d049d59ac6fdf8a579fec14c5c8964f22337065719378f"
+    },
+    {
+      "path": "Interface/FrameXML/OptionsPanelTemplates.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "555745995b72480ba77c9531b2468b23f7df4a66217c4cca98634712117a0afc"
+    },
+    {
+      "path": "Interface/FrameXML/OptionsPanelTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "feb686fc50dd76d679b6b958ce91df43a1955a1e6bfe6d46d3cf2c5429699453"
+    },
+    {
+      "path": "Interface/FrameXML/PaperDollFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d9ba63b33222a48f3e210964e3f448cb936998d99bea0e6d138940b92c5bc68a"
+    },
+    {
+      "path": "Interface/FrameXML/PaperDollFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3c6b70c49d54e8112f53407a451e7a7e296df3a0690014dc3b2740068ab7ea36"
+    },
+    {
+      "path": "Interface/FrameXML/PartyFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0ff2183bc4cbeca6a8a2ace42dea7e8eac690202e8889ac8f47ce830cc6a00c8"
+    },
+    {
+      "path": "Interface/FrameXML/PartyFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7ccea9f27c5ba5ca6223786b137400d27b863fc042e370c2353bd729a9716932"
+    },
+    {
+      "path": "Interface/FrameXML/PartyMemberFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "673f410ba22f63affa59ab7d5f068c1af4fb37b07b1214a0a92f9f98a22accb9"
+    },
+    {
+      "path": "Interface/FrameXML/PetActionBarFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2e8b646a018d127dbe0bbbdf064e0195787e85774c1f2f1cd8167eeff57e3b0d"
+    },
+    {
+      "path": "Interface/FrameXML/PetActionBarFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "56acde24a595deceb2c0fe4aaea54ec1f34485f667c925436239e9fd07910b3f"
+    },
+    {
+      "path": "Interface/FrameXML/PetFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d08b4aa4057e37335c4a014fa5ddb0f1ac5b0715ccfd51f4c3fdf75f35ffc0b4"
+    },
+    {
+      "path": "Interface/FrameXML/PetFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "03f89178c0884fed54ca7151c2b72b941d510a70a8586abdf1afda1070e78215"
+    },
+    {
+      "path": "Interface/FrameXML/PetitionFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "3227e501a4ba0015dcce3ffa40cf4f64c40cae3e32d25d6e3253fcd3a7716e13"
+    },
+    {
+      "path": "Interface/FrameXML/PetitionFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "df505dcbe3018d4b2d39e2a6eca60df4f75a5fe41cb8a98b9236195c053d7d6f"
+    },
+    {
+      "path": "Interface/FrameXML/PetPaperDollFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "308db599d97fba974e2e5c7267c9c8f3c77060883376c62f0081c99c4ceebb72"
+    },
+    {
+      "path": "Interface/FrameXML/PetPaperDollFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "45ca2f32ea018c6c02e5321b3d15621823852d347887c32632c52a5e5640d407"
+    },
+    {
+      "path": "Interface/FrameXML/PetPopup.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "e34e10c04425dd51a7410833af4679c117863d6eeebd4adc8e0ead076bc619db"
+    },
+    {
+      "path": "Interface/FrameXML/PetPopup.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "30f377ef2bde650a5795a6bcfda85bbab6e6b89f561cfc20d64d0c6fb7eb9eaf"
+    },
+    {
+      "path": "Interface/FrameXML/PetStable.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "b074b86699544388c42768b00934f5192404280653cb5c2fe0fe7603e49463f4"
+    },
+    {
+      "path": "Interface/FrameXML/PetStable.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7881631835cf53772e8db055a7764833e48b79b7322d58bb57dff8be2446deb5"
+    },
+    {
+      "path": "Interface/FrameXML/PlayerFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c274f5023eb8788de3b7b3336ba4558f2e2a65e71bd5995b81eda21f165ce5ed"
+    },
+    {
+      "path": "Interface/FrameXML/PlayerFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e6ee4c75b5b7cfa3e5be880f561ce95a5bd105f15ebb79f87f8d3e2cb94c3a35"
+    },
+    {
+      "path": "Interface/FrameXML/PVPBattlegroundFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d8abfd448e30f0555b557a141e37858530158023732c45b00bab25888fd416b0"
+    },
+    {
+      "path": "Interface/FrameXML/PVPBattlegroundFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b891df77ca222eefc9aa74dd72bf511792b1cfe42870657ad49dad848436d30d"
+    },
+    {
+      "path": "Interface/FrameXML/PVPFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "291fe21d810f1a6933d58c99ba84a32ef3b94a1625d2e07f25ea2a17d3516ba7"
+    },
+    {
+      "path": "Interface/FrameXML/PVPFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "db0194b2dc9d2a26a0a253d336172aeb26fac878b9699accd6587296a7b01020"
+    },
+    {
+      "path": "Interface/FrameXML/PVPFrameTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5730ac91020874a7a1b6ac01fb99439402ce22e4dfbc8adcca3b7feb11b00ac0"
+    },
+    {
+      "path": "Interface/FrameXML/QuestFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "97161787fefe3414af7ae3138de8104f2cd8806818e0cf9322350e5393faf157"
+    },
+    {
+      "path": "Interface/FrameXML/QuestFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f167450d7bdab09dfebf1f686564beecd3ba9b499b06661b16287df5e1d9c910"
+    },
+    {
+      "path": "Interface/FrameXML/QuestFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2e3b104a266941569628ba99d47fc800873066544c3dbb522803ad6d1164611e"
+    },
+    {
+      "path": "Interface/FrameXML/QuestInfo.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "7647282a6801e9b3f14da52b1fa471025d741057cc0fc2b4cd656753a77e63d1"
+    },
+    {
+      "path": "Interface/FrameXML/QuestInfo.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "35bda6f56483bf1e695a427b800f4a4cc65428accc952fe998921ba430b5e084"
+    },
+    {
+      "path": "Interface/FrameXML/QuestLogFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4bde72ab6296d9c804b33aea5f06066e4da4f711af21ba9f9aff117b4b01ccd3"
+    },
+    {
+      "path": "Interface/FrameXML/QuestLogFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a4cefef9d4ad11072931f04b8d55a36476e353c2d5a0af91abf27f0b30045b29"
+    },
+    {
+      "path": "Interface/FrameXML/QuestPOI.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "69843702b491685b5d27e9832836d31a6dc3369ce72d2ae76cf7e660d856a6b3"
+    },
+    {
+      "path": "Interface/FrameXML/QuestPOI.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "eb960bbba168fd34f5af7c762ae7f169c6c7c9dddb80728fe5dcac3fcc4010b6"
+    },
+    {
+      "path": "Interface/FrameXML/QuestTimerFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4190ac50b4f1bfd803dbe034cee8e36b743317139982c2ea2bad91da206cbdec"
+    },
+    {
+      "path": "Interface/FrameXML/QuestTimerFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "89c5669803be9e41ff0773dae351e2045d15e2c6f7a9a4c26f578db47ade2393"
+    },
+    {
+      "path": "Interface/FrameXML/RaidFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "61d70fa0375d565036931de01b68d1dec18e9409d9680f614a84716ae38ad59a"
+    },
+    {
+      "path": "Interface/FrameXML/RaidFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e3f819ab3231dbf8dbd98fe0c5c91fa6bfefca79eb474591f64ba1c614faf419"
+    },
+    {
+      "path": "Interface/FrameXML/RaidWarning.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e6c7ce36fba45df725f17991c1bedb9628aa2fab9ae7171267efbe6a76c6e320"
+    },
+    {
+      "path": "Interface/FrameXML/RaidWarning.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "ff04695ef12f9b502181992f81cac03c051ce171dcee36a3dc11acb8070b268d"
+    },
+    {
+      "path": "Interface/FrameXML/RatingMenuFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "8ea23ab2e668cbfc9b18b53b09c7ff2df2842b542ded08baa9d667ff54fb9213"
+    },
+    {
+      "path": "Interface/FrameXML/ReadyCheck.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7a46cd6d0227dec612e41082f2690f9b01e6c03592fca9eb2377a64a93db1228"
+    },
+    {
+      "path": "Interface/FrameXML/ReadyCheck.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "fafeb3c3dc4ee2bae0623d5f591f287c21d862187e42c20ee0bdd82adc5cb0d3"
+    },
+    {
+      "path": "Interface/FrameXML/ReputationFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0eab740ebd4a01b0e9395bd16588b815d958c345d08c2ddb130f8d56a8e3d0fe"
+    },
+    {
+      "path": "Interface/FrameXML/ReputationFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c584a38f0432ec063c575b4537ab3997f15168e014311ce4d3dac13b958bf9bc"
+    },
+    {
+      "path": "Interface/FrameXML/RestrictedEnvironment.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "c2a67809cebfedd1f2748abf7393d0e442b282ce653f307a8db6db10d872a3e1"
+    },
+    {
+      "path": "Interface/FrameXML/RestrictedExecution.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "d91023d0f8c590cf3168d42ba439c480862fa0c773981a05e69af1051b61ad77"
+    },
+    {
+      "path": "Interface/FrameXML/RestrictedFrames.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "fab961ef313c3df7598b575d15742fc1492c229260d4de7c7bbf28321ff0f849"
+    },
+    {
+      "path": "Interface/FrameXML/RuneFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9d9579c1f6ea14a5d9836baaab68fce7a56dca80c4cfb7dd824ad76f6d9ae070"
+    },
+    {
+      "path": "Interface/FrameXML/RuneFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5d5ef5c7ce8e46fb99ecf01ca12d9e138faa3ffa7f9eff49094c099da1a8ffe8"
+    },
+    {
+      "path": "Interface/FrameXML/SecureHandlers.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a109f01a571dcc99e8c6ed74d15a25fbe5a9e74fd54ddde07ef9fa93ea3afd25"
+    },
+    {
+      "path": "Interface/FrameXML/SecureHandlerTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5f6aa173b9878aa3cae42377269d209fe8752ef7e2c9b8619f165bf6e9b1d546"
+    },
+    {
+      "path": "Interface/FrameXML/SecureHoverDriver.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "8b30bfa9ee110869065bad4b9aa43cc0989381711fc89a3707b87d86900d2b49"
+    },
+    {
+      "path": "Interface/FrameXML/SecureStateDriver.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "6dcb56a86a1f41057bf340058ab4c08bef1bb3397b266f95dfd5ddff529178e1"
+    },
+    {
+      "path": "Interface/FrameXML/SecureTemplates.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "18e855a2a8868f95e2a35f86c2d16236df63281b05af0f72cefb3ee1b6757a4f"
+    },
+    {
+      "path": "Interface/FrameXML/SecureTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5b0527f842dbb69841b8aa2068f751767b08ebd8000dc1a3c0345e0ef3dd4c97"
+    },
+    {
+      "path": "Interface/FrameXML/SkillFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "13ba112b3a8088fcb450ee3bf5113f85757641c13103c122088a51f2efc804bc"
+    },
+    {
+      "path": "Interface/FrameXML/SkillFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e4f571524a27ebe62a805ee9cc92fc981ca45f16fcd7a9ee4640eed5b645cabd"
+    },
+    {
+      "path": "Interface/FrameXML/Sound.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "af0a6a25f45942700ab201cdee6e986f2e42fc936855e8dcb49bece81e72b5ee"
+    },
+    {
+      "path": "Interface/FrameXML/SparkleFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "440760c7492e38ecb01df43433dd5d6feef7816793b9b6b44aecf73331d9cfa1"
+    },
+    {
+      "path": "Interface/FrameXML/SparkleFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "bc435c96f6227873841575bac5ac97f5d60c0a865b1824d060fc6572f58cd0b6"
+    },
+    {
+      "path": "Interface/FrameXML/SpellBookFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8bfc33573a6a8e9e859506e9945be8079b8fde07385f556d92f35b5f5042512b"
+    },
+    {
+      "path": "Interface/FrameXML/SpellBookFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "e9e91c97ec3b2a35392d6edaace9af5b9220d9fd56b1f8fcb991e3d66c067051"
+    },
+    {
+      "path": "Interface/FrameXML/StackSplitFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0ac5e1578198272034139b3f9cd45d98a98f5ac5f579523ffb2618656abffd76"
+    },
+    {
+      "path": "Interface/FrameXML/StackSplitFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7b1b3ed5599eae7f763abbe15a08eab47ea77beab514477e54c033266151df9d"
+    },
+    {
+      "path": "Interface/FrameXML/StaticPopup.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "4ccc25bd7103d0356e69a718308d6f49749702a40ff2f6d8e5da0279f6196187"
+    },
+    {
+      "path": "Interface/FrameXML/StaticPopup.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b1ab47154ca5be8cc821b4277b39747b2a90cc1963b8c42b9475bd5920d69ecb"
+    },
+    {
+      "path": "Interface/FrameXML/StatsFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "90c62a5e74f916421d2aad437ab3550aabeda6968fb9d8734f2d2309aa4a8dbb"
+    },
+    {
+      "path": "Interface/FrameXML/StatsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0e04c523594d8a1a274405196961621af8dd84d94a6dff096dbb312bb2f95cb4"
+    },
+    {
+      "path": "Interface/FrameXML/TabardFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "889c8ddcd97428eeb2f149e41e53daf00c999344bc5927fe6a7ba4ef8ddb2509"
+    },
+    {
+      "path": "Interface/FrameXML/TabardFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "61839535a9c41ccf07af9227dc81370f8961418c665072eba78897e0ff783f86"
+    },
+    {
+      "path": "Interface/FrameXML/TalentFrameBase.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a657daf5212d899e5af531678f92b7a26f469fc2b9c1eb0cccafcc3ef73d174f"
+    },
+    {
+      "path": "Interface/FrameXML/TalentFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "3e41f62e9fa147103dd49668ab53e882b9e889e0914f5b8a66ad8fda4b3fa568"
+    },
+    {
+      "path": "Interface/FrameXML/TargetFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "33fabbf8dd3735fe11d96afac961e52ba31891c8e192cef5aa697e3adf050ef7"
+    },
+    {
+      "path": "Interface/FrameXML/TargetFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "ba95d037d94c2782ce5ae3c9602f971f7d59c24ae8381976a77b24a0610abe4c"
+    },
+    {
+      "path": "Interface/FrameXML/TaxiFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e24088b759b9c215079147568e0a40d71d5382b69e3e5710ee1486a4bb95dc3e"
+    },
+    {
+      "path": "Interface/FrameXML/TaxiFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "c902cac9c32ca73cf46e38ad1a99d361edb8da5e79ce92c7fd0724442e5e072e"
+    },
+    {
+      "path": "Interface/FrameXML/TextStatusBar.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "323ec5e51d96d323bc8e9ed8e6a8cbb7e40dc38987a2873dd11460cb74dfb23b"
+    },
+    {
+      "path": "Interface/FrameXML/TextStatusBar.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "0126beed47cf57520436b3c45149a59cf7b01d4a49af54ad38c3a68aa2087f1c"
+    },
+    {
+      "path": "Interface/FrameXML/TicTacToeFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "8eaf5f91e407b0b217ffba02e75ae78c0260fb763c67d223130a43415ecef697"
+    },
+    {
+      "path": "Interface/FrameXML/TicTacToeFrame.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "b3292f7c74eee7743200dcefbdbffedf09b62b2b2aca1e93682c094674d42037"
+    },
+    {
+      "path": "Interface/FrameXML/TotemFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7f58876a82985212fd6df86c206570c366b6a44edd14b47167281269db86ad1c"
+    },
+    {
+      "path": "Interface/FrameXML/TotemFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "038bc50dd3b6981b03c2b66e74629840f2c7fa9165eb320f597f0c3bdd51fac9"
+    },
+    {
+      "path": "Interface/FrameXML/TradeFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "50317a706701cbacca7aa8eb11c460af55756b2b109f4412bb2063f5c76fb7b3"
+    },
+    {
+      "path": "Interface/FrameXML/TradeFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8f5b20f87a31e18e8f8a96ee9c71bf630f52bbb2ede1fa4f81bdc79d54550b03"
+    },
+    {
+      "path": "Interface/FrameXML/TutorialFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b5262a2e0b9ce5fadc3f3cc12e8f1a2c00c24da0577b015644e88b9a728ed22b"
+    },
+    {
+      "path": "Interface/FrameXML/TutorialFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c6fe4af7c7abad6d7dbfc30f7662f5652c47239f378b5af5cb97c4e7f004f7bf"
+    },
+    {
+      "path": "Interface/FrameXML/UIDropDownMenu.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "1455189341a41004ad27a60ed7bd6ab68f79630b8ebf01fe5f771899d82c89b9"
+    },
+    {
+      "path": "Interface/FrameXML/UIDropDownMenu.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5c95e41b13e1be01a4109b575b5d5ecc0d02746d524b16d342b1bf37c2115f70"
+    },
+    {
+      "path": "Interface/FrameXML/UIDropDownMenuTemplates.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "19b6bd99567a6b7add1fcc60429268ac768f161c0dd6c5d7d4fbc1f5ef9782ee"
+    },
+    {
+      "path": "Interface/FrameXML/UIErrorsFrame.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "5290e4919faaf77e9470a93e541b79b6adcdf05e10db34617355451aae8e9e9c"
+    },
+    {
+      "path": "Interface/FrameXML/UIErrorsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "59519301ce01b815ce877ede08653146a541623b32fa6ae8a3be9611cd2720f8"
+    },
+    {
+      "path": "Interface/FrameXML/UIMenu.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "30d2811100759b020ab8b012cb15041e1336c5513c5ce14a56b5a5fa51ac9307"
+    },
+    {
+      "path": "Interface/FrameXML/UIMenu.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "140dc86446911dd141e785095cc8c58e9c08034f87ba13b8a10f9086c50479e1"
+    },
+    {
+      "path": "Interface/FrameXML/UIPanelTemplates.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d9bf44461b50247caa5c4c3813aa11d59a6b69273fc22725932e05296c5be2f0"
+    },
+    {
+      "path": "Interface/FrameXML/UIPanelTemplates.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "08aabf325cdb0c1ef82d029e2bff7793d8d28b80ae3250dd35c817adbd751b00"
+    },
+    {
+      "path": "Interface/FrameXML/UIParent.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "635c39852311c04758aaedee09377a9182d4cca58c4f685bac187745b1f7ff57"
+    },
+    {
+      "path": "Interface/FrameXML/UIParent.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "b6737d69147a66366469516e1085d62afd73895574646ae4b99f65ad78806ed4"
+    },
+    {
+      "path": "Interface/FrameXML/UnitFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "118cd7752eabcc1ee8dc3bbdc32170bf6026f1bb7ac576edb0cd2644b7512c11"
+    },
+    {
+      "path": "Interface/FrameXML/UnitFrame.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "724002228467c090bcf27ddb766ed6557cfe784d23d8ecbb9cba407cb67a20fa"
+    },
+    {
+      "path": "Interface/FrameXML/UnitPopup.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "25943a2ee93b2efbae1999b3fb7fb6579c156caa60d611f5cedbbee42e34fffb"
+    },
+    {
+      "path": "Interface/FrameXML/UnitPopup.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "d0447d4b755816b627c13cb140771ceaeb39511ddd8b9eb93cc6f98aadbcf897"
+    },
+    {
+      "path": "Interface/FrameXML/VehicleMenuBar.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "97d33e74046a05424596c0b517527a068548da938eb16285994b0b46b465349d"
+    },
+    {
+      "path": "Interface/FrameXML/VehicleMenuBar.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "93781f49699b1ecd0a431da74088c3d9e9f43da0d83b9254b1093377ee3f98b6"
+    },
+    {
+      "path": "Interface/FrameXML/VideoOptionsFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "7dddee566cd76ed6e51d65c31da6ff2d2babbfa439217ee017989ae17befb2ad"
+    },
+    {
+      "path": "Interface/FrameXML/VideoOptionsFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "23ef08f0f90b9c2255a1ced2421247e2e7de115d23fe3ab3ab4cff16ba6148e3"
+    },
+    {
+      "path": "Interface/FrameXML/VideoOptionsPanels.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "9807dcb7cd0ca95ff1840a0186c0d8b661de2ca84ffcef73b52915c8d34d3429"
+    },
+    {
+      "path": "Interface/FrameXML/VideoOptionsPanels.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "1de7d6796eaaa67090ad7c18d67c654bd72da126eb67c7f0867db20f336cdcec"
+    },
+    {
+      "path": "Interface/FrameXML/VoiceChat.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "37a4a6af52665407656ef1abbb0de8da6c41f858e99b806f9eaf452113eaef88"
+    },
+    {
+      "path": "Interface/FrameXML/VoiceChat.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0987668be5a7ff9076259be50df013c6550e1b8eeb708ceec989a28960f1aefc"
+    },
+    {
+      "path": "Interface/FrameXML/WatchFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "59bbfe759dc0297310b12921a7c8990399d1625d05640e4400a8e19abb90b67a"
+    },
+    {
+      "path": "Interface/FrameXML/WatchFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "0725901f0d9d04a71488ea4a8f46c9f0cf4edd34c90eee89b48f52af1e97a1bd"
+    },
+    {
+      "path": "Interface/FrameXML/WorldFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "295c9066359278a08804290346f4da72634c4d247338bb5836e8317c747d0cc4"
+    },
+    {
+      "path": "Interface/FrameXML/WorldFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "82c0cf2e3eb9e1bd7622a5d76e3874d0a627655eecd8d1f58b381245ed01b9f4"
+    },
+    {
+      "path": "Interface/FrameXML/WorldMapFrame.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8"
+    },
+    {
+      "path": "Interface/FrameXML/WorldMapFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "d3e914987c2a155447a5fa22697f878690a2f153f611f3d70aea9355315de46c"
+    },
+    {
+      "path": "Interface/FrameXML/WorldMapFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "6c17b56aa88f256602e7f287b209e4fc9da118b310a5201cdba3a2f90bb83eca"
+    },
+    {
+      "path": "Interface/FrameXML/WorldStateFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "295f87238a2ea2a1ac538e17bc92a1f95056fe7b6384b8da3844d031641721af"
+    },
+    {
+      "path": "Interface/FrameXML/WorldStateFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "8591a7d71bd571af97cb2d2879fb9f8fa96ee57ed33ffd33631771aa829194c6"
+    },
+    {
+      "path": "Interface/FrameXML/ZoneText.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "941baced5b38c6e9e73bea621b10df9be41ed38dfd3b87dcaa3c52790209b0af"
+    },
+    {
+      "path": "Interface/FrameXML/ZoneText.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2419c3bfff03e4de032f55ec5afb6c01f605668ce9cea1cec4b78f84f20fcbae"
+    },
+    {
+      "path": "Interface/GlueXML/AccountLogin.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "17aba21c4ededfcb3707a39c37bfda57bd3acc8aaab30c0321b9ed9944e5475f"
+    },
+    {
+      "path": "Interface/GlueXML/AccountLogin.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "880bc803987658cdf45127e36f448397ee48edd1d7ae1dea3dc0b47eff28c0fa"
+    },
+    {
+      "path": "Interface/GlueXML/AddonList.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "74a7082ada529b96e7c61861605d8acfb156d8647a37d9ac23955aa1cc3c5500"
+    },
+    {
+      "path": "Interface/GlueXML/AddonList.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5a79e95a1a7d92a0072684cceaec86a8e2cc7c7eedc480c97148ee04c11164cf"
+    },
+    {
+      "path": "Interface/GlueXML/AudioOptionsFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2dbb00e20052167a0d76182e22c4f6128223bf2f0ba50ffe96f4dd9bbedb6f0b"
+    },
+    {
+      "path": "Interface/GlueXML/AudioOptionsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9ce5f81003ee2171b4415df6568d1e74f2d4d77fa881e7a930077b466953d4c2"
+    },
+    {
+      "path": "Interface/GlueXML/AudioOptionsPanels.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "9aa7f500490a6990f05d33de073ea93b22c1b8a7c14e23abf0def91d8309087f"
+    },
+    {
+      "path": "Interface/GlueXML/AudioOptionsPanels.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2e43edc94c9aeb7aab0f9677630a3b2b36613986c3c90fd34082dd29d58eb3ec"
+    },
+    {
+      "path": "Interface/GlueXML/CharacterCreate.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f041474fa333e063bc8b30919c9a85ddc663e86e799f59505be2d911b90cff73"
+    },
+    {
+      "path": "Interface/GlueXML/CharacterCreate.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5492a4dccfc414fe1a7e8bb3f3b994d2382e65e182759a082c6d5c212cb13a1d"
+    },
+    {
+      "path": "Interface/GlueXML/CharacterSelect.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "05dd41f47dfd84d4ff4b4e590c9af96b339efda184c2aac2a3ed5cb11d3c997c"
+    },
+    {
+      "path": "Interface/GlueXML/CharacterSelect.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c89d9f36653657372bc91698c5f1b83368757e52750a57c8a00bae6360f2d3a3"
+    },
+    {
+      "path": "Interface/GlueXML/CreditsFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "40319af9e91ab7e045a48dceaf2ec8c74ab9d93f4329b21bec1e2ac29a63587e"
+    },
+    {
+      "path": "Interface/GlueXML/CreditsFrame.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "e52154e81026a1c93689b4de8113c3b7004e9a258b45c7f082a55503664f1226"
+    },
+    {
+      "path": "Interface/GlueXML/GlueBasicControls.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "601043a94dbee01c4dce470bf98dccdf099da67f215a3e21f2382ba2273cfdc4"
+    },
+    {
+      "path": "Interface/GlueXML/GlueButtons.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "655e3d07f65ab553e5c0ac1c9e51dc645e8ed58942659dd4023f8d443cc31e44"
+    },
+    {
+      "path": "Interface/GlueXML/GlueButtons.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "91645a1f10f5435acab7ce1e4a4c219b239eb366347628903a8ee79147906adc"
+    },
+    {
+      "path": "Interface/GlueXML/GlueDialog.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "2bbd50c7ae17fcc054485681a8a67c6b2d19ca208788d2e7f6bcc3367a23088d"
+    },
+    {
+      "path": "Interface/GlueXML/GlueDialog.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "32056f0bd3ba82feec71328602508d26e4955a19938650ec3d15590a98682f8d"
+    },
+    {
+      "path": "Interface/GlueXML/GlueDropDownMenu.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7a4792bc0b94068152df8647b37dc5be78ef39e0b5e06dceb71da86db5d17645"
+    },
+    {
+      "path": "Interface/GlueXML/GlueDropDownMenu.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "83498f108f7c42e51eb58c80e064804bb1e6faa13d7b5d42f1145e535a45a9fb"
+    },
+    {
+      "path": "Interface/GlueXML/GlueDropDownMenuTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "1a66c06d338386bf3cdb79ee5ff9925d05c7ab06735e62b9ddc178ca09dc80ee"
+    },
+    {
+      "path": "Interface/GlueXML/GlueFonts.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2125915455da9093b0a678193edcb116d43b2ffe4608ea682ed1c1e6ec3f0af6"
+    },
+    {
+      "path": "Interface/GlueXML/GlueFontStyles.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2c0c6ccca9b759fcdeda0eb2cf140ea67323b8d2780740f961668abca207f7c5"
+    },
+    {
+      "path": "Interface/GlueXML/GlueLocalization.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "39cf920331ab73ce28ef18b3971f7ecf521d72632d684eca98dc404f32960c07"
+    },
+    {
+      "path": "Interface/GlueXML/GlueLocalization.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "5de360f24cb9595ccc49fc03d4bf85cb06978e40099d43457bb2d248c9a3503c"
+    },
+    {
+      "path": "Interface/GlueXML/GlueLocalizationPost.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "7a1fac65b664b0382924f107eafc7d4652fac51e56cb41da2fbb4979aebb7bf3"
+    },
+    {
+      "path": "Interface/GlueXML/GlueLocalizationPost.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "824ae1b4b99f59be2d3784acfb3662f2d719fca1ece9db03cebc3288b6f79d63"
+    },
+    {
+      "path": "Interface/GlueXML/GlueParent.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "503d2363655a4b3145332a4024ee24240a0ab04b87724b6a6b0ec97fd75d8d31"
+    },
+    {
+      "path": "Interface/GlueXML/GlueParent.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "7658781cbda1f99b3ba460938454705ab915cfcc585947f9895b5076ab63d397"
+    },
+    {
+      "path": "Interface/GlueXML/GlueSplash.xml",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "17be9a29a35674c7d78d35e8cfc88a9b547340092bd8c944e5b29ccc55e64ea6"
+    },
+    {
+      "path": "Interface/GlueXML/GlueStrings.lua",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "cb23e488305fe2f3573283b2931ecdbb5fefd08b3b8e30b86d5b646c2cd05532"
+    },
+    {
+      "path": "Interface/GlueXML/GlueTemplates.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "ef1b468b78843246e2bae54414a1e54233beaf736e50927b6ab7cbe05a34db81"
+    },
+    {
+      "path": "Interface/GlueXML/GlueTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7db99dacfde83cdae9e37637530f4d2dbec7fe0cdb3deab7f1b5de191624219e"
+    },
+    {
+      "path": "Interface/GlueXML/GlueTooltip.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "870cbde2c262d69b8ee122fe410ebb6f993ab1fb65a5c0fac6d6fef31868bf31"
+    },
+    {
+      "path": "Interface/GlueXML/GlueXML.toc",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "a0d46e898e5d986c925c93cff09cba11005a8908c6f971c1c5739e9524603413"
+    },
+    {
+      "path": "Interface/GlueXML/MovieFrame.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "61893cbab0349f6e8515f22a9be4808cf65d8032db2e9abd6803ed79be8f7e37"
+    },
+    {
+      "path": "Interface/GlueXML/MovieFrame.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "9b4d87bcd82a3898554ee1b973b41385f51fe83a53f6f68490713e92f859a25d"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsFrameTemplates.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "bdcd52da1a869c861c1fffa17c79f43f7f42e4f96f8613e019996463112ec128"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsFrameTemplates.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "578b1ec393ec78e751981b1c3b9f2b5f65db7b062821542761b3fde18a613e86"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsPanelTemplates.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "528ad5af3d34eee4340b6e3f7183fcff4b317eb646fd25be7cd31a30b4535518"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsPanelTemplates.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "a65b42f564a4de85ce9c6b3c57c2b54b573e43e9fc495f104d8c1835520f0a38"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsSelect.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "4527345d890e5be46ffac74f92854defca32ffd1d0b13544c890f2cf792cb206"
+    },
+    {
+      "path": "Interface/GlueXML/OptionsSelect.xml",
+      "archive": "enGB/patch-enGB-3.MPQ",
+      "sha256": "c53eb9ee01b6e777f8598961a940126b08928e553e691f24d2cf2ca2605158ff"
+    },
+    {
+      "path": "Interface/GlueXML/PatchDownload.lua",
+      "archive": "enGB/locale-enGB.MPQ",
+      "sha256": "48324c8d9d84264c2e97cc8e2dae819a92954a002e8f674ca599aa058c04cc56"
+    },
+    {
+      "path": "Interface/GlueXML/PatchDownload.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "07429cb528f9bf97209bd4e13e9c94b96c7acc054a3c98bfb9b5a366256eabd1"
+    },
+    {
+      "path": "Interface/GlueXML/RealmList.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "7da756e9adec2f6406120b5564b3a229d7909abf6bc390260f13a055e4773ff3"
+    },
+    {
+      "path": "Interface/GlueXML/RealmList.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "0891e18b208be4cbca1fc3da2819a5a9474a70ba46297d83f9170ae260707102"
+    },
+    {
+      "path": "Interface/GlueXML/RealmWizard.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "2d3a11871a74980ecb37ec49a0803306b530e867526c95621eb032eabe6a6f54"
+    },
+    {
+      "path": "Interface/GlueXML/RealmWizard.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "5e111d97e8c68dac9d457d5d0e21d342292d8d5473414cf9969e6d8a57bb3307"
+    },
+    {
+      "path": "Interface/GlueXML/SecurityMatrix.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "330a0e599ce011dec43d00cfb3ecf4e1f1ccf477ba53a4e4120e135109714c98"
+    },
+    {
+      "path": "Interface/GlueXML/SecurityMatrix.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "3d4b9596d20d5b21e78b32a1fb61a1ed95ce66adc6b4ab940807caa370dc2f28"
+    },
+    {
+      "path": "Interface/GlueXML/TrialConvert.lua",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "2fc173bd88fc88af9a3f374a1e7dcef049fcf25ccb061ca68aa4d78c21bd8c2f"
+    },
+    {
+      "path": "Interface/GlueXML/TrialConvert.xml",
+      "archive": "enGB/patch-enGB.MPQ",
+      "sha256": "743f6326e11383ab7baad8c672c73800e0707191be2efd2d55e3f42d1d98f674"
+    },
+    {
+      "path": "Interface/GlueXML/VideoOptionsFrame.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "5482f1975aec88c1b51c6347d19d9c30c3e72cf412e5bcac5a583a78822e45b6"
+    },
+    {
+      "path": "Interface/GlueXML/VideoOptionsFrame.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "6ee9a5801c0cdc2d7d6ffea206c7a4f771f967b9f7b766fbfc6588459c4751d7"
+    },
+    {
+      "path": "Interface/GlueXML/VideoOptionsPanels.lua",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "6d4f7557d075eef0bdb811db219a4e9c0360b636ab4638c0e7dfd257e478c0d7"
+    },
+    {
+      "path": "Interface/GlueXML/VideoOptionsPanels.xml",
+      "archive": "enGB/patch-enGB-2.MPQ",
+      "sha256": "f07669349a8e55be41ba51fe759024d224dcf24c0524edb5c97c693e0ce2ac10"
+    },
+    {
+      "path": "native-registrations.json",
+      "executable": "Wow_Original.exe",
+      "sha256": "743f612075f238ad9b869d6a65d2860f372878451b8f558ab76999881a2e7861"
+    }
+  ]
+}
