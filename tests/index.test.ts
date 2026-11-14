@@ -1,18 +1,24 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-test-'))
+const packaged = path.join(directory, 'package')
 const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'test', version: '1' })
 
 beforeAll(async () => {
   execFileSync('vpx', ['scripts/build-reference.ts', database], { stdio: 'pipe' })
+  execFileSync('vp', ['pm', 'pack', '--pack-destination', directory], { stdio: 'pipe' })
+  const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
+  if (!archive) throw new Error('Package archive not created')
+  execFileSync('tar', ['-xzf', path.join(directory, archive), '-C', directory])
+  symlinkSync(path.resolve('node_modules'), path.join(packaged, 'node_modules'), 'dir')
   const db = new DatabaseSync(database)
   db.exec(`CREATE TABLE world_example (name TEXT, description TEXT, empty TEXT, zero INTEGER);
     INSERT INTO world_example VALUES ('Example', 'first line' || char(10) || 'second line', '', 0);
@@ -20,7 +26,7 @@ beforeAll(async () => {
   db.close()
   await client.connect(new StdioClientTransport({
     command: process.execPath,
-    args: ['dist/index.mjs'],
+    args: [path.join(packaged, 'dist/index.mjs')],
     env: { ...process.env, WOTLK_MCP_DB: database }
   }))
 })
@@ -33,6 +39,10 @@ afterAll(async () => {
 test('packaged server retrieves Offsets and reports missing IDs individually', async () => {
   const tools = await client.listTools()
   expect(tools.tools.map((tool) => tool.name)).toEqual(['get'])
+  expect(tools.tools[0]?.inputSchema).toMatchObject({
+    properties: { ids: { minItems: 1, maxItems: 20 } },
+    additionalProperties: false
+  })
   expect(tools.tools[0]?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
   const result = await client.callTool({ name: 'get', arguments: {
     ids: ['offset:Globals::PlayerName', 'offset:missing']
@@ -44,9 +54,15 @@ test('packaged server retrieves Offsets and reports missing IDs individually', a
 })
 
 test('invalid IDs and oversized batches are tool errors', async () => {
-  for (const ids of [['bogus:x'], [], Array(21).fill('offset:x')]) {
-    const result = await client.callTool({ name: 'get', arguments: { ids } })
-    expect(result.isError).toBe(true)
+  const results = await Promise.all(
+    [['bogus:x'], [], Array(21).fill('offset:x')].map((ids) =>
+      client.callTool({ name: 'get', arguments: { ids } })
+    )
+  )
+  for (const result of results) expect(result.isError).toBe(true)
+  for (const result of results) {
+    expect(JSON.stringify(result)).toContain('valid kinds:')
+    expect(JSON.stringify(result)).not.toContain('\\n')
   }
 })
 
@@ -59,7 +75,7 @@ test('invalid local overrides are actionable errors', async () => {
   const other = new Client({ name: 'test-invalid', version: '1' })
   await other.connect(new StdioClientTransport({
     command: process.execPath,
-    args: ['dist/index.mjs'],
+    args: [path.join(packaged, 'dist/index.mjs')],
     env: { ...process.env, WOTLK_MCP_DB: path.join(directory, 'missing.sqlite') }
   }))
   try {
@@ -79,7 +95,7 @@ test('a newer schema major is rejected rather than substituted', async () => {
   const other = new Client({ name: 'test-newer', version: '1' })
   await other.connect(new StdioClientTransport({
     command: process.execPath,
-    args: ['dist/index.mjs'],
+    args: [path.join(packaged, 'dist/index.mjs')],
     env: { ...process.env, WOTLK_MCP_DB: incompatible }
   }))
   try {
