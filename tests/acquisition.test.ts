@@ -284,6 +284,13 @@ test.skipIf(process.platform !== 'win32')(
       holder.stdin.end('\n')
       await once(holder, 'exit')
     }
+    const afterRelease = await launch(env)
+    try {
+      expect((await call(afterRelease)).isError).not.toBe(true)
+      expect(existsSync(locked)).toBe(false)
+    } finally {
+      await afterRelease.close()
+    }
   }
 )
 
