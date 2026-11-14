@@ -86,7 +86,8 @@ for (const line of readFileSync('world/schema-columns.tsv', 'utf8').trimEnd().sp
 const decoder = new TextDecoder('utf-8', { fatal: true })
 type Value = null | bigint | number | string | Uint8Array
 const sqlNull: unknown = JSON.parse('null')
-function decode(field: string, kind: Kind): Value {
+function decode(field: string, column: Column, table: string): Value {
+  const { kind } = column
   if (field === 'N') {
     if (sqlNull !== null) throw new Error('Invalid SQL null')
     return sqlNull
@@ -109,9 +110,8 @@ function decode(field: string, kind: Kind): Value {
   }
   if (kind === 'real') {
     const value = Number(text)
-    if (!text || !Number.isFinite(value)) throw new Error(`Invalid floating point value ${text}`)
-    // SQLite normalizes REAL negative zero, so retain its ASCII bytes as a BLOB.
-    if (Object.is(value, -0)) return Buffer.from('-0')
+    if (!text || !Number.isFinite(value) || Object.is(value, -0))
+      throw new Error(`World floating conversion loss in ${table}.${column.name}: ${text}`)
     return value
   }
   return text
@@ -124,9 +124,7 @@ function hashRow(hash: Hash, columns: Column[], values: Value[]): void {
     if (
       value !== null &&
       ((kind === 'integer' && typeof value !== 'bigint') ||
-        (kind === 'real' &&
-          typeof value !== 'number' &&
-          !(value instanceof Uint8Array && Buffer.from(value).equals(Buffer.from('-0')))) ||
+        (kind === 'real' && typeof value !== 'number') ||
         ((kind === 'unsigned' || kind === 'text') && typeof value !== 'string') ||
         (kind === 'blob' && !(value instanceof Uint8Array)))
     )
@@ -137,7 +135,6 @@ function hashRow(hash: Hash, columns: Column[], values: Value[]): void {
       bytes = Buffer.alloc(0)
       valueKind = 'null'
     } else if (value instanceof Uint8Array) bytes = Buffer.from(value)
-    else if (typeof value === 'number' && Object.is(value, -0)) bytes = Buffer.from('-0', 'utf8')
     else bytes = Buffer.from(String(value), 'utf8')
     hash.update(`${columns[i].type}:${valueKind}:${bytes.length}:`).update(bytes)
   }
@@ -146,6 +143,7 @@ function hashRow(hash: Hash, columns: Column[], values: Value[]): void {
 
 async function scan(
   query: string,
+  table: string,
   columns: Column[],
   consume: (values: Value[]) => void
 ): Promise<void> {
@@ -166,7 +164,7 @@ async function scan(
     for await (const line of createInterface({ input: child.stdout, crlfDelay: Infinity })) {
       const fields = line.split('\t')
       if (fields.length !== columns.length) throw new Error('Wrong number of MySQL columns')
-      consume(fields.map((field, i) => decode(field, columns[i].kind)))
+      consume(fields.map((field, i) => decode(field, columns[i], table)))
     }
     await exited
   } catch (error) {
@@ -197,7 +195,7 @@ try {
     const expectedCount = BigInt(countText)
     const sourceHash = createHash('sha256')
     let sourceCount = 0n
-    await scan(query, columns, (values) => {
+    await scan(query, table, columns, (values) => {
       hashRow(sourceHash, columns, values)
       sourceCount++
     })
@@ -218,7 +216,7 @@ try {
     )
     const exportHash = createHash('sha256')
     let exportCount = 0n
-    await scan(query, columns, (values) => {
+    await scan(query, table, columns, (values) => {
       hashRow(exportHash, columns, values)
       insert.run(...values)
       exportCount++

@@ -96,7 +96,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
         payload: Buffer.from([0, 127, 128, 255]),
         missing: sqlNull,
         created: '0000-00-00 00:00:00',
-        negative_zero: '-0',
+        negative_zero: '0',
         fraction: '0.10000000149011612'
       }
     }
@@ -265,7 +265,7 @@ esac
         payload: new Uint8Array([0, 127, 128, 255]),
         missing: sqlNull,
         created: '0000-00-00 00:00:00',
-        negative_zero: new Uint8Array([45, 48]),
+        negative_zero: 0,
         fraction: 0.10000000149011612
       })
       expect(db.prepare('SELECT ID, ShapeshiftMask FROM world_spell_dbc').get()).toMatchObject({
@@ -331,6 +331,32 @@ esac
       ).toMatchObject({ n: 0 })
     } finally {
       rolledBack.close()
+    }
+    const edgeFile = path.join(rows, 'synthetic_types')
+    const edgeFields = readFileSync(edgeFile, 'utf8').trimEnd().split('\t')
+    edgeFields[4] = 'V2D30'
+    writeFileSync(edgeFile, `${edgeFields.join('\t')}\n`)
+    const loss = spawnSync('vpx', [exporter, 'fixture', failedDatabase], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+        WORLD_ROOT: world,
+        WORLD_ROWS: rows
+      }
+    })
+    expect(loss.status).not.toBe(0)
+    expect(loss.stderr).toContain(
+      'World floating conversion loss in synthetic_types.negative_zero: -0'
+    )
+    const afterLoss = new DatabaseSync(failedDatabase, { readOnly: true })
+    try {
+      expect(
+        afterLoss.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name LIKE 'world_%'").get()
+      ).toMatchObject({ n: 0 })
+    } finally {
+      afterLoss.close()
     }
   } finally {
     rmSync(dir, { recursive: true, force: true })
