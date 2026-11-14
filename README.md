@@ -97,6 +97,22 @@ The independently authored package code is [MIT licensed](LICENSE). The database
 vp install
 ```
 
+For a local Offsets-only reference and stdio process, run:
+
+```bash
+vp run build
+vp run build:reference reference.sqlite
+WOTLK_MCP_DB="$PWD/reference.sqlite" node dist/index.mjs
+```
+
+Connect an MCP client to that process; it is not an interactive shell. This local reference is not the production database.
+
+To add the verified Interface source to an existing reference, use the extracted inputs and independently trusted manifest digest:
+
+```bash
+vp run import:interface reference.sqlite /path/to/client-inputs MANIFEST_SHA256
+```
+
 - Run the unit tests:
 
 ```bash
