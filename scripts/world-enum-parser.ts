@@ -1,6 +1,10 @@
 // Definitions are read from the pinned AzerothCore headers, GPL-2.0-or-later;
 // see world/azerothcore-LICENSE.txt and world/azerothcore-AUTHORS.txt.
-export function parseEnum(source: string, enumName: string): { value: number; name: string }[] {
+export function parseEnum(
+  source: string,
+  enumName: string,
+  external: { value: number; name: string }[] = []
+): { value: number; name: string }[] {
   const clean = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
   const match = clean.match(new RegExp(`\\benum\\s+${enumName}\\b[^;{}]*\\{([^}]*)\\}`))
   if (!match) throw new Error(`Missing pinned enum ${enumName}`)
@@ -47,9 +51,9 @@ export function parseEnum(source: string, enumName: string): { value: number; na
         } else if (token && /^(?:0[xX][\da-fA-F]+|\d+)[uUlL]*$/.test(token))
           left = BigInt(token.replace(/[uUlL]+$/, ''))
         else {
-          const found = symbols.get(token)
+          const found = symbols.get(token) ?? external.find((entry) => entry.name === token)?.value
           if (found === undefined) throw new Error(`Unknown ${enumName} symbol ${token}`)
-          left = found
+          left = BigInt(found)
         }
         while (
           index < tokens.length &&
