@@ -50,6 +50,9 @@ test('spell mappings validate fields and materialize named references without ch
     db.exec(
       `CREATE TABLE dbc_Spell (ID INTEGER, Name_lang TEXT, ${columns.map((x) => `"${x}" INTEGER`).join(', ')}, Category INTEGER, Missing INTEGER); INSERT INTO dbc_Spell (ID, Name_lang, Effect_1, Effect_2, Effect_3, EffectAura_1, EffectAura_2, EffectAura_3, ImplicitTargetA_1, ImplicitTargetA_2, ImplicitTargetA_3, Attributes, AttributesExG, SchoolMask, ProcTypeMask, PowerType, Category, Missing) VALUES (1, 'Example', 1, 2, 9999, 1, 2, 1, 1, 2, 1, 9, 2, 1, 2, -1, 4, 7); INSERT INTO record VALUES ('spell:1', 'spell', 'Example', 'dbc_Spell', 1, '', ''); CREATE TABLE dbc_Category (ID INTEGER, Name_lang TEXT); INSERT INTO dbc_Category VALUES (4, 'Example category'); CREATE TABLE dbc_foreign_key (source_table TEXT, field TEXT, target_table TEXT, target_field TEXT); INSERT INTO dbc_foreign_key VALUES ('dbc_Spell', 'Category', 'dbc_Category', 'ID'), ('dbc_Spell', 'Missing', 'dbc_Category', 'ID');`
     )
+    db.exec(
+      'UPDATE dbc_Spell SET ImplicitTargetB_1 = 1, ImplicitTargetB_2 = 2, ImplicitTargetB_3 = 1, Targets = 1, TargetCreatureType = 2, InterruptFlags = 1, AuraInterruptFlags = 2, ChannelInterruptFlags = 1'
+    )
     db.close()
     const root = 'azerothcore-wotlk-2948c203faa0d23c4772441119ebe98e5b7cad95'
     const headerNames: Record<string, string[]> = {
@@ -154,7 +157,21 @@ test('spell mappings validate fields and materialize named references without ch
         'Effect_2: 2 (SECOND)',
         'Effect_3: 9999',
         'EffectAura_3: 1 (FIRST)',
+        'EffectAura_1: 1 (FIRST)',
+        'EffectAura_2: 2 (SECOND)',
         'ImplicitTargetA_2: 2 (SECOND)',
+        'ImplicitTargetA_1: 1 (FIRST)',
+        'ImplicitTargetA_3: 1 (FIRST)',
+        'ImplicitTargetB_1: 1 (FIRST)',
+        'ImplicitTargetB_2: 2 (SECOND)',
+        'ImplicitTargetB_3: 1 (FIRST)',
+        'Targets: 1 (FIRST)',
+        'TargetCreatureType: 2 (SECOND)',
+        'InterruptFlags: 1 (FIRST)',
+        'AuraInterruptFlags: 2 (SECOND)',
+        'ChannelInterruptFlags: 1 (FIRST)',
+        'SchoolMask: 1 (FIRST)',
+        'ProcTypeMask: 2 (SECOND)',
         'Attributes: 9 (FIRST, 8)',
         'AttributesExG: 2 (SECOND)',
         'PowerType: -1',
