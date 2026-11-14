@@ -71,9 +71,10 @@ test.each([
   ['native evidence', "UPDATE lua_native_registration SET va='0x00400001'"],
   ['Interface FTS coverage', "DELETE FROM ui_line_fts"],
   ['duplicate IDs', "INSERT INTO record SELECT * FROM record WHERE id='spell:1'"],
+  ['corrupt FTS index', "UPDATE record_fts_data SET block=X'00' WHERE id=(SELECT max(id) FROM record_fts_data)"],
   ['FTS coverage', "DELETE FROM record_fts WHERE id='spell:1'"],
 ])('rejects %s', (_name, sql) => {
-  const file = fixture(); const db = new DatabaseSync(file); db.exec(sql); db.close()
+  const file = fixture(); const db = new DatabaseSync(file); db.enableDefensive?.(false); db.exec(sql); db.close()
   const result = gate(file)
   expect(result.status).not.toBe(0)
 })
@@ -140,4 +141,25 @@ test('rejects invalid declared logical hashes', () => {
   db.close()
   writeFileSync(`${file}.br`, brotliCompressSync(readFileSync(file)))
   expect(spawnSync('node', ['--experimental-strip-types', 'scripts/release-gate.ts', file, `${file}.br`]).status).not.toBe(0)
+})
+
+test.each(['kind', 'relation'])('rejects %s shrink independently of table counts', (dimension) => {
+  const candidate = fixture()
+  let db = new DatabaseSync(candidate)
+  if (dimension === 'relation') for (let i = 0; i < 10; i++) db.prepare("INSERT INTO link VALUES ('event:1','starts','item:1',?)").run(String(i))
+  db.close()
+  seal(candidate)
+  const previous = `${candidate}.previous`
+  copyFileSync(candidate, previous)
+  db = new DatabaseSync(previous)
+  if (dimension === 'kind') db.exec("INSERT INTO record SELECT 'spell:2',kind,name,source_table,source_row,search_text,hint FROM record WHERE id='spell:1'; INSERT INTO record_fts SELECT 'spell:2',name,text FROM record_fts WHERE id='spell:1'")
+  else db.exec("INSERT INTO link VALUES ('event:1','drops','item:1','')")
+  db.close()
+  db = new DatabaseSync(candidate)
+  db.exec("UPDATE meta SET value='{\"fixture\":\"two\"}' WHERE key='input_pins'")
+  db.close()
+  const rejected = gate(candidate, previous, '--prepare')
+  expect(rejected.status).not.toBe(0)
+  expect(rejected.stderr).toContain(dimension === 'kind' ? 'kind:spell' : 'relation:drops')
+  expect(gate(candidate, previous, '--prepare', '--allow-shrink').status).toBe(0)
 })
