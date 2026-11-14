@@ -124,6 +124,14 @@ vp run import:client-data -- reference.sqlite /path/to/client-inputs MANIFEST_SH
 
 The importer verifies the manifest, every imported DBC and the definition archive SHA-256 `b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca`. It imports build 12340 layouts into `dbc_` tables, expands arrays with one-based suffixes, and records definition references in `dbc_foreign_key`. The enGB extraction remains an English stand-in, not proof of enUS identity. The local extraction is not the reviewed or published #30 production asset.
 
+After importing both Client Data and World Data into the same reference, build their item-set, talent-rank, skill-line, faction and stored-spawn Links:
+
+```bash
+vp run build:client-faction-spawn-links -- reference.sqlite
+```
+
+The command uses existing Records only and leaves all source rows intact. Creature spawn counts include stored alternate entries in `world_creature_multispawn`, counting each spawn once per creature and map. Counts are stored rows, not probabilities or inferred areas. Item-set members absent from World Data are omitted from Links and remain a report-only fidelity discrepancy.
+
 WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
 
 ### Pinned client-inputs asset
