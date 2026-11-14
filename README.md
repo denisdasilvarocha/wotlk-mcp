@@ -1,21 +1,93 @@
 # wotlk-mcp
 
-A read-only MCP reference for World of Warcraft 3.3.5a build 12340. The current local reference contains the curated Offsets catalog.
+A read-only MCP reference for World of Warcraft 3.3.5a build 12340.
 
-Requires Node.js 24.15.0 or newer and Vite+ for development. Build and run a local reference:
+> **Release status:** This repository is private. The npm package and production database have not been published; the examples below describe the intended public installation and do not currently provide a public live service. The separately authorized client-inputs release is private. World Data acceptance approval is still deferred.
 
-```bash
-vp install
-vp run build
-vp run build:reference reference.sqlite
-WOTLK_MCP_DB="$PWD/reference.sqlite" node dist/index.mjs
+## Connect a client
+
+Install [Node.js](https://nodejs.org/) **24.15.0 or newer**, including npm. Once the package and compatible database are published, configure one of the following stdio clients. They launch a local process; this server does not provide HTTP.
+
+### Claude Code
+
+On macOS or Linux, use the [Claude Code MCP command](https://code.claude.com/docs/en/mcp):
+
+```sh
+claude mcp add --transport stdio wotlk -- npx -y wotlk-mcp@1
 ```
 
-The last command starts an MCP server over stdio; connect an MCP client rather than typing commands into it. Without `WOTLK_MCP_DB`, the server downloads a compatible published database from GitHub Releases, verifies its compressed SHA-256 digest and schema, and stores it in the OS cache. First use requires a network connection; if the download is still in progress after 20 seconds, retry the tool call. Set `GITHUB_TOKEN` or `GH_TOKEN` optionally for authenticated GitHub requests. `WOTLK_MCP_DB` selects a compatible local database and disables network access; an invalid override fails rather than falling back. No database is bundled. The `get` tool accepts up to 20 kind-qualified IDs, such as `offset:Globals::PlayerName`.
+On Windows:
 
-With a usable cached database, startup and queries do not wait for update metadata. The server checks at most once per 24 hours, including after a failed check, and keeps using its selected snapshot for the whole session. A verified update or rollback takes effect on the next start. If newer data requires a newer package major, the server logs guidance to stderr and adds it once to the first tool result after it becomes known.
+```text
+claude mcp add --transport stdio wotlk -- cmd /d /s /c "npx -y wotlk-mcp@1"
+```
 
-The package code is MIT licensed; the database contains source data with separate provenance recorded in its `source` table.
+### Codex
+
+In `~/.codex/config.toml` (or a trusted project's `.codex/config.toml`), following the [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp#stdio-servers):
+
+```toml
+[mcp_servers.wotlk]
+command = "npx"
+args = ["-y", "wotlk-mcp@1"]
+```
+
+On Windows replace those two lines with:
+
+```toml
+command = "cmd"
+args = ["/d", "/s", "/c", "npx -y wotlk-mcp@1"]
+```
+
+### OMP
+
+In `.omp/mcp.json` for a project or `~/.omp/agent/mcp.json` for the default user profile:
+
+```json
+{
+  "mcpServers": {
+    "wotlk": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "wotlk-mcp@1"]
+    }
+  }
+}
+```
+
+On Windows use `"command": "cmd"` and `"args": ["/d", "/s", "/c", "npx -y wotlk-mcp@1"]` in the same entry. Merge the entry into an existing config rather than replacing other servers. These examples pin the package major; upgrading to a new major is deliberate.
+
+## Use the reference
+
+Ask your client to search for a name, then retrieve the resulting ID. The server exposes exactly four tools:
+
+| Tool | Purpose |
+| --- | --- |
+| `search` | Find literal terms with ranked, paginated hits; `kind` is an optional array of kinds. Source lines are searched only when `file` is explicitly included. |
+| `get` | Fetch up to 20 IDs with full Record details. Empty fields are omitted; for `file:` IDs, `from` and `to` select one-based inclusive line windows, with continuation for longer files. |
+| `related` | Browse one-hop Links in either direction, optionally filtered by relation, with pagination. |
+| `sql` | Query raw source tables or discover the schema using one read-only statement. |
+
+IDs are kind-qualified, for example `spell:53`, `offset:Globals::PlayerName`, or `file:FrameXML/ChatFrame.lua`. Kinds are `spell`, `talent`, `itemset`, `skillline`, `map`, `area`, `faction`, `class`, `race`, `achievement`, `creature`, `item`, `quest`, `gameobject`, `fn`, `event`, `widget`, `method`, `cvar`, `type`, `cle`, `template`, `slash`, `offset`, and `file`. A kind belongs to one source; Client Data and World Data overrides are not merged. Records preserve source provenance; `source` also lists pins, hashes and licences.
+
+For SQL discovery, try `SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name` and `PRAGMA table_info('world_item_template')`. Source tables use `dbc_`, `world_`, `lua_`, `offsets_` and `ui_` prefixes. SQL permits SELECT and the `table_info`, `table_xinfo`, `table_list`, `index_list`, and `foreign_key_list` PRAGMAs; writes, attaching databases, extension loading and other introspection are denied. The default row limit is 100, maximum 1,000; output is capped at 32,000 UTF-16 code units and expensive queries time out after five seconds. Output is tab-separated with escaped cells and an explicit truncation marker.
+
+This is reference data, not a live-client integration: it does not attach to the game, read process memory or talk to a game server. Source text and query results are data, not trusted instructions.
+
+## Database and updates
+
+No database is bundled with the package. On first use, the server downloads a compatible published GitHub release, verifies the compressed SHA-256 digest and schema, and caches it. A tool call waits up to 20 seconds for the first download; if still pending, retry. Network access is needed for the first download unless you provide a local database.
+
+Cached starts and queries do not wait for update metadata. The server tries an update check in the background at most once per 24 hours, including failed attempts. It retains the selected snapshot for the session; a verified update or an older release used as a rollback takes effect on the next start. Offline starts use the cache, falling back to the previous usable copy when necessary. Package major 1 accepts database schema major 1. If a newer database needs a higher package major, the server writes a warning to stderr and appends it once to the first tool response after the warning becomes known; upgrade the package deliberately.
+
+| Environment variable | Purpose |
+| --- | --- |
+| `WOTLK_MCP_DB` | Path to a compatible local SQLite reference. Disables network access; an invalid override fails rather than falling back. |
+| `GITHUB_TOKEN` or `GH_TOKEN` | Optional GitHub token for release requests, useful for rate limits or an authorized private repository. Keep tokens out of committed configuration and use only the access required. |
+
+## Rights and provenance
+
+The independently authored package code is [MIT licensed](LICENSE). The database contains mixed-rights material and is **not** blanket MIT: consult the `source` table and the `NOTICE.md` accompanying each database release. The owner's verified enGB extraction is an accepted English stand-in for the enUS target, not proof of full enUS byte identity. The owner accepts the risks of redistributing Blizzard-derived material and using the unlicensed Codex source; acceptance is not permission or a licence grant. See the private [client-inputs release notice](https://github.com/denisdasilvarocha/wotlk-mcp/releases/tag/client-inputs-12340-engb-1) and [database releases](https://github.com/denisdasilvarocha/wotlk-mcp/releases) when available.
 
 ## Development
 

@@ -7,13 +7,23 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+function run(command: string, args: string[], cwd?: string): void {
+  if (process.platform === 'win32')
+    execFileSync('cmd', ['/d', '/s', '/c', [command, ...args].map((arg) => `"${arg}"`).join(' ')], {
+      cwd,
+      stdio: 'pipe',
+      timeout: 120_000
+    })
+  else execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
+}
+
 test('a clean installed tarball exposes an executable MCP server without a bundled database', async () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-install-'))
   const client = new Client({ name: 'install-test', version: '1' })
   try {
     const database = path.join(directory, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/build-reference.ts', database], { stdio: 'pipe' })
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', directory], { stdio: 'pipe' })
+    run('vpx', ['scripts/build-reference.ts', database])
+    run('vp', ['pm', 'pack', '--pack-destination', directory])
     const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
     if (!archive) throw new Error('Package archive not created')
     const files = execFileSync('tar', ['-tzf', path.join(directory, archive)], { encoding: 'utf8' })
@@ -27,14 +37,22 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
         dependencies: { 'wotlk-mcp': `file:${path.join(directory, archive)}` }
       })
     )
-    execFileSync('vp', ['install'], { cwd: directory, stdio: 'pipe', timeout: 120_000 })
+    run('vp', ['install'], directory)
     const installed = JSON.parse(
       readFileSync(path.join(directory, 'node_modules/wotlk-mcp/package.json'), 'utf8')
     )
     expect(installed.version).toBe('1.0.0')
+    let command = 'npx'
+    let args = ['-y', 'wotlk-mcp@1']
+    if (process.platform === 'win32') {
+      command = 'cmd'
+      args = ['/d', '/s', '/c', 'npx -y wotlk-mcp@1']
+    }
     await client.connect(
       new StdioClientTransport({
-        command: path.join(directory, 'node_modules/.bin/wotlk-mcp'),
+        command,
+        args,
+        cwd: directory,
         env: { ...process.env, WOTLK_MCP_DB: database }
       })
     )
