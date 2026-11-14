@@ -2,10 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { acceptedSchemaMajor, kinds } from './schema.js'
 
-export function openReference(): DatabaseSync {
-  const path = process.env.WOTLK_MCP_DB
-  if (!path)
-    throw new Error('no reference database: set WOTLK_MCP_DB to a compatible local database')
+export function openReference(path: string): DatabaseSync {
   let db: DatabaseSync | undefined
   try {
     db = new DatabaseSync(path, { readOnly: true })
@@ -30,10 +27,7 @@ export function openReference(): DatabaseSync {
     return db
   } catch (error) {
     db?.close()
-    throw new Error(
-      `invalid WOTLK_MCP_DB: ${String(error).replace(/[\r\n]+/g, ' ')}; select a compatible reference database`,
-      { cause: error }
-    )
+    throw error
   }
 }
 
