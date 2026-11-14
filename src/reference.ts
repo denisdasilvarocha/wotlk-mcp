@@ -8,7 +8,10 @@ export function openReference(path: string): DatabaseSync {
     db = new DatabaseSync(path, { readOnly: true })
     const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
     const version = row?.value
-    if (typeof version !== 'string' || !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`).test(version))
+    if (
+      typeof version !== 'string' ||
+      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`).test(version)
+    )
       throw new Error(
         `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
       )

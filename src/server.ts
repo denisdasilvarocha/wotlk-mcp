@@ -43,7 +43,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     if (request.params.name === 'related') {
       const args = parseRelated(request.params.arguments)
-      const db = openReference()
+      const db = openReference(await getReferencePath())
       try {
         return { content: [{ type: 'text', text: getRelated(db, args) }] }
       } finally {
