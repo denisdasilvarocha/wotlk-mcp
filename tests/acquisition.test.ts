@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { setTimeout as delay } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
 import { brotliCompressSync } from 'node:zlib'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -102,7 +103,7 @@ async function launch(extra: Record<string, string> = {}, homeCache = false): Pr
     HOME: cache,
     XDG_CACHE_HOME: cache,
     LOCALAPPDATA: cache,
-    NODE_OPTIONS: `--import=${preload}`,
+    NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
     TEST_RELEASES: `${base}/releases`,
     ...extra
   }
