@@ -1,6 +1,6 @@
 {
   "name": "wotlk-mcp",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Read-only MCP reference for World of Warcraft 3.3.5a build 12340.",
   "homepage": "https://github.com/denisdasilvarocha/wotlk-mcp#readme",
   "bugs": {
@@ -26,6 +26,9 @@
     "build:reference": "vpx scripts/build-reference.ts",
     "check": "vp check",
     "dev": "vp pack --watch",
+    "import:client-data": "vpx scripts/import-client-data.ts",
+    "import:codex": "node scripts/import-codex.ts",
+    "import:interface": "vpx scripts/import-interface.ts",
     "prepare": "vp config",
     "prepublishOnly": "vp run build",
     "test": "vp test",
@@ -49,5 +52,6 @@
   },
   "engines": {
     "node": ">=24.15.0"
-  }
+  },
+  "wotlkSchemaMajor": 1
 }
