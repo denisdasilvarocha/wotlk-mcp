@@ -1,0 +1,488 @@
+[
+  {
+    "path": "UI::CGGameUI::EnterWorld",
+    "va": "0x00528010",
+    "kind": "function",
+    "note": "enter world"
+  },
+  {
+    "path": "UI::CGGameUI::LeaveWorld",
+    "va": "0x00528C30",
+    "kind": "function",
+    "note": "leave world"
+  },
+  {
+    "path": "UI::CGGameUI::ShutdownGame",
+    "va": "0x00529160",
+    "kind": "function",
+    "note": "shutdown game"
+  },
+  {
+    "path": "UI::CGGameUI::Shutdown",
+    "va": "0x00528F00",
+    "kind": "function",
+    "note": "shutdown UI"
+  },
+  {
+    "path": "UI::CGGameUI::InitializeGame",
+    "va": "0x0052B550",
+    "kind": "function",
+    "note": "initialize game"
+  },
+  {
+    "path": "UI::CGGameUI::Reload",
+    "va": "0x0051D960",
+    "kind": "function",
+    "note": "reload UI; sets the reload flag BD0791=1; the Lua ReloadUI wrapper is 5222E0"
+  },
+  {
+    "path": "UI::CGGameUI::CheckBindings",
+    "va": "0x008165E0",
+    "kind": "function",
+    "note": "check key bindings"
+  },
+  {
+    "path": "UI::CGGameUI::CheckPermissions",
+    "va": "0x005191C0",
+    "kind": "function",
+    "note": "lua protection check (bypass target)"
+  },
+  {
+    "path": "UI::CGGameUI::Target",
+    "va": "0x00524BF0",
+    "kind": "function",
+    "note": "target unit"
+  },
+  {
+    "path": "UI::CGGameUI::ClearInteractTarget",
+    "va": "0x00518D50",
+    "kind": "function",
+    "note": "clear interact target"
+  },
+  {
+    "path": "UI::CGGameUI::SetInteractTarget",
+    "va": "0x0051FCE0",
+    "kind": "function",
+    "note": "set interact target"
+  },
+  {
+    "path": "UI::CGGameUI::CloseInteraction",
+    "va": "0x00512E60",
+    "kind": "function",
+    "note": "close interaction"
+  },
+  {
+    "path": "UI::CGGameUI::OpenGuildInvite",
+    "va": "0x00512570",
+    "kind": "function",
+    "note": "open guild invite"
+  },
+  {
+    "path": "UI::CGGameUI::OpenGossipWindow",
+    "va": "0x006D1E20",
+    "kind": "function",
+    "note": "open gossip window"
+  },
+  {
+    "path": "UI::CGGameUI::ClearCursor",
+    "va": "0x00519280",
+    "kind": "function",
+    "note": "clear cursor"
+  },
+  {
+    "path": "UI::CGGameUI::SetCursorItem",
+    "va": "0x00520770",
+    "kind": "function",
+    "note": "set cursor item"
+  },
+  {
+    "path": "UI::CGGameUI::GetCursorItem",
+    "va": "0x00513660",
+    "kind": "function",
+    "note": "get cursor item"
+  },
+  {
+    "path": "UI::CGGameUI::UnlockItem",
+    "va": "0x00513770",
+    "kind": "function",
+    "note": "unlock cursor item"
+  },
+  {
+    "path": "UI::CGGameUI::DisplayError",
+    "va": "0x005216F0",
+    "kind": "function",
+    "note": "display error message"
+  },
+  {
+    "path": "UI::CGGameUI::BroadcastUIError",
+    "va": "0x005219E0",
+    "kind": "function",
+    "note": "broadcast UI error"
+  },
+  {
+    "path": "UI::CGGameUI::ShowCombatFeedback_0",
+    "va": "0x00513380",
+    "kind": "function",
+    "note": "show combat feedback"
+  },
+  {
+    "path": "UI::CGGameUI::OnTerrainClick",
+    "va": "0x00527360",
+    "kind": "function",
+    "note": "handle terrain click"
+  },
+  {
+    "path": "UI::CGGameUI::HandleTerrainClick",
+    "va": "0x00527830",
+    "kind": "function",
+    "note": "terrain click handler"
+  },
+  {
+    "path": "UI::CGGameUI::ShowSpellFailed",
+    "va": "0x00808200",
+    "kind": "function",
+    "note": "show spell failed UI"
+  },
+  {
+    "path": "UI::CGameUI::Signal_EVENT_ACTIONBAR_UPDATE_COOLDOWN",
+    "va": "0x005A7CC0",
+    "kind": "function",
+    "note": "cooldown event"
+  },
+  {
+    "path": "UI::CGameUI::Signal_EVENT_ACTIONBAR_UPDATE_STATE",
+    "va": "0x005A7CB0",
+    "kind": "function",
+    "note": "state event"
+  },
+  {
+    "path": "UI::CGCursor_C::Update",
+    "va": "0x006162C0",
+    "kind": "function",
+    "note": "update cursor"
+  },
+  {
+    "path": "UI::CGCursor_C::SetCursorFromName",
+    "va": "0x00616830",
+    "kind": "function",
+    "note": "set cursor by name"
+  },
+  {
+    "path": "UI::CGCursor_C::CursorSetCursorMode",
+    "va": "0x00616800",
+    "kind": "function",
+    "note": "set cursor mode"
+  },
+  {
+    "path": "UI::CGCursor_C::CursorSetHeldItem",
+    "va": "0x00616630",
+    "kind": "function",
+    "note": "set held item cursor"
+  },
+  {
+    "path": "UI::CGActionBar::UseAction",
+    "va": "0x005ABBC0",
+    "kind": "function",
+    "note": "use action"
+  },
+  {
+    "path": "UI::CGActionBar::PutActionInSlot",
+    "va": "0x005AB120",
+    "kind": "function",
+    "note": "put action in slot"
+  },
+  {
+    "path": "UI::CGActionBar::PickupAction",
+    "va": "0x005ABE70",
+    "kind": "function",
+    "note": "pickup action"
+  },
+  {
+    "path": "UI::CGActionBar::GetCooldown",
+    "va": "0x005A8E40",
+    "kind": "function",
+    "note": "get cooldown"
+  },
+  {
+    "path": "UI::CGActionBar::GetTexture",
+    "va": "0x005A97F0",
+    "kind": "function",
+    "note": "get action texture"
+  },
+  {
+    "path": "UI::CGActionBar::IsCurrentAction",
+    "va": "0x005AA240",
+    "kind": "function",
+    "note": "is current action"
+  },
+  {
+    "path": "UI::CGActionBar::HideGrid",
+    "va": "0x005A7A80",
+    "kind": "function",
+    "note": "hide action bar grid"
+  },
+  {
+    "path": "UI::CGWorldFrame::OnWorldUpdate",
+    "va": "0x004FA5F0",
+    "kind": "function",
+    "note": "world update"
+  },
+  {
+    "path": "UI::CGWorldFrame::OnLayerUpdate",
+    "va": "0x004FA040",
+    "kind": "function",
+    "note": "layer update"
+  },
+  {
+    "path": "UI::CGWorldFrame::Render",
+    "va": "0x004F8EA0",
+    "kind": "function",
+    "note": "render frame"
+  },
+  {
+    "path": "UI::CGWorldFrame::RenderWorld",
+    "va": "0x004FAF90",
+    "kind": "function",
+    "note": "render world"
+  },
+  {
+    "path": "UI::CGWorldFrame::Intersect",
+    "va": "0x0077F310",
+    "kind": "function",
+    "note": "intersect test"
+  },
+  {
+    "path": "UI::CGWorldFrame::TranslateToMapCoords",
+    "va": "0x00544140",
+    "kind": "function",
+    "note": "map coord translate"
+  },
+  {
+    "path": "UI::CGWorldFrame::CreateFrames",
+    "va": "0x00521040",
+    "kind": "function",
+    "note": "create frames"
+  },
+  {
+    "path": "UI::CGWorldFrame::GetActiveCamera",
+    "va": "0x004F5960",
+    "kind": "function",
+    "note": "get active camera"
+  },
+  {
+    "path": "UI::CGCamera::SetView",
+    "va": "0x00603330",
+    "kind": "function",
+    "note": "set camera view"
+  },
+  {
+    "path": "UI::CGCamera::ResetView",
+    "va": "0x006048A0",
+    "kind": "function",
+    "note": "reset view"
+  },
+  {
+    "path": "UI::CGCamera::UpdateFreeLookFacing",
+    "va": "0x006020B0",
+    "kind": "function",
+    "note": "update free look"
+  },
+  {
+    "path": "UI::CGCamera::SyncFreeLookFacing",
+    "va": "0x006023D0",
+    "kind": "function",
+    "note": "sync free look"
+  },
+  {
+    "path": "UI::CGCamera::ZoomIn",
+    "va": "0x005FF950",
+    "kind": "function",
+    "note": "zoom in"
+  },
+  {
+    "path": "UI::CGCamera::ZoomOut",
+    "va": "0x005FFA60",
+    "kind": "function",
+    "note": "zoom out"
+  },
+  {
+    "path": "UI::CGCamera::ParentToWorld",
+    "va": "0x00600B60",
+    "kind": "function",
+    "note": "parent to world"
+  },
+  {
+    "path": "UI::CGCamera::virt00",
+    "va": "0x005FF500",
+    "kind": "function",
+    "note": "virt00"
+  },
+  {
+    "path": "UI::CGCamera::virt04",
+    "va": "0x00600C20",
+    "kind": "function",
+    "note": "virt04"
+  },
+  {
+    "path": "UI::CGCamera::virt08",
+    "va": "0x00600CC0",
+    "kind": "function",
+    "note": "virt08"
+  },
+  {
+    "path": "UI::CGCamera::virt0C",
+    "va": "0x00600D60",
+    "kind": "function",
+    "note": "virt0C"
+  },
+  {
+    "path": "UI::CGCamera::CreateViewFromCamera",
+    "va": "0x005FE4E0",
+    "kind": "function",
+    "note": "create from camera"
+  },
+  {
+    "path": "UI::CGCamera::Unknown1",
+    "va": "0x00604940",
+    "kind": "function",
+    "note": "unknown function"
+  },
+  {
+    "path": "UI::CGCamera::Unknown5",
+    "va": "0x00604A70",
+    "kind": "function",
+    "note": "unknown function"
+  },
+  {
+    "path": "UI::Camera::CameraCreate",
+    "va": "0x004BFCA0",
+    "kind": "function",
+    "note": "create camera"
+  },
+  {
+    "path": "UI::Camera::CameraDuplicate",
+    "va": "0x004BFCE0",
+    "kind": "function",
+    "note": "duplicate camera"
+  },
+  {
+    "path": "UI::CGInputControl::CGInputControl",
+    "va": "0x005FCD70",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "UI::CGInputControl::InputControlDestroy_0",
+    "va": "0x005FD3D0",
+    "kind": "function",
+    "note": "destroy"
+  },
+  {
+    "path": "UI::CGInputControl::InputControlDestroy",
+    "va": "0x005FD430",
+    "kind": "function",
+    "note": "destroy (alt)"
+  },
+  {
+    "path": "UI::CGInputControl::SetControlBit",
+    "va": "0x005FA170",
+    "kind": "function",
+    "note": "set control bit"
+  },
+  {
+    "path": "UI::CGInputControl::UnsetControlBit",
+    "va": "0x005FA450",
+    "kind": "function",
+    "note": "unset control bit"
+  },
+  {
+    "path": "UI::CGInputControl::ToggleControlBit",
+    "va": "0x005FBE10",
+    "kind": "function",
+    "note": "toggle control bit"
+  },
+  {
+    "path": "UI::CGInputControl::UpdatePlayer",
+    "va": "0x005FBBC0",
+    "kind": "function",
+    "note": "update player"
+  },
+  {
+    "path": "UI::CGInputControl::OnMouseMoveRel",
+    "va": "0x005FAB70",
+    "kind": "function",
+    "note": "mouse move relative"
+  },
+  {
+    "path": "UI::CGInputControl::EnterWorld",
+    "va": "0x005FAC60",
+    "kind": "function",
+    "note": "enter world"
+  },
+  {
+    "path": "UI::CGInputControl::CheckToCancelCurrentChannelSpell",
+    "va": "0x005FAA40",
+    "kind": "function",
+    "note": "cancel channeling check"
+  },
+  {
+    "path": "UI::CInputControl::Ctor",
+    "va": "0x005FD1D0",
+    "kind": "function",
+    "note": "constructor (alt)"
+  },
+  {
+    "path": "UI::CInputControl::VehicleAimChange",
+    "va": "0x005FB4B0",
+    "kind": "function",
+    "note": "vehicle aim"
+  },
+  {
+    "path": "UI::CInputControl::RemoveFlags_0xF0000",
+    "va": "0x005F95E0",
+    "kind": "function",
+    "note": "remove flags"
+  },
+  {
+    "path": "UI::CInputControl::RemoveFlags_0x11000",
+    "va": "0x005F95F0",
+    "kind": "function",
+    "note": "remove flags (alt)"
+  },
+  {
+    "path": "UI::Input::OnKeyDown",
+    "va": "0x00765AF0",
+    "kind": "function",
+    "note": "key down event"
+  },
+  {
+    "path": "UI::Input::OnKeyDownRepeat",
+    "va": "0x00764B90",
+    "kind": "function",
+    "note": "key repeat event"
+  },
+  {
+    "path": "UI::Input::OnKeyUp",
+    "va": "0x00763BE0",
+    "kind": "function",
+    "note": "key up event"
+  },
+  {
+    "path": "UI::Input::OnChar",
+    "va": "0x00764990",
+    "kind": "function",
+    "note": "character input"
+  },
+  {
+    "path": "UI::Input::OnMouseDown",
+    "va": "0x00764A10",
+    "kind": "function",
+    "note": "mouse down event"
+  },
+  {
+    "path": "UI::Input::closeconsole",
+    "va": "0x00763C10",
+    "kind": "function",
+    "note": "close console"
+  }
+]

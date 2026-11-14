@@ -1,0 +1,580 @@
+[
+  {
+    "path": "ObjectManager::ClntObjMgr::GetObjectPtr",
+    "va": "0x004D4BB0",
+    "kind": "function",
+    "note": "get object pointer by GUID"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::EnumVisibleObjects",
+    "va": "0x004D4B30",
+    "kind": "function",
+    "note": "enumerate visible objects (callback)"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::ObjectPtr",
+    "va": "0x004D4DB0",
+    "kind": "function",
+    "note": "get object from ObjectManager"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::GetActivePlayer",
+    "va": "0x004D3790",
+    "kind": "function",
+    "note": "get local player GUID"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::GetActivePlayerObj",
+    "va": "0x004038F0",
+    "kind": "function",
+    "note": "get local player object"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::GetMapID",
+    "va": "0x006CD770",
+    "kind": "function",
+    "note": "get current map ID — **label unverified**: body is an event/opcode handler (registered as callback id 0x4C0)",
+    "status": "unverified"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::Create",
+    "va": "0x004D7750",
+    "kind": "function",
+    "note": "create ObjectManager"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::Destroy",
+    "va": "0x004D6750",
+    "kind": "function",
+    "note": "destroy ObjectManager"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::Initialize",
+    "va": "0x004D76E0",
+    "kind": "function",
+    "note": "initialize ObjectManager"
+  },
+  {
+    "path": "ObjectManager::ClntObjMgr::InitializeShared",
+    "va": "0x004D4AC0",
+    "kind": "function",
+    "note": "initialize shared state"
+  },
+  {
+    "path": "Object::CGObject_C::CGObject_C",
+    "va": "0x00745E60",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGObject_C::Initialize",
+    "va": "0x007460C0",
+    "kind": "function",
+    "note": "initialize object"
+  },
+  {
+    "path": "Object::CGObject_C::Shutdown",
+    "va": "0x00744E50",
+    "kind": "function",
+    "note": "shutdown object"
+  },
+  {
+    "path": "Object::CGObject_C::Enable",
+    "va": "0x00744DB0",
+    "kind": "function",
+    "note": "enable object"
+  },
+  {
+    "path": "Object::CGObject_C::Disable",
+    "va": "0x00744D20",
+    "kind": "function",
+    "note": "disable object"
+  },
+  {
+    "path": "Object::CGObject_C::PostInit",
+    "va": "0x00744A50",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Object::CGObject_C::Destructor",
+    "va": "0x004D6010",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Object::CGObject_C::GetPosition",
+    "va": "0x004D5EA0",
+    "kind": "function",
+    "note": "get object position"
+  },
+  {
+    "path": "Object::CGObject_C::GetFacing",
+    "va": "0x004D5EE0",
+    "kind": "function",
+    "note": "get facing angle"
+  },
+  {
+    "path": "Object::CGObject_C::GetFacing_Override",
+    "va": "0x004D5EF0",
+    "kind": "function",
+    "note": "get facing (override)"
+  },
+  {
+    "path": "Object::CGObject_C::virt3C",
+    "va": "0x004D5F10",
+    "kind": "function",
+    "note": "virtual position func"
+  },
+  {
+    "path": "Object::CGObject_C::TranslateRotation",
+    "va": "0x004D5F20",
+    "kind": "function",
+    "note": "translate rotation"
+  },
+  {
+    "path": "Object::CGObject_C::CopyMatrix",
+    "va": "0x00744380",
+    "kind": "function",
+    "note": "copy transform matrix"
+  },
+  {
+    "path": "Object::CGObject_C::SetTypeByTypeId",
+    "va": "0x00743130",
+    "kind": "function",
+    "note": "set object type"
+  },
+  {
+    "path": "Object::CGObject_C::GetQuestStatus",
+    "va": "0x00745DA0",
+    "kind": "function",
+    "note": "get quest status — **label unverified**: body rebuilds the selection-circle model (no quest code)",
+    "status": "unverified"
+  },
+  {
+    "path": "Object::CGObject_C::SetupDescriptorBounds",
+    "va": "0x00743640",
+    "kind": "function",
+    "note": "setup descriptor bounds"
+  },
+  {
+    "path": "Object::CGObject_C::IsLocalPlayer",
+    "va": "0x004CEE50",
+    "kind": "function",
+    "note": "check if local player"
+  },
+  {
+    "path": "Object::CGObject_C::virt14",
+    "va": "0x007438E0",
+    "kind": "function",
+    "note": "virt14"
+  },
+  {
+    "path": "Object::CGObject_C::virt20",
+    "va": "0x007451B0",
+    "kind": "function",
+    "note": "virt20"
+  },
+  {
+    "path": "Object::CGObject_C::virt9C",
+    "va": "0x007432E0",
+    "kind": "function",
+    "note": "virt9C"
+  },
+  {
+    "path": "Object::CGObject_C::virt98",
+    "va": "0x00743250",
+    "kind": "function",
+    "note": "virt98"
+  },
+  {
+    "path": "Object::CGObject_C::virtE8",
+    "va": "0x00743300",
+    "kind": "function",
+    "note": "virtE8"
+  },
+  {
+    "path": "Object::CGObject_C::virtE4",
+    "va": "0x00743330",
+    "kind": "function",
+    "note": "virtE4"
+  },
+  {
+    "path": "Object::CGObject_C::virtB8",
+    "va": "0x00743530",
+    "kind": "function",
+    "note": "virtB8"
+  },
+  {
+    "path": "Object::CGObject_C::PreAnimate",
+    "va": "0x00743EC0",
+    "kind": "function",
+    "note": "pre-animation update"
+  },
+  {
+    "path": "Object::CGObject_C::virt50",
+    "va": "0x007444E0",
+    "kind": "function",
+    "note": "animation virt"
+  },
+  {
+    "path": "Object::CGObject_C::PostReenable",
+    "va": "0x00743FF0",
+    "kind": "function",
+    "note": "post re-enable"
+  },
+  {
+    "path": "Object::CGObject_C::AddWorldObject",
+    "va": "0x00743760",
+    "kind": "function",
+    "note": "add to world"
+  },
+  {
+    "path": "Object::CGxDevice::BuildSelectionMatrix",
+    "va": "0x00744150",
+    "kind": "function",
+    "note": "build selection matrix"
+  },
+  {
+    "path": "Object::CGItem_C::CGItem_C",
+    "va": "0x00709840",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGItem_C::Initialize",
+    "va": "0x00709440",
+    "kind": "function",
+    "note": "initialize item"
+  },
+  {
+    "path": "Object::CGItem_C::Shutdown",
+    "va": "0x00709A10",
+    "kind": "function",
+    "note": "shutdown item"
+  },
+  {
+    "path": "Object::CGItem_C::PostInit",
+    "va": "0x0070AF80",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Object::CGItem_C::GetItemEntry",
+    "va": "0x00707360",
+    "kind": "function",
+    "note": "get item entry ID"
+  },
+  {
+    "path": "Object::CGItem_C::BuildItemName",
+    "va": "0x00706D70",
+    "kind": "function",
+    "note": "build item name string"
+  },
+  {
+    "path": "Object::CGItem_C::GetClassID",
+    "va": "0x00707220",
+    "kind": "function",
+    "note": "get item class ID"
+  },
+  {
+    "path": "Object::CGItem_C::GetInventoryType",
+    "va": "0x00707280",
+    "kind": "function",
+    "note": "get inventory type"
+  },
+  {
+    "path": "Object::CGItem_C::virt5C",
+    "va": "0x00707150",
+    "kind": "function",
+    "note": "virtual function"
+  },
+  {
+    "path": "Object::CGItem_C::GetInventoryArt",
+    "va": "0x0070A910",
+    "kind": "function",
+    "note": "get inventory icon"
+  },
+  {
+    "path": "Object::CGItem_C::OnRightClick",
+    "va": "0x00708200",
+    "kind": "function",
+    "note": "handle right click"
+  },
+  {
+    "path": "Object::CGItem_C::RequestRefundInfo",
+    "va": "0x007089E0",
+    "kind": "function",
+    "note": "request refund info"
+  },
+  {
+    "path": "Object::CGItem_C::SetItemRefundToken",
+    "va": "0x00706CF0",
+    "kind": "function",
+    "note": "set refund token"
+  },
+  {
+    "path": "Object::CGItem_C::SignalEvent",
+    "va": "0x0060BFE0",
+    "kind": "function",
+    "note": "signal item event"
+  },
+  {
+    "path": "Object::CGItem_C::CreateItemLink",
+    "va": "0x0061E290",
+    "kind": "function",
+    "note": "create item link"
+  },
+  {
+    "path": "Object::CGItem_C::CanEquipInSlot",
+    "va": "0x005176F0",
+    "kind": "function",
+    "note": "check equip slot"
+  },
+  {
+    "path": "Object::CGItem_C::GetBag",
+    "va": "0x00706AD0",
+    "kind": "function",
+    "note": "get containing bag — address is a **CGContainer_C** member (its vtable 0xA332D0 slots 9/10, returns `this+0x760`)"
+  },
+  {
+    "path": "Object::CGItem_C::GetStatName",
+    "va": "0x0061BB20",
+    "kind": "function",
+    "note": "get stat name"
+  },
+  {
+    "path": "Object::CGItem_C::GetBagFamily",
+    "va": "0x007072B0",
+    "kind": "function",
+    "note": "get bag family"
+  },
+  {
+    "path": "Object::Item::GetItemName",
+    "va": "0x007071D0",
+    "kind": "function",
+    "note": "get item name"
+  },
+  {
+    "path": "Object::Item::GetItemIDByName",
+    "va": "0x00709DE0",
+    "kind": "function",
+    "note": "get item ID by name"
+  },
+  {
+    "path": "Object::Item::GetPageTextId",
+    "va": "0x00707180",
+    "kind": "function",
+    "note": "get page text ID"
+  },
+  {
+    "path": "Object::CGItemStats_C::GetSocketFlags",
+    "va": "0x0061B930",
+    "kind": "function",
+    "note": "get socket flags"
+  },
+  {
+    "path": "Object::CGItemStats_C::Create",
+    "va": "0x0061B5B0",
+    "kind": "function",
+    "note": "create item stats"
+  },
+  {
+    "path": "Object::CGItemStats_C::CleanStatNames",
+    "va": "0x0061BA90",
+    "kind": "function",
+    "note": "clean stat names"
+  },
+  {
+    "path": "Object::CGItemStats_C::MakeStatNamesPretty",
+    "va": "0x0061B9E0",
+    "kind": "function",
+    "note": "format stat names"
+  },
+  {
+    "path": "Object::CGGameObject_C::CGGameObject_C",
+    "va": "0x00714250",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGGameObject_C::Initialize",
+    "va": "0x007140A0",
+    "kind": "function",
+    "note": "initialize"
+  },
+  {
+    "path": "Object::CGGameObject_C::Shutdown",
+    "va": "0x00714150",
+    "kind": "function",
+    "note": "shutdown"
+  },
+  {
+    "path": "Object::CGGameObject_C::PostInit",
+    "va": "0x00712F30",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Object::CGGameObject_C::Disable",
+    "va": "0x007130A0",
+    "kind": "function",
+    "note": "disable"
+  },
+  {
+    "path": "Object::CGGameObject_C::PostReenable",
+    "va": "0x00713130",
+    "kind": "function",
+    "note": "post re-enable"
+  },
+  {
+    "path": "Object::CGGameObject_C::Destructor",
+    "va": "0x00713F20",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Object::CGGameObject_C::OnRightClick",
+    "va": "0x00711140",
+    "kind": "function",
+    "note": "handle right click"
+  },
+  {
+    "path": "Object::CGGameObject_C::CloseInteraction",
+    "va": "0x0070BAC0",
+    "kind": "function",
+    "note": "close interaction"
+  },
+  {
+    "path": "Object::CGGameObject_C::LoadBaseObject",
+    "va": "0x00712400",
+    "kind": "function",
+    "note": "load base object"
+  },
+  {
+    "path": "Object::CGGameObject_C::GetLockRecord",
+    "va": "0x0070EF30",
+    "kind": "function",
+    "note": "get lock record"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt64",
+    "va": "0x00713F50",
+    "kind": "function",
+    "note": "virt64"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt3C",
+    "va": "0x007124A0",
+    "kind": "function",
+    "note": "virt3C"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt38",
+    "va": "0x007111A0",
+    "kind": "function",
+    "note": "virt38"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt84",
+    "va": "0x0070F580",
+    "kind": "function",
+    "note": "virt84"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt40",
+    "va": "0x0070EE80",
+    "kind": "function",
+    "note": "virt40"
+  },
+  {
+    "path": "Object::CGGameObject_C::virt18",
+    "va": "0x0070F940",
+    "kind": "function",
+    "note": "virt18"
+  },
+  {
+    "path": "Object::Level2Object::SetupDescriptorBounds",
+    "va": "0x0070CBA0",
+    "kind": "function",
+    "note": "setup descriptors"
+  },
+  {
+    "path": "Object::CGContainer_C::CGContainer_C",
+    "va": "0x00706A20",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGContainer_C::virt00",
+    "va": "0x00706B60",
+    "kind": "function",
+    "note": "virt00"
+  },
+  {
+    "path": "Object::CGCorpse_C::CGCorpse_C",
+    "va": "0x00706430",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGCorpse_C::PostInit",
+    "va": "0x00705B20",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Object::CGCorpse_C::GetCorpsePosition",
+    "va": "0x0051F430",
+    "kind": "function",
+    "note": "get corpse position"
+  },
+  {
+    "path": "Object::CGDynamicObject_C::CGDynamicObject_C",
+    "va": "0x007053A0",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Object::CGDynamicObject_C::PostInit",
+    "va": "0x00705230",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Object::CGBag_C::FindItem_0",
+    "va": "0x007546F0",
+    "kind": "function",
+    "note": "find item in bag"
+  },
+  {
+    "path": "Object::CGBag_C::FindItem",
+    "va": "0x00754CD0",
+    "kind": "function",
+    "note": "find item (alt)"
+  },
+  {
+    "path": "Object::CGBag_C::GetItemTypeCount",
+    "va": "0x00754D00",
+    "kind": "function",
+    "note": "get item type count"
+  },
+  {
+    "path": "Object::CGBag_C::GetItemIdByName",
+    "va": "0x00754B90",
+    "kind": "function",
+    "note": "get item by name"
+  },
+  {
+    "path": "Object::CGBag_C::GetBagItem",
+    "va": "0x00754390",
+    "kind": "function",
+    "note": "get bag item"
+  },
+  {
+    "path": "Object::CGBag_C::GetBagAtIndex",
+    "va": "0x005D6F20",
+    "kind": "function",
+    "note": "get bag at index"
+  }
+]

@@ -1,0 +1,189 @@
+[
+  {
+    "path": "Lua::FrameScript::Execute",
+    "va": "0x00819210",
+    "kind": "function",
+    "note": "execute Lua code string"
+  },
+  {
+    "path": "Lua::FrameScript::GetLuaState",
+    "va": "0x00817DB0",
+    "kind": "function",
+    "note": "get active lua_State*"
+  },
+  {
+    "path": "Lua::FrameScript::RegisterFunction",
+    "va": "0x00817F90",
+    "kind": "function",
+    "note": "register Lua C function"
+  },
+  {
+    "path": "Lua::FrameScript::UnregisterFunction",
+    "va": "0x00817FD0",
+    "kind": "function",
+    "note": "unregister Lua function"
+  },
+  {
+    "path": "Lua::FrameScript::GetVariable",
+    "va": "0x00818010",
+    "kind": "function",
+    "note": "get Lua global variable"
+  },
+  {
+    "path": "Lua::FrameScript::GetTop",
+    "va": "0x0084DBD0",
+    "kind": "function",
+    "note": "get stack top index"
+  },
+  {
+    "path": "Lua::FrameScript::SetTop",
+    "va": "0x0084DBF0",
+    "kind": "function",
+    "note": "set stack top index"
+  },
+  {
+    "path": "Lua::FrameScript::pushnil",
+    "va": "0x0084E280",
+    "kind": "function",
+    "note": "push nil to stack"
+  },
+  {
+    "path": "Lua::FrameScript::PushNumber",
+    "va": "0x0084E2A0",
+    "kind": "function",
+    "note": "push number to stack"
+  },
+  {
+    "path": "Lua::FrameScript::pushinteger",
+    "va": "0x0084E2D0",
+    "kind": "function",
+    "note": "push integer to stack"
+  },
+  {
+    "path": "Lua::FrameScript::PushString",
+    "va": "0x0084E350",
+    "kind": "function",
+    "note": "push string to stack"
+  },
+  {
+    "path": "Lua::FrameScript::pushboolean",
+    "va": "0x0084E4D0",
+    "kind": "function",
+    "note": "push boolean to stack"
+  },
+  {
+    "path": "Lua::FrameScript::pushcclosure",
+    "va": "0x0084E400",
+    "kind": "function",
+    "note": "push C closure"
+  },
+  {
+    "path": "Lua::FrameScript::ToNumber",
+    "va": "0x0084E030",
+    "kind": "function",
+    "note": "convert to number"
+  },
+  {
+    "path": "Lua::FrameScript::tointeger",
+    "va": "0x0084E070",
+    "kind": "function",
+    "note": "convert to integer"
+  },
+  {
+    "path": "Lua::FrameScript::ToLString",
+    "va": "0x0084E0E0",
+    "kind": "function",
+    "note": "convert to string with length"
+  },
+  {
+    "path": "Lua::FrameScript::toboolean",
+    "va": "0x0084E0B0",
+    "kind": "function",
+    "note": "convert to boolean"
+  },
+  {
+    "path": "Lua::FrameScript::touserdata",
+    "va": "0x0084E1C0",
+    "kind": "function",
+    "note": "get userdata pointer"
+  },
+  {
+    "path": "Lua::FrameScript::tocfunction",
+    "va": "0x0084E1C0",
+    "kind": "function",
+    "note": "**Not present in build 12340** — 0x84E1C0 is lua_touserdata; nearest predicate is lua_iscfunction at 0x0084DEF0",
+    "status": "not-present"
+  },
+  {
+    "path": "Lua::FrameScript::IsNumber",
+    "va": "0x0084DF20",
+    "kind": "function",
+    "note": "check if number"
+  },
+  {
+    "path": "Lua::FrameScript::IsString",
+    "va": "0x0084DF60",
+    "kind": "function",
+    "note": "check if string"
+  },
+  {
+    "path": "Lua::FrameScript::equal",
+    "va": "0x0084DFE0",
+    "kind": "function",
+    "note": "compare values"
+  },
+  {
+    "path": "Lua::FrameScript::CreateTable",
+    "va": "0x0084E6E0",
+    "kind": "function",
+    "note": "create new table"
+  },
+  {
+    "path": "Lua::FrameScript::getfield",
+    "va": "0x0084F3B0",
+    "kind": "function",
+    "note": "get table field"
+  },
+  {
+    "path": "Lua::FrameScript::setfield",
+    "va": "0x0084E900",
+    "kind": "function",
+    "note": "set table field"
+  },
+  {
+    "path": "Lua::FrameScript::GetTable",
+    "va": "0x0084E560",
+    "kind": "function",
+    "note": "get table by reference"
+  },
+  {
+    "path": "Lua::FrameScript::FindTable",
+    "va": "0x0084E590",
+    "kind": "function",
+    "note": "find table by name"
+  },
+  {
+    "path": "Lua::FrameScript::SignalEvent",
+    "va": "0x0081B530",
+    "kind": "function",
+    "note": "fire UI event"
+  },
+  {
+    "path": "Lua::FrameScript::SignalCombatLogEvent",
+    "va": "0x00750400",
+    "kind": "function",
+    "note": "fire combat log event"
+  },
+  {
+    "path": "Lua::FrameScript::DisplayError",
+    "va": "0x0084F280",
+    "kind": "function",
+    "note": "display error message"
+  },
+  {
+    "path": "Lua::FrameScript::GetParamValue",
+    "va": "0x00815500",
+    "kind": "function",
+    "note": "get event parameter"
+  }
+]
