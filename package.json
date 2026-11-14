@@ -1,6 +1,6 @@
 {
   "name": "wotlk-mcp",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Read-only MCP reference for World of Warcraft 3.3.5a build 12340.",
   "homepage": "https://github.com/denisdasilvarocha/wotlk-mcp#readme",
   "bugs": {
@@ -49,5 +49,6 @@
   },
   "engines": {
     "node": ">=24.15.0"
-  }
+  },
+  "wotlkSchemaMajor": 1
 }

@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite'
 
-import { kinds } from './schema.js'
+import { acceptedSchemaMajor, kinds } from './schema.js'
 
 export function openReference(): DatabaseSync {
   const path = process.env.WOTLK_MCP_DB
@@ -11,7 +11,10 @@ export function openReference(): DatabaseSync {
     db = new DatabaseSync(path, { readOnly: true })
     const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
     const version = row?.value
-    if (typeof version !== 'string' || !/^1\.\d+\.\d+$/.test(version))
+    if (
+      typeof version !== 'string' ||
+      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`).test(version)
+    )
       throw new Error(
         `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
       )
