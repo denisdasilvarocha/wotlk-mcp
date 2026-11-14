@@ -1,0 +1,1161 @@
+namespace WoWOffsets {
+    namespace Cache {
+        namespace DBItemCache {
+            constexpr uint32_t GetInfoBlockByID = 0x0067CA30; // get item by ID
+            constexpr uint32_t GetItemNameByIndex = 0x004FD200; // get item name by index
+        }
+
+        namespace DbItemCache {
+            constexpr uint32_t Load = 0x0067CDD0; // load item cache
+            constexpr uint32_t Unpack = 0x0098D910; // unpack item cache
+        }
+
+        namespace DbCreatureCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067B6A0; // get creature by ID
+            constexpr uint32_t Load = 0x0067BA40; // load creature cache
+            constexpr uint32_t Unpack = 0x0098D4C0; // unpack creature
+        }
+
+        namespace CreatureStats {
+            constexpr uint32_t GetName = 0x0053B8E0; // get creature name
+        }
+
+        namespace DbNpcCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067D0D0; // get NPC by ID
+            constexpr uint32_t Load = 0x0067D470; // load NPC cache
+        }
+
+        namespace DbQuestCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067DE90; // get quest by ID
+            constexpr uint32_t Load = 0x0067E0E0; // load quest cache
+            constexpr uint32_t Unpack = 0x007F70E0; // unpack quest
+        }
+
+        namespace QuestCache {
+            constexpr uint32_t Constructor = 0x00634E70; // quest cache constructor
+        }
+
+        namespace DbNameCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067D770; // get name by ID
+            constexpr uint32_t Load = 0x00680D70; // load name cache
+        }
+
+        namespace DbGuildCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067D930; // get guild by ID
+            constexpr uint32_t Load_0 = 0x0067DB90; // load guild cache
+            constexpr uint32_t Unpack = 0x0075B3E0; // unpack guild
+        }
+
+        namespace DbGameObjectCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067BD40; // get GO by ID
+            constexpr uint32_t Load_0 = 0x0067C0E0; // load GO cache
+            constexpr uint32_t Unpack = 0x0098D750; // unpack GO
+        }
+
+        namespace GameObjectStats {
+            constexpr uint32_t GetName = 0x004FD1E0; // get GO name
+        }
+
+        namespace DbPetNameCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067EA30; // get pet name by ID
+            constexpr uint32_t Load = 0x0067EC80; // load pet name cache
+            constexpr uint32_t Invalidate = 0x0067A940; // invalidate pet cache
+        }
+
+        namespace DbArenaTeamCache {
+            constexpr uint32_t GetInfoBlockById = 0x00680170; // arena team
+        }
+
+        namespace DbItemTextCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067F4C0; // item text
+        }
+
+        namespace DbPetitionCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067EF70; // petition
+        }
+
+        namespace DbPageTextCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067E3E0; // page text
+        }
+
+        namespace DbDanceCache {
+            constexpr uint32_t GetInfoBlockById = 0x006806D0; // dance
+        }
+
+        namespace DbItemNameCache {
+            constexpr uint32_t GetInfoBlockById = 0x0067C3E0; // item name
+        }
+
+        namespace DbWoWCache {
+            constexpr uint32_t Load = 0x0067FE00; // load WoW cache
+            constexpr uint32_t GetInfoBlockById = 0x0067FA80; // get info block
+            constexpr uint32_t Shutdown_WARDEN_UNLOAD = 0x007DA930; // cache shutdown on unload — **label unverified**: host-interface slot 1, *loads* the cached module (key + `DbWoWCache` lookup → `0x7DA610`)
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Cache {
+        namespace DBCache {
+            constexpr uint32_t CancelCallback_0 = 0x0067A3A0; // cancel callback
+            constexpr uint32_t CancelCallback = 0x00679F00; // cancel callback (alt)
+            constexpr uint32_t Warden = 0x00676AC0; // warden DB cache
+            constexpr uint32_t WardenCachedModule_InternalDelete = 0x006791B0; // delete cached module
+        }
+
+        namespace TSHashTable {
+            constexpr uint32_t DBCache_ItemStats_InternalNew = 0x006707C0; // new item stats (original: TSHashTable_DBCache_ItemStats...InternalNew)
+            constexpr uint32_t DBCache_CGPetition_InternalNew = 0x006713E0; // new petition (original: TSHashTable_DBCache_CGPetition...InternalNew)
+            constexpr uint32_t DBCache_GameObjectStats_InternalNew = 0x00670420; // new GO stats (original: TSHashTable_DBCache_GameObjectStats...InternalNew)
+            constexpr uint32_t DBCache_GameObjectStats_Destroy = 0x00672FF0; // destroy GO (original: TSHashTable_DBCache_GameObjectStats...Destroy)
+            constexpr uint32_t DBCache_ItemStats_Destroy = 0x00673550; // destroy item stats (original: TSHashTable_DBCache_ItemStats...Destroy)
+            constexpr uint32_t DBCache_CGPetition_Destroy = 0x00674810; // destroy petition (original: TSHashTable_DBCache_CGPetition...Destroy)
+            constexpr uint32_t ITEMCOOLDOWNHASHNODE_InternalNew = 0x0080A3A0; // new cooldown entry (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...InternalNew)
+            constexpr uint32_t ITEMCOOLDOWNHASHNODE_InternalDelete = 0x0080A400; // delete cooldown entry (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...InternalDelete)
+            constexpr uint32_t ITEMCOOLDOWNHASHNODE_Destroy = 0x0080A4D0; // destroy cooldown table (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...Destroy)
+        }
+
+        namespace DBCache_CreatureStats {
+            constexpr uint32_t InternalNew = 0x00670270; // new creature stats
+            constexpr uint32_t Destroy = 0x00672D40; // destroy creature
+        }
+
+        namespace DBCache_ItemName {
+            constexpr uint32_t InternalNew = 0x00670650; // new item name
+            constexpr uint32_t Destroy = 0x006732A0; // destroy item name
+        }
+
+        namespace DBCache_NpcText {
+            constexpr uint32_t InternalNew = 0x00670970; // new NPC text
+            constexpr uint32_t Destroy = 0x00673800; // destroy NPC text
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Cache {
+        namespace DbCache {
+            constexpr uint32_t LoadAll = 0x00635060; // load all cache entries
+            constexpr uint32_t LoadAll_Jmp = 0x00635520; // jump to load all (original: j_DbCache_LoadAll)
+            constexpr uint32_t dbcLoadFunction = 0x006348B0; // load function
+        }
+
+        namespace ClientDB {
+            constexpr uint32_t Free = 0x00636270; // free client DB
+        }
+
+        namespace ClientDb {
+            constexpr uint32_t RegisterBase = 0x006337D0; // register base DB
+            constexpr uint32_t StringLookup = 0x00634910; // string lookup
+            constexpr uint32_t GetLocalizedRow = 0x004CFD20; // get localized row
+            constexpr uint32_t Unpack = 0x004CFBB0; // unpack DB
+            constexpr uint32_t GetRow = 0x0065C290; // get row from client DB (original: GetRow_ClientDB)
+        }
+
+        namespace CClientDb {
+            constexpr uint32_t CopyRowData = 0x004CFD90; // copy row data
+        }
+
+        namespace WowClientDB {
+            constexpr uint32_t GetRow = 0x004BB1C0; // get row (alt)
+        }
+
+        namespace RecordLookup {
+            constexpr uint32_t GetSpellVisualRow = 0x007FA290; // get spell visual
+            constexpr uint32_t GetGameTableValue = 0x007F6990; // get game table value
+            constexpr uint32_t GetMaxPlayersForMap = 0x00634AB0; // get max players
+            constexpr uint32_t GetMapResetTime = 0x00634A80; // get map reset time
+            constexpr uint32_t GetMapDifficultyInfoByMapIdAndDifficulty = 0x00634950; // map difficulty
+            constexpr uint32_t GetAnimationDataRecField_6 = 0x007176B0; // animation data
+            constexpr uint32_t GetPetPersonalityRow = 0x0071F390; // pet personality
+            constexpr uint32_t IsAnimationDataId_RifleRelated = 0x0071DAA0; // animation check
+            constexpr uint32_t GetWMOAreaRec = 0x00990560; // get WMO area record
+            constexpr uint32_t GetLiquidTypeRecForArea = 0x009905C0; // get liquid type
+        }
+
+        namespace FactionRec {
+            constexpr uint32_t LoadDB = 0x0063F080; // load faction DB
+        }
+
+        namespace Faction {
+            constexpr uint32_t GetReputationIndexForFaction = 0x00718B30; // get rep index
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Cache {
+        namespace ClientDbPointer {
+            constexpr uint32_t Achievement = 0x00AD305C; // pointer to the Achievement ClientDB object; record type 0xEB
+            constexpr uint32_t Achievement_Criteria = 0x00AD3080; // pointer to the Achievement_Criteria ClientDB object; record type 0xEC
+            constexpr uint32_t AnimationData = 0x00AD30C8; // pointer to the AnimationData ClientDB object; record type 0xEE
+            constexpr uint32_t AreaTable = 0x00AD3134; // pointer to the AreaTable ClientDB object; record type 0xF1
+            constexpr uint32_t AuctionHouse = 0x00AD31C4; // pointer to the AuctionHouse ClientDB object; record type 0xF5
+            constexpr uint32_t BattlemasterList = 0x00AD3254; // pointer to the BattlemasterList ClientDB object; record type 0xF9
+            constexpr uint32_t ChrClasses = 0x00AD3404; // pointer to the ChrClasses ClientDB object; record type 0x105
+            constexpr uint32_t ChrRaces = 0x00AD3428; // pointer to the ChrRaces ClientDB object; record type 0x106
+            constexpr uint32_t CreatureDisplayInfo = 0x00AD34B8; // pointer to the CreatureDisplayInfo ClientDB object; record type 0x109
+            constexpr uint32_t CreatureModelData = 0x00AD3500; // pointer to the CreatureModelData ClientDB object; record type 0x10C
+            constexpr uint32_t CreatureSpellData = 0x00AD356C; // pointer to the CreatureSpellData ClientDB object; record type 0x10F
+            constexpr uint32_t Faction = 0x00AD3860; // pointer to the Faction ClientDB object; record type 0x121
+            constexpr uint32_t FactionTemplate = 0x00AD3884; // pointer to the FactionTemplate ClientDB object; record type 0x123
+            constexpr uint32_t GameObjectDisplayInfo = 0x00AD3938; // pointer to the GameObjectDisplayInfo ClientDB object; record type 0x128
+            constexpr uint32_t Item = 0x00AD3D4C; // pointer to the Item ClientDB object; record type 0x145
+            constexpr uint32_t ItemDisplayInfo = 0x00AD3DDC; // pointer to the ItemDisplayInfo ClientDB object; record type 0x149
+            constexpr uint32_t ItemExtendedCost = 0x00AD3E00; // pointer to the ItemExtendedCost ClientDB object; record type 0x14A
+            constexpr uint32_t Map = 0x00AD4160; // pointer to the Map ClientDB object; record type 0x167
+            constexpr uint32_t Spell = 0x00AD49D0; // pointer to the Spell ClientDB object; record type 0x194
+            constexpr uint32_t SpellCastTimes = 0x00AD4748; // pointer to the SpellCastTimes ClientDB object; record type 0x191
+            constexpr uint32_t SpellDuration = 0x00AD4820; // pointer to the SpellDuration ClientDB object; record type 0x198
+            constexpr uint32_t SpellItemEnchantment = 0x00AD48B0; // pointer to the SpellItemEnchantment ClientDB object; record type 0x19C
+            constexpr uint32_t SpellRange = 0x00AD4988; // pointer to the SpellRange ClientDB object; record type 0x1A2
+            constexpr uint32_t Talent = 0x00AD4B5C; // pointer to the Talent ClientDB object; record type 0x1AE
+            constexpr uint32_t TalentTab = 0x00AD4B80; // pointer to the TalentTab ClientDB object; record type 0x1AF
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Lua {
+        namespace FrameScript {
+            constexpr uint32_t Execute = 0x00819210; // execute Lua code string
+            constexpr uint32_t GetLuaState = 0x00817DB0; // get active lua_State*
+            constexpr uint32_t RegisterFunction = 0x00817F90; // register Lua C function
+            constexpr uint32_t UnregisterFunction = 0x00817FD0; // unregister Lua function
+            constexpr uint32_t GetVariable = 0x00818010; // get Lua global variable
+            constexpr uint32_t GetTop = 0x0084DBD0; // get stack top index
+            constexpr uint32_t SetTop = 0x0084DBF0; // set stack top index
+            constexpr uint32_t pushnil = 0x0084E280; // push nil to stack
+            constexpr uint32_t PushNumber = 0x0084E2A0; // push number to stack
+            constexpr uint32_t pushinteger = 0x0084E2D0; // push integer to stack
+            constexpr uint32_t PushString = 0x0084E350; // push string to stack
+            constexpr uint32_t pushboolean = 0x0084E4D0; // push boolean to stack
+            constexpr uint32_t pushcclosure = 0x0084E400; // push C closure
+            constexpr uint32_t ToNumber = 0x0084E030; // convert to number
+            constexpr uint32_t tointeger = 0x0084E070; // convert to integer
+            constexpr uint32_t ToLString = 0x0084E0E0; // convert to string with length
+            constexpr uint32_t toboolean = 0x0084E0B0; // convert to boolean
+            constexpr uint32_t touserdata = 0x0084E1C0; // get userdata pointer
+            constexpr uint32_t tocfunction = 0x0084E1C0; // **Not present in build 12340** — 0x84E1C0 is lua_touserdata; nearest predicate is lua_iscfunction at 0x0084DEF0
+            constexpr uint32_t IsNumber = 0x0084DF20; // check if number
+            constexpr uint32_t IsString = 0x0084DF60; // check if string
+            constexpr uint32_t equal = 0x0084DFE0; // compare values
+            constexpr uint32_t CreateTable = 0x0084E6E0; // create new table
+            constexpr uint32_t getfield = 0x0084F3B0; // get table field
+            constexpr uint32_t setfield = 0x0084E900; // set table field
+            constexpr uint32_t GetTable = 0x0084E560; // get table by reference
+            constexpr uint32_t FindTable = 0x0084E590; // find table by name
+            constexpr uint32_t SignalEvent = 0x0081B530; // fire UI event
+            constexpr uint32_t SignalCombatLogEvent = 0x00750400; // fire combat log event
+            constexpr uint32_t DisplayError = 0x0084F280; // display error message
+            constexpr uint32_t GetParamValue = 0x00815500; // get event parameter
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Movement {
+        namespace CMovement {
+            constexpr uint32_t MoveUnit = 0x006F09F0; // move unit
+            constexpr uint32_t OnMoveStart = 0x006F0CF0; // start moving
+            constexpr uint32_t OnMoveStop = 0x0098C8A0; // movement stop handler
+            constexpr uint32_t OnJump = 0x006F0DD0; // jump handler
+            constexpr uint32_t StopMove = 0x0098BD10; // force stop movement
+            constexpr uint32_t OnStrafeStart = 0x006F0D60; // start strafing
+            constexpr uint32_t OnStrafeStop = 0x00988DC0; // stop strafing
+            constexpr uint32_t StartTurn = 0x00988DF0; // start turning
+            constexpr uint32_t OnTurnStart = 0x006F1010; // turn start handler
+            constexpr uint32_t OnTurnStop = 0x00989010; // turn stop handler
+            constexpr uint32_t OnPitchStop = 0x00989450; // pitch stop handler
+            constexpr uint32_t IsFalling = 0x005FEDE0; // check if falling
+            constexpr uint32_t CreateMovementStatus = 0x00987140; // create movement status
+            constexpr uint32_t CreateMovementStatus_NoMovementFlags = 0x006E90E0; // status without flags
+            constexpr uint32_t FillFromStatus = 0x009872C0; // fill from status
+            constexpr uint32_t FillFromStatus_Falling = 0x00988990; // fill falling status
+            constexpr uint32_t UpdateStatus = 0x006ED990; // update status
+            constexpr uint32_t GetMoveStartTime = 0x006E9F50; // get move start time
+            constexpr uint32_t GetMoveEventMsgId = 0x006E9870; // get event message ID
+            constexpr uint32_t CalcCurrentSpeed = 0x00987570; // calculate current speed
+            constexpr uint32_t ReCalcCurrentSpeed = 0x009880C0; // recalculate speed
+            constexpr uint32_t OnMoveSetRunSpeed = 0x006EDB80; // set run speed
+            constexpr uint32_t OnMoveSetRunBackSpeed = 0x006EDC70; // set run back speed
+            constexpr uint32_t OnMoveSetWalkSpeed = 0x006EDD60; // set walk speed
+            constexpr uint32_t OnMoveSetSwimSpeed = 0x006EDE50; // set swim speed
+            constexpr uint32_t OnMoveSetSwimBackSpeed = 0x006EDF40; // set swim back speed
+            constexpr uint32_t OnFlightSpeedChange_ActiveMover = 0x006EE030; // flight speed change
+            constexpr uint32_t OnFlightBackSpeedChange = 0x006EE180; // flight back speed
+            constexpr uint32_t OnMoveSetTurnRate = 0x006EE210; // set turn rate
+            constexpr uint32_t OnPitchSpeedChange_ActiveMover = 0x006EE300; // pitch speed change
+            constexpr uint32_t SplineFlags = 0x006E9AD0; // get spline flags
+            constexpr uint32_t SplineEnableFlying = 0x00989890; // enable spline flying
+            constexpr uint32_t SplineToggleEnableFlying = 0x006EBE50; // toggle flying
+            constexpr uint32_t OnSplineMoveUnRoot = 0x006EBA20; // spline unroot
+            constexpr uint32_t OnSplineStopSwim = 0x006EB020; // spline stop swim
+            constexpr uint32_t OnSplineMoveToggleHover = 0x006EB060; // toggle hover
+            constexpr uint32_t OnSplineMoveToggleRunMode = 0x006E90D0; // toggle run mode
+            constexpr uint32_t OnSplineMoveToggleWaterWalk = 0x006E9240; // toggle water walk
+            constexpr uint32_t OnSplineMoveToggleFeatherFall = 0x006E9250; // toggle feather fall
+            constexpr uint32_t ToggleMovementFlag_0x20000000_FeatherFall = 0x00987440; // toggle feather fall; flag bit is named in the identifier
+            constexpr uint32_t ToggleMovementFlag_0x10000000_WaterWalk = 0x009873F0; // toggle water walk; flag bit is named in the identifier
+            constexpr uint32_t ToggleMovementFlag_0x40000000_Hover = 0x00987460; // toggle hover; flag bit is named in the identifier
+            constexpr uint32_t SetMovementFlag_0x8000000 = 0x009872A0; // set flag; flag bit is named in the identifier
+            constexpr uint32_t ClearMovementFlag_0x8000000 = 0x009872B0; // clear flag; flag bit is named in the identifier
+            constexpr uint32_t ToggleMovementFlag2_0x80 = 0x0098B570; // toggle flag2; flag bit is named in the identifier
+            constexpr uint32_t ToggleMovementFlag2_0x100 = 0x0098B590; // toggle flag2; flag bit is named in the identifier
+            constexpr uint32_t ProcessMoveEvent = 0x006ED0F0; // process move event
+            constexpr uint32_t AddPlayerMoveEvent = 0x006EC8B0; // add player move event
+            constexpr uint32_t HandleSplinePackets_1235_1236 = 0x006EBC20; // handle spline packets
+            constexpr uint32_t WriteMovementStatusToPacket = 0x007164B0; // write status to packet
+            constexpr uint32_t CalcFallStartElevation = 0x00986F00; // calculate fall start
+            constexpr uint32_t Swimming_FallCalc = 0x0098BFF0; // swimming fall calc
+            constexpr uint32_t IsFallingSwimmingFlying_6636D0 = 0x006EABA0; // check state
+            constexpr uint32_t OnStartAscendOrDescendPacket = 0x006EF5C0; // ascend/descend
+            constexpr uint32_t OnMoveStopAscendPacket = 0x006EF630; // stop ascend
+            constexpr uint32_t OnFallChangePacket = 0x006EEE50; // fall change
+            constexpr uint32_t OnFallLand_OnHeartbeat = 0x006EF680; // fall land heartbeat
+            constexpr uint32_t DisableFlying = 0x0098C240; // disable flying
+            constexpr uint32_t EnableHover = 0x009883F0; // enable hover
+            constexpr uint32_t DisableHover = 0x0098B710; // disable hover
+            constexpr uint32_t OnMoveHover = 0x006EEF60; // move hover handler
+            constexpr uint32_t OnMoveUpdateCanFlyPacket = 0x006EF0D0; // can fly update
+            constexpr uint32_t OnCanFlyChangePacket = 0x006EF060; // can fly change
+            constexpr uint32_t ForceSetTransportInt = 0x006EC400; // force set transport
+            constexpr uint32_t SetTransportAndSend_909 = 0x006F0C70; // set transport and send
+            constexpr uint32_t OnKnockback = 0x006F0E30; // knockback handler
+            constexpr uint32_t OnKnockbackPacket = 0x007187F0; // knockback packet
+        }
+
+        namespace CMovementStatus {
+            constexpr uint32_t ctor = 0x004F4C50; // status constructor
+            constexpr uint32_t Read = 0x004F4D40; // read status
+            constexpr uint32_t Skip = 0x004F4CA0; // skip status
+            constexpr uint32_t Write = 0x004F4ED0; // write status
+        }
+
+        namespace CMoveSpline {
+            constexpr uint32_t Read = 0x004F4B50; // read spline
+            constexpr uint32_t Skip = 0x004F4A50; // skip spline
+            constexpr uint32_t CopyFrom = 0x006F1240; // copy spline
+            constexpr uint32_t Dtor = 0x0074B7E0; // spline destructor
+            constexpr uint32_t Alloc = 0x0074B810; // allocate spline
+        }
+
+        namespace Movement {
+            constexpr uint32_t LoadMovePacket = 0x0071EF80; // load move packet
+            constexpr uint32_t WriteMovementPacket = 0x0071F060; // write move packet
+            constexpr uint32_t AllocPlayerMoveEvent = 0x006EBC70; // allocate move event
+            constexpr uint32_t AllocCMoveSpline = 0x0074B7B0; // allocate move spline
+            constexpr uint32_t MovementAddTransport = 0x0074B730; // add transport
+            constexpr uint32_t MovementMoveTransports = 0x0074B6E0; // move transports
+            constexpr uint32_t MovementRemoveTransport = 0x0074B750; // remove transport
+            constexpr uint32_t MovementGetTransportMatrix = 0x0074B4C0; // get transport matrix
+            constexpr uint32_t MovementGetTransportMatrixInternal = 0x0074B430; // get matrix internal
+        }
+
+        namespace CPlayerMoveEvent {
+            constexpr uint32_t FromMoveStatus = 0x006E9050; // create from status
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace World {
+        constexpr uint32_t IsInFlyableArea = 0x0051A1D0; // check flyable area
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Network {
+        namespace CDataStore {
+            constexpr uint32_t New = 0x008CD0B0; // create new data store
+            constexpr uint32_t Free = 0x00401030; // free data store
+            constexpr uint32_t Free_0 = 0x008CD160; // free (alternate)
+            constexpr uint32_t Destroy = 0x00403880; // frees the buffer and restores the base CDataStore vtable; matches Packets::Destroy
+            constexpr uint32_t Reset = 0x004010E0; // reset data store
+            constexpr uint32_t InternalDestroy = 0x0047AE50; // internal destroy
+            constexpr uint32_t dtor = 0x008CCF50; // destructor
+            constexpr uint32_t GetByte = 0x0047B340; // read byte (uint8)
+            constexpr uint32_t GetInt8_2 = 0x00401140; // read int8
+            constexpr uint32_t GetInt16 = 0x0047B380; // read int16
+            constexpr uint32_t GetInt = 0x0047B3C0; // read int32
+            constexpr uint32_t ReadInt32 = 0x0050F420; // read int32 (alt)
+            constexpr uint32_t GetUInt64 = 0x0047B400; // read uint64
+            constexpr uint32_t GetFloat = 0x0047B440; // read float
+            constexpr uint32_t GetString = 0x0047B480; // read string
+            constexpr uint32_t GetCString = 0x0047B560; // read C string
+            constexpr uint32_t GetCString_2 = 0x0047B6A0; // read C string (alt)
+            constexpr uint32_t GetIntArray = 0x0047B5F0; // read int array
+            constexpr uint32_t ReadBytes = 0x0047B6B0; // read raw bytes
+            constexpr uint32_t GetWowGUID = 0x0076DC20; // read WoW GUID
+            constexpr uint32_t ReadPackedVector3 = 0x007152B0; // read packed vector
+            constexpr uint32_t PutByte = 0x0047AFE0; // write byte
+            constexpr uint32_t PutInt8AtPos = 0x0047AEF0; // write int8 at position
+            constexpr uint32_t PutInt16 = 0x0047B040; // write int16
+            constexpr uint32_t PutInt16AtPos = 0x0047AF40; // write int16 at position
+            constexpr uint32_t PutInt32AtPos = 0x0047AF90; // write int32 at position
+            constexpr uint32_t Put = 0x0047B0A0; // write data
+            constexpr uint32_t PutGuid = 0x0047B100; // write GUID
+            constexpr uint32_t PutFloat = 0x0047B160; // write float
+            constexpr uint32_t PutString = 0x0047B300; // write string
+            constexpr uint32_t PutCString_2 = 0x0047B1C0; // write C string
+            constexpr uint32_t PutCString_3 = 0x0047B280; // write C string (alt)
+            constexpr uint32_t PutVector3 = 0x00406DA0; // write vector3
+            constexpr uint32_t GetBufferParams = 0x0047ADE0; // get buffer params
+            constexpr uint32_t DetachBuffer = 0x0047AE10; // detach buffer
+            constexpr uint32_t DetachBufferProxy = 0x008CCFC0; // detach buffer proxy
+            constexpr uint32_t CanRead = 0x0047B290; // check readable bytes
+            constexpr uint32_t CanReadNumBytes = 0x008CBBF0; // check specific count
+            constexpr uint32_t InternalFetchWrite = 0x0047AEA0; // internal write fetch
+            constexpr uint32_t InternalFetchRead = 0x00936900; // internal read fetch
+            constexpr uint32_t Alloc = 0x00401010; // allocate packet
+            constexpr uint32_t GenPacket = 0x00401050; // generate packet
+            constexpr uint32_t InitPacket2 = 0x00403EC0; // initialize packet
+            constexpr uint32_t GetPosition = 0x00401190; // get read position
+            constexpr uint32_t Finalize = 0x00401130; // finalize packet
+            constexpr uint32_t ReleasePacket2 = 0x00403F10; // release packet
+            constexpr uint32_t ReleaseSomePacket = 0x008CD040; // release packet (alt)
+            constexpr uint32_t InitSomePacket = 0x008CCEE0; // init packet
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Network {
+        namespace NetClient {
+            constexpr uint32_t NetClient = 0x00632A40; // constructor
+            constexpr uint32_t _NetClient = 0x006331B0; // destructor
+            constexpr uint32_t Initialize = 0x00631D30; // initialize client
+            constexpr uint32_t Destroy = 0x006322A0; // destroy client
+            constexpr uint32_t SetMessageHandler = 0x00631FA0; // set message handler
+            constexpr uint32_t HandleDisconnect = 0x00632540; // handle disconnect
+            constexpr uint32_t HandleData = 0x00632460; // handle incoming data
+            constexpr uint32_t WCMessageReady = 0x00633330; // message ready callback
+            constexpr uint32_t WCDisconnected = 0x00632060; // disconnected callback
+            constexpr uint32_t DelayedDelete = 0x00632390; // delayed delete
+            constexpr uint32_t Disconnect = 0x00631EA0; // disconnect
+            constexpr uint32_t GetNetStats = 0x006320D0; // get network stats
+        }
+
+        namespace CNetClient {
+            constexpr uint32_t ResetHandler = 0x00631FC0; // reset handler
+            constexpr uint32_t Process = 0x00631FE0; // process network
+            constexpr uint32_t SetUserNameAndSessionKey = 0x00631F70; // set credentials
+        }
+
+        namespace ClientServices {
+            constexpr uint32_t GetSessionKey = 0x00631F90; // get session key
+            constexpr uint32_t Initialize = 0x006B2200; // initialize
+            constexpr uint32_t PollStatus = 0x006B1100; // poll status
+            constexpr uint32_t Connect = 0x006B1390; // connect
+            constexpr uint32_t Disconnect = 0x006B0940; // disconnect
+            constexpr uint32_t CharacterCreate = 0x006B1620; // create character
+            constexpr uint32_t DeleteCharacter = 0x006B1A70; // delete character
+            constexpr uint32_t CharacterForceLogout = 0x006B1930; // force logout
+            constexpr uint32_t ClearMessageHandler = 0x006B0BC0; // clear handler
+            constexpr uint32_t GetErrorToken = 0x006B0F40; // get error token
+            constexpr uint32_t SendPacket = 0x00406F40; // send packet
+        }
+
+        namespace CClientConnection {
+            constexpr uint32_t Send = 0x00926A70; // send packet — **label unverified**: FMOD static-lib socket-send loop (`send()`+`WSAEWOULDBLOCK` retry); both callers are FMOD translation units
+        }
+
+        namespace ClientConnection {
+            constexpr uint32_t ClientConnection = 0x004650E0; // constructor
+            constexpr uint32_t _ClientConnection = 0x00465320; // destructor
+            constexpr uint32_t HandleAuthResponse = 0x00464640; // auth response
+            constexpr uint32_t HandleCharEnum = 0x00464C10; // character enum
+            constexpr uint32_t SendCharEnumOpcode = 0x00464A40; // send char enum
+            constexpr uint32_t SendPlayerLoginOpcode = 0x00464AB0; // send player login
+            constexpr uint32_t HandleCharacterLoginFailed = 0x00464460; // login failed
+            constexpr uint32_t HandleCharacterCreate = 0x00464780; // character create
+            constexpr uint32_t HandleClientCacheVersion = 0x00464730; // cache version
+            constexpr uint32_t HandleAddonInfo = 0x00464410; // addon info
+        }
+
+        namespace ClientLink {
+            constexpr uint32_t CMD_AUTH_LOGON_CHALLENGE = 0x008CC3E0; // logon challenge
+            constexpr uint32_t CMD_AUTH_LOGON_PROOF = 0x008CC7A0; // logon proof
+            constexpr uint32_t CMD_AUTH_RECONNECT_CHALLENGE = 0x008CC980; // reconnect challenge
+            constexpr uint32_t CMD_AUTH_RECONNECT_PROOF = 0x008CCA50; // reconnect proof
+            constexpr uint32_t CMD_REALM_LIST = 0x008CC250; // realm list
+            constexpr uint32_t CMD_XFER_INITIATE = 0x008CCB40; // transfer initiate
+            constexpr uint32_t CMD_XFER_DATA = 0x008CCC20; // transfer data
+        }
+
+        namespace GruntLogin {
+            constexpr uint32_t GruntLogin = 0x008CACA0; // constructor
+            constexpr uint32_t vFunc0 = 0x008CA0B0; // vFunc0
+            constexpr uint32_t vFunc1 = 0x008CA1D0; // vFunc1
+            constexpr uint32_t vFunc2 = 0x008CA140; // vFunc2
+            constexpr uint32_t vFunc14 = 0x008CB160; // vFunc14
+            constexpr uint32_t vFunc15 = 0x008CB020; // vFunc15
+            constexpr uint32_t vFunc18 = 0x008CA4F0; // vFunc18
+            constexpr uint32_t vFunc8 = 0x008CAD40; // vFunc8
+        }
+
+        namespace BattleNetLogin {
+            constexpr uint32_t BattlenetLogin = 0x008C8C00; // constructor
+            constexpr uint32_t vFunc0 = 0x008C52E0; // vFunc0
+            constexpr uint32_t vFunc18 = 0x008C52D0; // vFunc18
+            constexpr uint32_t vFunc10 = 0x008C62B0; // vFunc10
+            constexpr uint32_t PatchInstruction = 0x008C6550; // patch instruction
+            constexpr uint32_t GameAccount = 0x008C64B0; // game account
+        }
+
+        namespace CGChat_C {
+            constexpr uint32_t SendMessage = 0x00509DD0; // send chat message
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Network {
+        namespace Packets {
+            constexpr uint32_t SMSG_UPDATE_OBJECT = 0x004D73A0; // object update
+            constexpr uint32_t SMSG_COMPRESSED_UPDATE_OBJECT = 0x004D74D0; // compressed update
+            constexpr uint32_t SMSG_DESTROY_OBJECT = 0x004D7610; // destroy object
+            constexpr uint32_t SMSG_COMPRESSED_MOVES = 0x007169A0; // compressed moves
+            constexpr uint32_t SMSG_SPELLLOGEXECUTE = 0x006D3220; // spell log execute
+            constexpr uint32_t SMSG_SPELLHEALLOG = 0x006D3C30; // spell heal log
+            constexpr uint32_t SMSG_SPELLENERGIZELOG = 0x006D3DF0; // spell energize log
+            constexpr uint32_t SMSG_SPELLLOGMISS = 0x006D3090; // spell miss log
+            constexpr uint32_t SMSG_SPELLNONMELEEDAMAGELOG = 0x006D3C10; // spell damage log
+            constexpr uint32_t SMSG_SPELLBREAKLOG = 0x006CE2B0; // spell break log
+            constexpr uint32_t SMSG_SPELLINSTAKILLLOG = 0x006CE260; // instant kill log
+            constexpr uint32_t SMSG_AURA_UPDATE = 0x007300A0; // aura update
+            constexpr uint32_t SMSG_POWER_UPDATE = 0x007236C0; // power update
+            constexpr uint32_t SMSG_CHANNEL_NOTIFY = 0x0050E120; // channel notify
+            constexpr uint32_t SMSG_CHANNEL_LIST = 0x00505DC0; // channel list
+            constexpr uint32_t SMSG_GM_MESSAGECHAT = 0x0050EBC0; // GM message
+            constexpr uint32_t SMSG_LOGIN_VERIFY_WORLD = 0x00403DE0; // verify world
+            constexpr uint32_t SMSG_NEW_WORLD = 0x00403D10; // new world
+            constexpr uint32_t SMSG_TRANSFER_ABORTED = 0x00403910; // transfer aborted
+            constexpr uint32_t SMSG_TRANSFER_PENDING = 0x00401480; // transfer pending
+            constexpr uint32_t SMSG_LOGIN_SETTIMESPEED = 0x007E28E0; // set time speed
+            constexpr uint32_t SMSG_SPELL_GO = 0x0080FEE0; // spell go packet (original row name Packet_PACKET_SMSG_SPELL_GO)
+            constexpr uint32_t SMSG_SPELL_FAILURE = 0x00809C70; // spell failure (original row name Packet_PACKET_SMSG_SPELL_FAILURE)
+            constexpr uint32_t SMSG_CAST_FAILED = 0x00809AF0; // cast failed (original row name Packet_PACKET_SMSG_CAST_FAILED)
+            constexpr uint32_t SMSG_SPELL_COOLDOWN = 0x00806DD0; // cooldown packet (original row name Packet_PACKET_SMSG_SPELL_COOLDOWN)
+            constexpr uint32_t SMSG_SPELL_DELAYED = 0x00801B80; // spell delayed (original row name Packet_PACKET_SMSG_SPELL_DELAYED)
+            constexpr uint32_t MSG_CHANNEL_START = 0x00801C90; // channel start (original row name Packet_PACKET_MSG_CHANNEL_START)
+            constexpr uint32_t MSG_CHANNEL_UPDATE = 0x00801DB0; // channel update (original row name Packet_PACKET_MSG_CHANNEL_UPDATE)
+            constexpr uint32_t SMSG_MOVE_KNOCK_BACK = 0x00732450; // knockback packet (Packet_PACKET_SMSG_MOVE_KNOCK_BACK)
+            constexpr uint32_t SMSG_WARDEN_DATA = 0x007DA850; // warden data packet
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace ObjectManager {
+        namespace ClntObjMgr {
+            constexpr uint32_t GetObjectPtr = 0x004D4BB0; // get object pointer by GUID
+            constexpr uint32_t EnumVisibleObjects = 0x004D4B30; // enumerate visible objects (callback)
+            constexpr uint32_t ObjectPtr = 0x004D4DB0; // get object from ObjectManager
+            constexpr uint32_t GetActivePlayer = 0x004D3790; // get local player GUID
+            constexpr uint32_t GetActivePlayerObj = 0x004038F0; // get local player object
+            constexpr uint32_t GetMapID = 0x006CD770; // get current map ID — **label unverified**: body is an event/opcode handler (registered as callback id 0x4C0)
+            constexpr uint32_t Create = 0x004D7750; // create ObjectManager
+            constexpr uint32_t Destroy = 0x004D6750; // destroy ObjectManager
+            constexpr uint32_t Initialize = 0x004D76E0; // initialize ObjectManager
+            constexpr uint32_t InitializeShared = 0x004D4AC0; // initialize shared state
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Object {
+        namespace CGObject_C {
+            constexpr uint32_t CGObject_C = 0x00745E60; // constructor
+            constexpr uint32_t Initialize = 0x007460C0; // initialize object
+            constexpr uint32_t Shutdown = 0x00744E50; // shutdown object
+            constexpr uint32_t Enable = 0x00744DB0; // enable object
+            constexpr uint32_t Disable = 0x00744D20; // disable object
+            constexpr uint32_t PostInit = 0x00744A50; // post initialization
+            constexpr uint32_t Destructor = 0x004D6010; // destructor
+            constexpr uint32_t GetPosition = 0x004D5EA0; // get object position
+            constexpr uint32_t GetFacing = 0x004D5EE0; // get facing angle
+            constexpr uint32_t GetFacing_Override = 0x004D5EF0; // get facing (override)
+            constexpr uint32_t virt3C = 0x004D5F10; // virtual position func
+            constexpr uint32_t TranslateRotation = 0x004D5F20; // translate rotation
+            constexpr uint32_t CopyMatrix = 0x00744380; // copy transform matrix
+            constexpr uint32_t SetTypeByTypeId = 0x00743130; // set object type
+            constexpr uint32_t GetQuestStatus = 0x00745DA0; // get quest status — **label unverified**: body rebuilds the selection-circle model (no quest code)
+            constexpr uint32_t SetupDescriptorBounds = 0x00743640; // setup descriptor bounds
+            constexpr uint32_t IsLocalPlayer = 0x004CEE50; // check if local player
+            constexpr uint32_t virt14 = 0x007438E0; // virt14
+            constexpr uint32_t virt20 = 0x007451B0; // virt20
+            constexpr uint32_t virt9C = 0x007432E0; // virt9C
+            constexpr uint32_t virt98 = 0x00743250; // virt98
+            constexpr uint32_t virtE8 = 0x00743300; // virtE8
+            constexpr uint32_t virtE4 = 0x00743330; // virtE4
+            constexpr uint32_t virtB8 = 0x00743530; // virtB8
+            constexpr uint32_t PreAnimate = 0x00743EC0; // pre-animation update
+            constexpr uint32_t virt50 = 0x007444E0; // animation virt
+            constexpr uint32_t PostReenable = 0x00743FF0; // post re-enable
+            constexpr uint32_t AddWorldObject = 0x00743760; // add to world
+        }
+
+        namespace CGxDevice {
+            constexpr uint32_t BuildSelectionMatrix = 0x00744150; // build selection matrix
+        }
+
+        namespace CGItem_C {
+            constexpr uint32_t CGItem_C = 0x00709840; // constructor
+            constexpr uint32_t Initialize = 0x00709440; // initialize item
+            constexpr uint32_t Shutdown = 0x00709A10; // shutdown item
+            constexpr uint32_t PostInit = 0x0070AF80; // post initialization
+            constexpr uint32_t GetItemEntry = 0x00707360; // get item entry ID
+            constexpr uint32_t BuildItemName = 0x00706D70; // build item name string
+            constexpr uint32_t GetClassID = 0x00707220; // get item class ID
+            constexpr uint32_t GetInventoryType = 0x00707280; // get inventory type
+            constexpr uint32_t virt5C = 0x00707150; // virtual function
+            constexpr uint32_t GetInventoryArt = 0x0070A910; // get inventory icon
+            constexpr uint32_t OnRightClick = 0x00708200; // handle right click
+            constexpr uint32_t RequestRefundInfo = 0x007089E0; // request refund info
+            constexpr uint32_t SetItemRefundToken = 0x00706CF0; // set refund token
+            constexpr uint32_t SignalEvent = 0x0060BFE0; // signal item event
+            constexpr uint32_t CreateItemLink = 0x0061E290; // create item link
+            constexpr uint32_t CanEquipInSlot = 0x005176F0; // check equip slot
+            constexpr uint32_t GetBag = 0x00706AD0; // get containing bag — address is a **CGContainer_C** member (its vtable 0xA332D0 slots 9/10, returns `this+0x760`)
+            constexpr uint32_t GetStatName = 0x0061BB20; // get stat name
+            constexpr uint32_t GetBagFamily = 0x007072B0; // get bag family
+        }
+
+        namespace Item {
+            constexpr uint32_t GetItemName = 0x007071D0; // get item name
+            constexpr uint32_t GetItemIDByName = 0x00709DE0; // get item ID by name
+            constexpr uint32_t GetPageTextId = 0x00707180; // get page text ID
+        }
+
+        namespace CGItemStats_C {
+            constexpr uint32_t GetSocketFlags = 0x0061B930; // get socket flags
+            constexpr uint32_t Create = 0x0061B5B0; // create item stats
+            constexpr uint32_t CleanStatNames = 0x0061BA90; // clean stat names
+            constexpr uint32_t MakeStatNamesPretty = 0x0061B9E0; // format stat names
+        }
+
+        namespace CGGameObject_C {
+            constexpr uint32_t CGGameObject_C = 0x00714250; // constructor
+            constexpr uint32_t Initialize = 0x007140A0; // initialize
+            constexpr uint32_t Shutdown = 0x00714150; // shutdown
+            constexpr uint32_t PostInit = 0x00712F30; // post initialization
+            constexpr uint32_t Disable = 0x007130A0; // disable
+            constexpr uint32_t PostReenable = 0x00713130; // post re-enable
+            constexpr uint32_t Destructor = 0x00713F20; // destructor
+            constexpr uint32_t OnRightClick = 0x00711140; // handle right click
+            constexpr uint32_t CloseInteraction = 0x0070BAC0; // close interaction
+            constexpr uint32_t LoadBaseObject = 0x00712400; // load base object
+            constexpr uint32_t GetLockRecord = 0x0070EF30; // get lock record
+            constexpr uint32_t virt64 = 0x00713F50; // virt64
+            constexpr uint32_t virt3C = 0x007124A0; // virt3C
+            constexpr uint32_t virt38 = 0x007111A0; // virt38
+            constexpr uint32_t virt84 = 0x0070F580; // virt84
+            constexpr uint32_t virt40 = 0x0070EE80; // virt40
+            constexpr uint32_t virt18 = 0x0070F940; // virt18
+        }
+
+        namespace Level2Object {
+            constexpr uint32_t SetupDescriptorBounds = 0x0070CBA0; // setup descriptors
+        }
+
+        namespace CGContainer_C {
+            constexpr uint32_t CGContainer_C = 0x00706A20; // constructor
+            constexpr uint32_t virt00 = 0x00706B60; // virt00
+        }
+
+        namespace CGCorpse_C {
+            constexpr uint32_t CGCorpse_C = 0x00706430; // constructor
+            constexpr uint32_t PostInit = 0x00705B20; // post initialization
+            constexpr uint32_t GetCorpsePosition = 0x0051F430; // get corpse position
+        }
+
+        namespace CGDynamicObject_C {
+            constexpr uint32_t CGDynamicObject_C = 0x007053A0; // constructor
+            constexpr uint32_t PostInit = 0x00705230; // post initialization
+        }
+
+        namespace CGBag_C {
+            constexpr uint32_t FindItem_0 = 0x007546F0; // find item in bag
+            constexpr uint32_t FindItem = 0x00754CD0; // find item (alt)
+            constexpr uint32_t GetItemTypeCount = 0x00754D00; // get item type count
+            constexpr uint32_t GetItemIdByName = 0x00754B90; // get item by name
+            constexpr uint32_t GetBagItem = 0x00754390; // get bag item
+            constexpr uint32_t GetBagAtIndex = 0x005D6F20; // get bag at index
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Spell {
+        namespace Spell_C {
+            constexpr uint32_t CastSpell = 0x0080DA40; // cast spell by ID
+            constexpr uint32_t SystemInitialize = 0x008100E0; // initialize spell system
+            constexpr uint32_t GetSpellCooldown = 0x00807980; // get spell cooldown
+            constexpr uint32_t GetSpellCooldown_Proxy = 0x00809000; // cooldown proxy; indexes the cooldown pointer table by book type (24-byte stride)
+            constexpr uint32_t GetItemCooldown = 0x00809030; // get item cooldown
+            constexpr uint32_t GetSpellRange = 0x00802C30; // get spell range
+            constexpr uint32_t TargetTradeItem = 0x005198A0; // target trade item
+            constexpr uint32_t HandleTerrainClick = 0x0080C340; // handle terrain targeting
+            constexpr uint32_t HandleSpriteRay = 0x00803A50; // handle sprite ray
+        }
+
+        namespace Spell {
+            constexpr uint32_t CreatePendingSpellCast = 0x00805010; // create pending cast
+            constexpr uint32_t GetPendingSpellCast = 0x00805180; // get pending cast
+            constexpr uint32_t Alloc_PeriodicClientTrigger = 0x0080DF10; // allocate periodic trigger
+            constexpr uint32_t SendCancelChannelingOpcode = 0x008008D0; // cancel channeling
+            constexpr uint32_t GetSpellIdForDifficulty = 0x00802850; // get difficulty spell ID
+            constexpr uint32_t HasApplyAuraEffect = 0x0076BD50; // has apply aura
+            constexpr uint32_t IsValidSpell = 0x00540650; // validate spell ID
+            constexpr uint32_t HasSpell = 0x0053C5B0; // player knows spell
+            constexpr uint32_t GetSpellVisualRow = 0x007FA290; // get spell visual
+            constexpr uint32_t GetSpellFailedResult = 0x007FCCA0; // get fail reason
+            constexpr uint32_t GetSpellFailedEventString = 0x007FEF10; // get fail string
+            constexpr uint32_t BroadcastSpellEvent = 0x0060BF60; // broadcast spell event
+            constexpr uint32_t SpellTableInitialize = 0x00812200; // initialize spell table
+            constexpr uint32_t GetSpellIdByName = 0x00540200; // get spell ID by name
+            constexpr uint32_t GetSpellManaCostByID = 0x008012F0; // get mana cost
+        }
+
+        namespace SpellRec {
+            constexpr uint32_t GetCastTime = 0x007FF180; // get base cast time; reads the spell record's cast-time index, resolved through SpellCastTimes.dbc
+            constexpr uint32_t GetDuration = 0x00800A70; // get spell duration; reads the spell record's duration index, resolved through SpellDuration.dbc (a different index from GetCastTime)
+            constexpr uint32_t GetLevel = 0x007FF070; // get required level
+            constexpr uint32_t GetClassMask = 0x007FDE80; // get class mask
+            constexpr uint32_t GetModifiedStats = 0x007FD970; // get modified stats
+            constexpr uint32_t GetModifiedStatValue = 0x007FDB50; // get modified stat value
+            constexpr uint32_t IsModifiedStat = 0x00800770; // check if stat modified
+            constexpr uint32_t HasEffect = 0x007FDE20; // check spell effect type
+            constexpr uint32_t HasAura = 0x007FDE50; // check aura type
+            constexpr uint32_t HasTrackingAura = 0x007FDF60; // has tracking aura
+            constexpr uint32_t WillSummonCritter = 0x008009B0; // will summon critter
+            constexpr uint32_t IsHelpfulOrHarmful = 0x007FE1B0; // check helpful/harmful
+            constexpr uint32_t UsableInShapeshift = 0x007FE850; // usable in shapeshift
+            constexpr uint32_t NotUsableInShapeshiftForm = 0x007FE890; // not usable in form
+            constexpr uint32_t HasShapeshiftFlag_0x1 = 0x00800950; // has shapeshift flag
+            constexpr uint32_t RangeHasFlag_0x1 = 0x007FF380; // range flag check
+            constexpr uint32_t RangeHasFlag_0x2 = 0x007FF3C0; // range flag check
+        }
+
+        namespace CGSpellBook {
+            constexpr uint32_t CastSpell = 0x0053BC40; // cast from spellbook
+            constexpr uint32_t UpdateSpells = 0x0053CA70; // update spellbook
+            constexpr uint32_t PickupSpell = 0x0053BAF0; // pickup spell to cursor
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace System {
+        namespace Client {
+            constexpr uint32_t InitializeGame = 0x00405540; // initialize game client
+            constexpr uint32_t DestroyGame = 0x00406510; // destroy game client
+            constexpr uint32_t Idle = 0x00403340; // main idle loop
+            constexpr uint32_t WinMain = 0x00406C70; // entry point
+            constexpr uint32_t start = 0x00401000; // program start
+        }
+
+        namespace SMem {
+            constexpr uint32_t Alloc = 0x0076E540; // memory allocation
+            constexpr uint32_t Free = 0x0076E5A0; // memory free
+            constexpr uint32_t ReAlloc = 0x0076E5E0; // memory reallocation
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Globals {
+        constexpr uint32_t PlayerName = 0x00C79D18; // current player name
+        constexpr uint32_t CurrentAccount = 0x00B6AA40; // current account name
+        constexpr uint32_t CurrentRealm = 0x00C79D08; // cached "realmName" CVar handle (string value at [handle+0x28])
+        constexpr uint32_t CurrentTargetGUID = 0x00BD07B0; // target GUID
+        constexpr uint32_t LastTargetGUID = 0x00BD07B8; // last target GUID
+        constexpr uint32_t MouseOverGUID = 0x00BD07A0; // mouseover GUID
+        constexpr uint32_t FollowGUID = 0x00CA11F8; // follow GUID
+        constexpr uint32_t IsLoadingOrConnecting = 0x00B6AA38; // connection/login operation enum (0..13), not a loading boolean
+        constexpr uint32_t Timestamp = 0x00B1D618; // UNVERIFIED: only zero-initialized by a static constructor (object at 0xB1D5E8), never read or written afterwards
+        constexpr uint32_t LastHardwareAction = 0x00B499A4; // last input time
+        constexpr uint32_t BuildNumber = 0x00B3203C; // client build number
+        constexpr uint32_t LocalGUID = 0x00CA1238; // local player GUID
+        constexpr uint32_t ObjectManager_Ptr = 0x00C79CE0; // pointer to ObjectManager
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace UI {
+        namespace CGGameUI {
+            constexpr uint32_t EnterWorld = 0x00528010; // enter world
+            constexpr uint32_t LeaveWorld = 0x00528C30; // leave world
+            constexpr uint32_t ShutdownGame = 0x00529160; // shutdown game
+            constexpr uint32_t Shutdown = 0x00528F00; // shutdown UI
+            constexpr uint32_t InitializeGame = 0x0052B550; // initialize game
+            constexpr uint32_t Reload = 0x0051D960; // reload UI; sets the reload flag BD0791=1; the Lua ReloadUI wrapper is 5222E0
+            constexpr uint32_t CheckBindings = 0x008165E0; // check key bindings
+            constexpr uint32_t CheckPermissions = 0x005191C0; // lua protection check (bypass target)
+            constexpr uint32_t Target = 0x00524BF0; // target unit
+            constexpr uint32_t ClearInteractTarget = 0x00518D50; // clear interact target
+            constexpr uint32_t SetInteractTarget = 0x0051FCE0; // set interact target
+            constexpr uint32_t CloseInteraction = 0x00512E60; // close interaction
+            constexpr uint32_t OpenGuildInvite = 0x00512570; // open guild invite
+            constexpr uint32_t OpenGossipWindow = 0x006D1E20; // open gossip window
+            constexpr uint32_t ClearCursor = 0x00519280; // clear cursor
+            constexpr uint32_t SetCursorItem = 0x00520770; // set cursor item
+            constexpr uint32_t GetCursorItem = 0x00513660; // get cursor item
+            constexpr uint32_t UnlockItem = 0x00513770; // unlock cursor item
+            constexpr uint32_t DisplayError = 0x005216F0; // display error message
+            constexpr uint32_t BroadcastUIError = 0x005219E0; // broadcast UI error
+            constexpr uint32_t ShowCombatFeedback_0 = 0x00513380; // show combat feedback
+            constexpr uint32_t OnTerrainClick = 0x00527360; // handle terrain click
+            constexpr uint32_t HandleTerrainClick = 0x00527830; // terrain click handler
+            constexpr uint32_t ShowSpellFailed = 0x00808200; // show spell failed UI
+        }
+
+        namespace CGameUI {
+            constexpr uint32_t Signal_EVENT_ACTIONBAR_UPDATE_COOLDOWN = 0x005A7CC0; // cooldown event
+            constexpr uint32_t Signal_EVENT_ACTIONBAR_UPDATE_STATE = 0x005A7CB0; // state event
+        }
+
+        namespace CGCursor_C {
+            constexpr uint32_t Update = 0x006162C0; // update cursor
+            constexpr uint32_t SetCursorFromName = 0x00616830; // set cursor by name
+            constexpr uint32_t CursorSetCursorMode = 0x00616800; // set cursor mode
+            constexpr uint32_t CursorSetHeldItem = 0x00616630; // set held item cursor
+        }
+
+        namespace CGActionBar {
+            constexpr uint32_t UseAction = 0x005ABBC0; // use action
+            constexpr uint32_t PutActionInSlot = 0x005AB120; // put action in slot
+            constexpr uint32_t PickupAction = 0x005ABE70; // pickup action
+            constexpr uint32_t GetCooldown = 0x005A8E40; // get cooldown
+            constexpr uint32_t GetTexture = 0x005A97F0; // get action texture
+            constexpr uint32_t IsCurrentAction = 0x005AA240; // is current action
+            constexpr uint32_t HideGrid = 0x005A7A80; // hide action bar grid
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace UI {
+        namespace CGWorldFrame {
+            constexpr uint32_t OnWorldUpdate = 0x004FA5F0; // world update
+            constexpr uint32_t OnLayerUpdate = 0x004FA040; // layer update
+            constexpr uint32_t Render = 0x004F8EA0; // render frame
+            constexpr uint32_t RenderWorld = 0x004FAF90; // render world
+            constexpr uint32_t Intersect = 0x0077F310; // intersect test
+            constexpr uint32_t TranslateToMapCoords = 0x00544140; // map coord translate
+            constexpr uint32_t CreateFrames = 0x00521040; // create frames
+            constexpr uint32_t GetActiveCamera = 0x004F5960; // get active camera
+        }
+
+        namespace CGCamera {
+            constexpr uint32_t SetView = 0x00603330; // set camera view
+            constexpr uint32_t ResetView = 0x006048A0; // reset view
+            constexpr uint32_t UpdateFreeLookFacing = 0x006020B0; // update free look
+            constexpr uint32_t SyncFreeLookFacing = 0x006023D0; // sync free look
+            constexpr uint32_t ZoomIn = 0x005FF950; // zoom in
+            constexpr uint32_t ZoomOut = 0x005FFA60; // zoom out
+            constexpr uint32_t ParentToWorld = 0x00600B60; // parent to world
+            constexpr uint32_t virt00 = 0x005FF500; // virt00
+            constexpr uint32_t virt04 = 0x00600C20; // virt04
+            constexpr uint32_t virt08 = 0x00600CC0; // virt08
+            constexpr uint32_t virt0C = 0x00600D60; // virt0C
+            constexpr uint32_t CreateViewFromCamera = 0x005FE4E0; // create from camera
+            constexpr uint32_t Unknown1 = 0x00604940; // unknown function
+            constexpr uint32_t Unknown5 = 0x00604A70; // unknown function
+        }
+
+        namespace Camera {
+            constexpr uint32_t CameraCreate = 0x004BFCA0; // create camera
+            constexpr uint32_t CameraDuplicate = 0x004BFCE0; // duplicate camera
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace UI {
+        namespace CGInputControl {
+            constexpr uint32_t CGInputControl = 0x005FCD70; // constructor
+            constexpr uint32_t InputControlDestroy_0 = 0x005FD3D0; // destroy
+            constexpr uint32_t InputControlDestroy = 0x005FD430; // destroy (alt)
+            constexpr uint32_t SetControlBit = 0x005FA170; // set control bit
+            constexpr uint32_t UnsetControlBit = 0x005FA450; // unset control bit
+            constexpr uint32_t ToggleControlBit = 0x005FBE10; // toggle control bit
+            constexpr uint32_t UpdatePlayer = 0x005FBBC0; // update player
+            constexpr uint32_t OnMouseMoveRel = 0x005FAB70; // mouse move relative
+            constexpr uint32_t EnterWorld = 0x005FAC60; // enter world
+            constexpr uint32_t CheckToCancelCurrentChannelSpell = 0x005FAA40; // cancel channeling check
+        }
+
+        namespace CInputControl {
+            constexpr uint32_t Ctor = 0x005FD1D0; // constructor (alt)
+            constexpr uint32_t VehicleAimChange = 0x005FB4B0; // vehicle aim
+            constexpr uint32_t RemoveFlags_0xF0000 = 0x005F95E0; // remove flags
+            constexpr uint32_t RemoveFlags_0x11000 = 0x005F95F0; // remove flags (alt)
+        }
+
+        namespace Input {
+            constexpr uint32_t OnKeyDown = 0x00765AF0; // key down event
+            constexpr uint32_t OnKeyDownRepeat = 0x00764B90; // key repeat event
+            constexpr uint32_t OnKeyUp = 0x00763BE0; // key up event
+            constexpr uint32_t OnChar = 0x00764990; // character input
+            constexpr uint32_t OnMouseDown = 0x00764A10; // mouse down event
+            constexpr uint32_t closeconsole = 0x00763C10; // close console
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace UI {
+        namespace CSimpleFrame {
+            constexpr uint32_t LoadXML = 0x004932C0; // load XML
+            constexpr uint32_t OnFrameRender = 0x00490840; // frame render
+        }
+
+        namespace CSimpleTop {
+            constexpr uint32_t CSimpleTop = 0x00495EB0; // constructor
+        }
+
+        namespace CSimpleUI {
+            constexpr uint32_t CreateTooltip = 0x00621070; // create tooltip
+        }
+
+        namespace CSimpleFontString {
+            constexpr uint32_t UpdateString = 0x00486B20; // update font string
+        }
+
+        namespace Font {
+            constexpr uint32_t GxuFontCreateFont = 0x006BDE80; // create font
+            constexpr uint32_t TextBlockGenerateFont = 0x004BE9C0; // generate font block
+            constexpr uint32_t TextBlockCreate = 0x004BDAA0; // create text block
+        }
+
+        namespace LuaFrameMethods {
+            constexpr uint32_t SetPoint = 0x0049DB10; // script method %s:SetPoint - set anchor point
+            constexpr uint32_t SetWidth = 0x0049D480; // script method %s:SetWidth - set width
+            constexpr uint32_t SetHeight = 0x0049D620; // script method %s:SetHeight - set height
+            constexpr uint32_t SetSize = 0x0049D7A0; // script method %s:SetSize - set size
+            constexpr uint32_t SetAlpha_0 = 0x0049F9E0; // script method %s:SetAlpha_0 - set alpha
+            constexpr uint32_t SetID = 0x0049FB00; // script method %s:SetID - set frame ID
+            constexpr uint32_t SetScale = 0x0049F820; // script method %s:SetScale - set scale
+            constexpr uint32_t SetFrameStrata = 0x0049E880; // script method %s:SetFrameStrata - set strata
+            constexpr uint32_t SetFrameLevel = 0x0049E9D0; // script method %s:SetFrameLevel - set level
+            constexpr uint32_t HookScript = 0x0049EDB0; // script method %s:HookScript - hook script
+            constexpr uint32_t RegisterEvent = 0x0049EFE0; // script method %s:RegisterEvent - register event
+            constexpr uint32_t UnregisterEvent = 0x0049F060; // script method %s:UnregisterEvent - unregister event
+            constexpr uint32_t IsEventRegistered = 0x0049F160; // script method %s:IsEventRegistered - check event
+            constexpr uint32_t GetAttribute = 0x0049F2D0; // script method %s:GetAttribute - get attribute
+            constexpr uint32_t SetAttribute = 0x0049F610; // script method %s:SetAttribute - set attribute
+            constexpr uint32_t SetHitRectInsets = 0x004A0090; // script method %s:SetHitRectInsets - set hit rect
+            constexpr uint32_t SetClampRectInsets = 0x004A0310; // script method %s:SetClampRectInsets - set clamp rect
+            constexpr uint32_t SetMinResize = 0x004A0520; // script method %s:SetMinResize - set min resize
+            constexpr uint32_t SetMaxResize = 0x004A06E0; // script method %s:SetMaxResize - set max resize
+            constexpr uint32_t SetBackdrop = 0x004A15A0; // script method %s:SetBackdrop - set backdrop
+        }
+
+        namespace LuaTextureMethods {
+            constexpr uint32_t SetBlendMode = 0x0048C040; // script method %s:SetBlendMode - set blend mode
+            constexpr uint32_t SetGradient = 0x0048C240; // script method %s:SetGradient - set gradient
+            constexpr uint32_t SetGradientAlpha = 0x0048C310; // script method %s:SetGradientAlpha - set gradient alpha
+            constexpr uint32_t SetAlpha_1 = 0x0048C3E0; // script method %s:SetAlpha_1 - set alpha (texture)
+            constexpr uint32_t SetRotation = 0x0048C860; // script method %s:SetRotation - set rotation
+            constexpr uint32_t SetTexCoord = 0x0048E170; // script method %s:SetTexCoord - set texture coords
+        }
+
+        namespace LuaFontStringMethods {
+            constexpr uint32_t SetAlpha_0_0 = 0x0048D030; // script method %s:SetAlpha_0_0 - set alpha
+            constexpr uint32_t SetAlphaGradient = 0x0048D0F0; // script method %s:SetAlphaGradient - set alpha gradient
+            constexpr uint32_t SetFontObject = 0x0048D380; // script method %s:SetFontObject - set font object
+            constexpr uint32_t SetFont = 0x0048D5B0; // script method %s:SetFont - set font
+            constexpr uint32_t SetShadowOffset = 0x0048DBB0; // script method %s:SetShadowOffset - set shadow offset
+            constexpr uint32_t SetSpacing = 0x0048DD00; // script method %s:SetSpacing - set spacing
+            constexpr uint32_t SetTextHeight = 0x0048DDB0; // script method %s:SetTextHeight - set text height
+            constexpr uint32_t SetJustifyH = 0x0048E360; // script method %s:SetJustifyH - set horizontal justify
+            constexpr uint32_t SetJustifyV = 0x0048E430; // script method %s:SetJustifyV - set vertical justify
+        }
+
+        namespace LuaButtonMethods {
+            constexpr uint32_t SetButtonState = 0x00977280; // script method %s:SetButtonState - set button state
+            constexpr uint32_t SetNormalFontObject = 0x00977340; // script method %s:SetNormalFontObject - set normal font
+            constexpr uint32_t SetDisabledFontObject = 0x009774C0; // script method %s:SetDisabledFontObject - set disabled font
+            constexpr uint32_t SetHighlightFontObject = 0x00977640; // script method %s:SetHighlightFontObject - set highlight font
+            constexpr uint32_t SetHighlightTexture = 0x00977D30; // script method %s:SetHighlightTexture - set highlight texture
+            constexpr uint32_t SetPushedTextOffset = 0x00977F60; // script method %s:SetPushedTextOffset - set pushed offset
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Unit {
+        namespace CGUnit_C {
+            constexpr uint32_t virt00 = 0x00737BA0; // virt00
+            constexpr uint32_t CGUnit_C = 0x0073F660; // constructor
+            constexpr uint32_t Initialize = 0x00742220; // initialize unit
+            constexpr uint32_t Shutdown = 0x00742BB0; // shutdown unit
+            constexpr uint32_t PostInit = 0x0073FCC0; // post initialization
+            constexpr uint32_t PostShutdown = 0x00724EA0; // post shutdown
+            constexpr uint32_t Disable = 0x00734FD0; // disable unit
+            constexpr uint32_t Reenable = 0x007237F0; // re-enable unit
+            constexpr uint32_t GetPosition = 0x006E6F10; // get unit position
+            constexpr uint32_t GetFacing = 0x006E6F40; // get unit facing angle; world, transport-adjusted; vtable slot 13; the client's own GetPlayerFacing uses this
+            constexpr uint32_t UpdateFacing = 0x006E6F60; // update facing; reads the raw movement facing, vtable slot 14
+            constexpr uint32_t GetWorldMatrix = 0x0071FD80; // get world transform matrix
+            constexpr uint32_t GetUnitName = 0x0072A000; // get unit name string
+            constexpr uint32_t DisplayInfoNeedsUpdate = 0x0072A480; // check display update
+            constexpr uint32_t UnitReaction = 0x007251C0; // get reaction to target
+            constexpr uint32_t CanAttack = 0x00729A70; // check if can attack target
+            constexpr uint32_t CanAssist = 0x007293D0; // check if can assist target
+            constexpr uint32_t IsFriendlyTowards = 0x0051A230; // **Uncertain**: 30-byte no-arg predicate [unit+0x9C0]>0 && !([unit+0xA30]&0x10000000); a friendly-towards test needs a target + faction logic the body lacks
+            constexpr uint32_t GetThreatEntry = 0x00734790; // get threat table entry
+            constexpr uint32_t AffectedByAura = 0x007283A0; // check aura effect
+            constexpr uint32_t GetParryingItem = 0x00754EF0; // get parry item
+            constexpr uint32_t OnRightClick = 0x00731260; // handle right click
+            constexpr uint32_t OnMovementPacket = 0x00740D30; // handle movement packet
+            constexpr uint32_t SendMovementPacket = 0x007413F0; // send movement packet
+            constexpr uint32_t WriteMovementPacketWithTransport = 0x0071F0C0; // write transport movement
+            constexpr uint32_t SendMovementPackets_954_958 = 0x00721B90; // send movement updates; note the name says "954_958" while the code uses 950h/954h
+            constexpr uint32_t OnKnockBackPacket = 0x0072D1B0; // handle knockback
+            constexpr uint32_t OnMoveTeleportAck = 0x0072D2D0; // teleport acknowledgement
+            constexpr uint32_t OnSplineSpeedChange = 0x00740A60; // spline speed change
+            constexpr uint32_t SendMoveTimeSkipped = 0x00717D90; // send time skipped
+            constexpr uint32_t IsActiveMover = 0x004D43C0; // check if active mover
+            constexpr uint32_t ToggleMovementFlag2_0x40 = 0x0074B9B0; // toggle movement flag
+            constexpr uint32_t GetAuraCount = 0x004F8850; // get aura count
+            constexpr uint32_t GetAuraSpellId = 0x004F8870; // get aura spell ID
+            constexpr uint32_t HasAuraBySpellId = 0x007282A0; // check aura by spell ID
+            constexpr uint32_t GetAura = 0x00556E10; // get aura info
+            constexpr uint32_t GetAuraCaster = 0x00723490; // get aura caster GUID
+            constexpr uint32_t GetAuraFlags = 0x00565510; // get aura flags
+            constexpr uint32_t GetCreatureType = 0x0071F300; // get creature type
+            constexpr uint32_t GetCreatureRank = 0x00718A00; // get creature rank
+            constexpr uint32_t GetCreatureModelDataRec = 0x00717A20; // get model data
+            constexpr uint32_t GetShapeshiftFormId = 0x0071AF70; // get shapeshift form
+            constexpr uint32_t GetBasePowerForType = 0x0071B770; // get base power
+            constexpr uint32_t GetPowerModifier = 0x0071B960; // get power modifier
+            constexpr uint32_t GetHealthRegenRateFromSpirit = 0x0071BA60; // get health regen rate
+            constexpr uint32_t GetStatsField_34 = 0x0071B8D0; // get stats field
+            constexpr uint32_t GetTitleString = 0x00719950; // get title string
+            constexpr uint32_t GetControllingPlayer = 0x00718B70; // get controlling player
+            constexpr uint32_t GetModel = 0x00717B20; // get unit model
+            constexpr uint32_t IsInFrontOfTargetWithGuid = 0x0071BCE0; // check if in front
+            constexpr uint32_t IsPartyMember = 0x0052C8C0; // check party membership
+            constexpr uint32_t IsRaidMember = 0x00573200; // check raid membership
+            constexpr uint32_t IsInMyParty = 0x00718D70; // in my party
+            constexpr uint32_t IsInMyPartyOrRaid = 0x00718CA0; // in my party or raid
+            constexpr uint32_t SetCurrentSpellDestLocation = 0x00715400; // set destination
+            constexpr uint32_t SetCurrentSpellAndCastId = 0x00715A80; // set spell and cast ID
+            constexpr uint32_t OnMoveStop = 0x006F0EB0; // stop moving
+            constexpr uint32_t HasMovementFlags2_0x1 = 0x0074B9A0; // check flag; flag bit is named in the identifier
+            constexpr uint32_t TrySendMSG_MOVE_FALL_LAND = 0x0073D4A0; // send fall land
+            constexpr uint32_t OnUnitMoveEventNoActive = 0x007235C0; // unit move event
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Unit {
+        namespace CGPlayer_C {
+            constexpr uint32_t CanInteract = 0x00729530; // check interaction
+            constexpr uint32_t IsInPartyOrRaid = 0x0071C570; // player in party/raid
+            constexpr uint32_t CGPlayer_C_0 = 0x006E6B40; // constructor
+            constexpr uint32_t Initialize = 0x006E45D0; // initialize player
+            constexpr uint32_t Shutdown = 0x006E4780; // shutdown player
+            constexpr uint32_t PostInit = 0x006E8280; // post initialization
+            constexpr uint32_t PostReenable = 0x006E1D70; // post re-enable
+            constexpr uint32_t Disable = 0x006E6020; // disable player
+            constexpr uint32_t Reenable = 0x006E6150; // re-enable player
+            constexpr uint32_t destructor = 0x006E78D0; // destructor
+            constexpr uint32_t GetCoinage = 0x0051A2B0; // get gold amount
+            constexpr uint32_t ClickToMove = 0x00727400; // click-to-move
+            constexpr uint32_t IsClickMoving = 0x00721F90; // is click moving
+            constexpr uint32_t SwapItems = 0x006DF890; // swap inventory items
+            constexpr uint32_t AutoEquipCursorItem = 0x006DFC40; // auto-equip cursor item
+            constexpr uint32_t AutoEquipItem = 0x006DFEE0; // auto-equip item
+            constexpr uint32_t ClearPendingEquip = 0x006E01A0; // clear pending equip
+            constexpr uint32_t FindSlotIndex = 0x006D29F0; // find inventory slot
+            constexpr uint32_t ReadItemResult = 0x006D5D90; // read item result
+            constexpr uint32_t GetVisibleItemEntryId = 0x006DE330; // get visible item entry
+            constexpr uint32_t GetSkillValue = 0x0051A250; // get skill value
+            constexpr uint32_t GetSkillMaxRank = 0x00594710; // get skill max rank
+            constexpr uint32_t GetSkillIndexById = 0x006DC1C0; // get skill by ID
+            constexpr uint32_t AcceptQuest = 0x006D4CA0; // accept quest
+            constexpr uint32_t GiveQuestItems = 0x006D4DD0; // give quest items
+            constexpr uint32_t CompleteQuest = 0x006D4D40; // complete quest
+            constexpr uint32_t QuestLogRemoveQuest = 0x006D4F80; // remove quest from log
+            constexpr uint32_t OnQuestGiverSendQuest = 0x006D0460; // quest giver send
+            constexpr uint32_t OnQuestGiverChooseReward = 0x006D0AB0; // choose reward
+            constexpr uint32_t OnQuestGiverListQuests = 0x006D0240; // list quests
+            constexpr uint32_t OnQuestGiverRequestItems = 0x006D08F0; // request items
+            constexpr uint32_t OnQuestGiverStatus = 0x006D11C0; // quest giver status
+            constexpr uint32_t SendTextEmote = 0x006DD9E0; // send text emote
+            constexpr uint32_t PlayEmote = 0x0073AD70; // play emote animation
+            constexpr uint32_t AcceptGuild = 0x006D4760; // accept guild invite
+            constexpr uint32_t DeclineGuild = 0x006D47D0; // decline guild invite
+            constexpr uint32_t AcceptGroup = 0x006D4450; // accept group invite
+            constexpr uint32_t DeclineGroup = 0x006D44D0; // decline group invite
+            constexpr uint32_t LeaveGroup = 0x006D4540; // leave group
+            constexpr uint32_t GetAFKText = 0x006DC8D0; // get AFK message
+            constexpr uint32_t GetDNDText = 0x006DC940; // get DND message
+            constexpr uint32_t TalkToBinder = 0x006D2120; // talk to innkeeper
+            constexpr uint32_t OnTrainerList = 0x006D12C0; // trainer list
+            constexpr uint32_t TrainerBuySpell = 0x00594DA0; // buy spell from trainer
+            constexpr uint32_t TalkToBanker = 0x006D2340; // talk to banker
+            constexpr uint32_t TalkToAuctioneer = 0x006D2640; // talk to auctioneer
+            constexpr uint32_t TalkToBattlemaster = 0x006D25C0; // talk to battlemaster
+            constexpr uint32_t TalkToGuildBanker = 0x006D23C0; // talk to guild banker
+            constexpr uint32_t TalkToStableMaster = 0x006D26C0; // talk to stable master
+            constexpr uint32_t TalkToSpiritHealer = 0x006DB010; // talk to spirit healer
+            constexpr uint32_t ShopFromMerchant = 0x006DAF60; // shop from merchant
+            constexpr uint32_t CTMAttackUnit = 0x0072EE20; // click-to-move attack
+            constexpr uint32_t CTMInteractGO = 0x0072B730; // CTM interact gameobject
+            constexpr uint32_t CTMFace = 0x0072B660; // CTM face direction
+            constexpr uint32_t CTMClickTerrain = 0x0072B6D0; // CTM click terrain
+            constexpr uint32_t OnAttackIconPressed = 0x0072C2B0; // attack icon pressed
+            constexpr uint32_t SetCombatMode = 0x006E1660; // set combat mode
+            constexpr uint32_t AcceptLevelGrant = 0x00521B00; // accept level grant
+            constexpr uint32_t OnTerrainClick = 0x00519640; // **Uncertain**: body is a Map.dbc query (record type 1/2 & flag 0x100); no terrain-click semantics
+        }
+    }
+} // namespace WoWOffsets
+
+namespace WoWOffsets {
+    namespace Warden {
+        namespace Warden {
+            constexpr uint32_t Tick = 0x007DA3D0; // warden tick/update
+            constexpr uint32_t GenerateKeys = 0x007DA360; // generate encryption keys — **label unverified**: body activates/instantiates the pending module (`D31A44` → export #1 → `D31A4C`)
+            constexpr uint32_t UnloadMainModule = 0x007DA300; // unload main module
+            constexpr uint32_t ShutdownAndUnload = 0x007DA420; // shutdown and unload
+            constexpr uint32_t StateLoad = 0x007DA550; // load state
+            constexpr uint32_t StateSave = 0x007DA4F0; // save state
+            constexpr uint32_t MemAlloc = 0x007DA4B0; // warden memory alloc
+            constexpr uint32_t MemFree = 0x007DA4D0; // warden memory free
+            constexpr uint32_t ZlibDecompress = 0x00866770; // decompress data
+            constexpr uint32_t SendPacket = 0x007DAAB0; // send Warden packet
+            constexpr uint32_t SetWardenPacketHandler = 0x007DA8C0; // set packet handler
+            constexpr uint32_t SaveModule = 0x007DA9F0; // save module to disk
+        }
+
+        namespace WardenModule {
+            constexpr uint32_t LoadWardenModule = 0x00872350; // load Warden module
+            constexpr uint32_t UnloadWardenModule = 0x008722C0; // unload module
+        }
+
+        namespace CWardenClient {
+            constexpr uint32_t LoadModule = 0x007DA610; // client load module
+        }
+
+        namespace BLLLoader {
+            constexpr uint32_t GetExport = 0x00872320; // get export from module
+        }
+
+        namespace WardenCached {
+            constexpr uint32_t LoadKey = 0x007DA1C0; // load cached key
+        }
+
+        namespace WardenCachedModule {
+            constexpr uint32_t StoreToCDataStore = 0x007DA220; // store to data store
+            constexpr uint32_t LoadFromCDataStore = 0x007DA260; // load from data store
+            constexpr uint32_t Copy = 0x007DA5C0; // copy cached module
+        }
+    }
+} // namespace WoWOffsets

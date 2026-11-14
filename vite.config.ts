@@ -83,8 +83,8 @@ export default defineConfig({
       // https://tsdown.dev/options/dependencies#deps-resolvedepsubpath
       resolveDepSubpath: true
     },
-    dts: { generator: 'tsgo' },
-    exports: true
+    entry: ['src/index.ts', 'src/sql-worker.ts'],
+    format: ['esm']
   },
   staged: { '*': 'vp check --fix' }
 })

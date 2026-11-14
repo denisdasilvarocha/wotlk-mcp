@@ -1,0 +1,716 @@
+[
+  {
+    "path": "Unit::CGUnit_C::virt00",
+    "va": "0x00737BA0",
+    "kind": "function",
+    "note": "virt00"
+  },
+  {
+    "path": "Unit::CGUnit_C::CGUnit_C",
+    "va": "0x0073F660",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Unit::CGUnit_C::Initialize",
+    "va": "0x00742220",
+    "kind": "function",
+    "note": "initialize unit"
+  },
+  {
+    "path": "Unit::CGUnit_C::Shutdown",
+    "va": "0x00742BB0",
+    "kind": "function",
+    "note": "shutdown unit"
+  },
+  {
+    "path": "Unit::CGUnit_C::PostInit",
+    "va": "0x0073FCC0",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Unit::CGUnit_C::PostShutdown",
+    "va": "0x00724EA0",
+    "kind": "function",
+    "note": "post shutdown"
+  },
+  {
+    "path": "Unit::CGUnit_C::Disable",
+    "va": "0x00734FD0",
+    "kind": "function",
+    "note": "disable unit"
+  },
+  {
+    "path": "Unit::CGUnit_C::Reenable",
+    "va": "0x007237F0",
+    "kind": "function",
+    "note": "re-enable unit"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetPosition",
+    "va": "0x006E6F10",
+    "kind": "function",
+    "note": "get unit position"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetFacing",
+    "va": "0x006E6F40",
+    "kind": "function",
+    "note": "get unit facing angle; world, transport-adjusted; vtable slot 13; the client's own GetPlayerFacing uses this"
+  },
+  {
+    "path": "Unit::CGUnit_C::UpdateFacing",
+    "va": "0x006E6F60",
+    "kind": "function",
+    "note": "update facing; reads the raw movement facing, vtable slot 14"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetWorldMatrix",
+    "va": "0x0071FD80",
+    "kind": "function",
+    "note": "get world transform matrix"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetUnitName",
+    "va": "0x0072A000",
+    "kind": "function",
+    "note": "get unit name string"
+  },
+  {
+    "path": "Unit::CGUnit_C::DisplayInfoNeedsUpdate",
+    "va": "0x0072A480",
+    "kind": "function",
+    "note": "check display update"
+  },
+  {
+    "path": "Unit::CGUnit_C::UnitReaction",
+    "va": "0x007251C0",
+    "kind": "function",
+    "note": "get reaction to target"
+  },
+  {
+    "path": "Unit::CGUnit_C::CanAttack",
+    "va": "0x00729A70",
+    "kind": "function",
+    "note": "check if can attack target"
+  },
+  {
+    "path": "Unit::CGUnit_C::CanAssist",
+    "va": "0x007293D0",
+    "kind": "function",
+    "note": "check if can assist target"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsFriendlyTowards",
+    "va": "0x0051A230",
+    "kind": "function",
+    "note": "**Uncertain**: 30-byte no-arg predicate [unit+0x9C0]>0 && !([unit+0xA30]&0x10000000); a friendly-towards test needs a target + faction logic the body lacks"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetThreatEntry",
+    "va": "0x00734790",
+    "kind": "function",
+    "note": "get threat table entry"
+  },
+  {
+    "path": "Unit::CGUnit_C::AffectedByAura",
+    "va": "0x007283A0",
+    "kind": "function",
+    "note": "check aura effect"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetParryingItem",
+    "va": "0x00754EF0",
+    "kind": "function",
+    "note": "get parry item"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnRightClick",
+    "va": "0x00731260",
+    "kind": "function",
+    "note": "handle right click"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnMovementPacket",
+    "va": "0x00740D30",
+    "kind": "function",
+    "note": "handle movement packet"
+  },
+  {
+    "path": "Unit::CGUnit_C::SendMovementPacket",
+    "va": "0x007413F0",
+    "kind": "function",
+    "note": "send movement packet"
+  },
+  {
+    "path": "Unit::CGUnit_C::WriteMovementPacketWithTransport",
+    "va": "0x0071F0C0",
+    "kind": "function",
+    "note": "write transport movement"
+  },
+  {
+    "path": "Unit::CGUnit_C::SendMovementPackets_954_958",
+    "va": "0x00721B90",
+    "kind": "function",
+    "note": "send movement updates; note the name says \"954_958\" while the code uses 950h/954h"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnKnockBackPacket",
+    "va": "0x0072D1B0",
+    "kind": "function",
+    "note": "handle knockback"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnMoveTeleportAck",
+    "va": "0x0072D2D0",
+    "kind": "function",
+    "note": "teleport acknowledgement"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnSplineSpeedChange",
+    "va": "0x00740A60",
+    "kind": "function",
+    "note": "spline speed change"
+  },
+  {
+    "path": "Unit::CGUnit_C::SendMoveTimeSkipped",
+    "va": "0x00717D90",
+    "kind": "function",
+    "note": "send time skipped"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsActiveMover",
+    "va": "0x004D43C0",
+    "kind": "function",
+    "note": "check if active mover"
+  },
+  {
+    "path": "Unit::CGUnit_C::ToggleMovementFlag2_0x40",
+    "va": "0x0074B9B0",
+    "kind": "function",
+    "note": "toggle movement flag"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetAuraCount",
+    "va": "0x004F8850",
+    "kind": "function",
+    "note": "get aura count"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetAuraSpellId",
+    "va": "0x004F8870",
+    "kind": "function",
+    "note": "get aura spell ID"
+  },
+  {
+    "path": "Unit::CGUnit_C::HasAuraBySpellId",
+    "va": "0x007282A0",
+    "kind": "function",
+    "note": "check aura by spell ID"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetAura",
+    "va": "0x00556E10",
+    "kind": "function",
+    "note": "get aura info"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetAuraCaster",
+    "va": "0x00723490",
+    "kind": "function",
+    "note": "get aura caster GUID"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetAuraFlags",
+    "va": "0x00565510",
+    "kind": "function",
+    "note": "get aura flags"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetCreatureType",
+    "va": "0x0071F300",
+    "kind": "function",
+    "note": "get creature type"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetCreatureRank",
+    "va": "0x00718A00",
+    "kind": "function",
+    "note": "get creature rank"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetCreatureModelDataRec",
+    "va": "0x00717A20",
+    "kind": "function",
+    "note": "get model data"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetShapeshiftFormId",
+    "va": "0x0071AF70",
+    "kind": "function",
+    "note": "get shapeshift form"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetBasePowerForType",
+    "va": "0x0071B770",
+    "kind": "function",
+    "note": "get base power"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetPowerModifier",
+    "va": "0x0071B960",
+    "kind": "function",
+    "note": "get power modifier"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetHealthRegenRateFromSpirit",
+    "va": "0x0071BA60",
+    "kind": "function",
+    "note": "get health regen rate"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetStatsField_34",
+    "va": "0x0071B8D0",
+    "kind": "function",
+    "note": "get stats field"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetTitleString",
+    "va": "0x00719950",
+    "kind": "function",
+    "note": "get title string"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetControllingPlayer",
+    "va": "0x00718B70",
+    "kind": "function",
+    "note": "get controlling player"
+  },
+  {
+    "path": "Unit::CGUnit_C::GetModel",
+    "va": "0x00717B20",
+    "kind": "function",
+    "note": "get unit model"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsInFrontOfTargetWithGuid",
+    "va": "0x0071BCE0",
+    "kind": "function",
+    "note": "check if in front"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsPartyMember",
+    "va": "0x0052C8C0",
+    "kind": "function",
+    "note": "check party membership"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsRaidMember",
+    "va": "0x00573200",
+    "kind": "function",
+    "note": "check raid membership"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsInMyParty",
+    "va": "0x00718D70",
+    "kind": "function",
+    "note": "in my party"
+  },
+  {
+    "path": "Unit::CGUnit_C::IsInMyPartyOrRaid",
+    "va": "0x00718CA0",
+    "kind": "function",
+    "note": "in my party or raid"
+  },
+  {
+    "path": "Unit::CGUnit_C::SetCurrentSpellDestLocation",
+    "va": "0x00715400",
+    "kind": "function",
+    "note": "set destination"
+  },
+  {
+    "path": "Unit::CGUnit_C::SetCurrentSpellAndCastId",
+    "va": "0x00715A80",
+    "kind": "function",
+    "note": "set spell and cast ID"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnMoveStop",
+    "va": "0x006F0EB0",
+    "kind": "function",
+    "note": "stop moving"
+  },
+  {
+    "path": "Unit::CGUnit_C::HasMovementFlags2_0x1",
+    "va": "0x0074B9A0",
+    "kind": "function",
+    "note": "check flag; flag bit is named in the identifier"
+  },
+  {
+    "path": "Unit::CGUnit_C::TrySendMSG_MOVE_FALL_LAND",
+    "va": "0x0073D4A0",
+    "kind": "function",
+    "note": "send fall land"
+  },
+  {
+    "path": "Unit::CGUnit_C::OnUnitMoveEventNoActive",
+    "va": "0x007235C0",
+    "kind": "function",
+    "note": "unit move event"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CanInteract",
+    "va": "0x00729530",
+    "kind": "function",
+    "note": "check interaction"
+  },
+  {
+    "path": "Unit::CGPlayer_C::IsInPartyOrRaid",
+    "va": "0x0071C570",
+    "kind": "function",
+    "note": "player in party/raid"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CGPlayer_C_0",
+    "va": "0x006E6B40",
+    "kind": "function",
+    "note": "constructor"
+  },
+  {
+    "path": "Unit::CGPlayer_C::Initialize",
+    "va": "0x006E45D0",
+    "kind": "function",
+    "note": "initialize player"
+  },
+  {
+    "path": "Unit::CGPlayer_C::Shutdown",
+    "va": "0x006E4780",
+    "kind": "function",
+    "note": "shutdown player"
+  },
+  {
+    "path": "Unit::CGPlayer_C::PostInit",
+    "va": "0x006E8280",
+    "kind": "function",
+    "note": "post initialization"
+  },
+  {
+    "path": "Unit::CGPlayer_C::PostReenable",
+    "va": "0x006E1D70",
+    "kind": "function",
+    "note": "post re-enable"
+  },
+  {
+    "path": "Unit::CGPlayer_C::Disable",
+    "va": "0x006E6020",
+    "kind": "function",
+    "note": "disable player"
+  },
+  {
+    "path": "Unit::CGPlayer_C::Reenable",
+    "va": "0x006E6150",
+    "kind": "function",
+    "note": "re-enable player"
+  },
+  {
+    "path": "Unit::CGPlayer_C::destructor",
+    "va": "0x006E78D0",
+    "kind": "function",
+    "note": "destructor"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetCoinage",
+    "va": "0x0051A2B0",
+    "kind": "function",
+    "note": "get gold amount"
+  },
+  {
+    "path": "Unit::CGPlayer_C::ClickToMove",
+    "va": "0x00727400",
+    "kind": "function",
+    "note": "click-to-move"
+  },
+  {
+    "path": "Unit::CGPlayer_C::IsClickMoving",
+    "va": "0x00721F90",
+    "kind": "function",
+    "note": "is click moving"
+  },
+  {
+    "path": "Unit::CGPlayer_C::SwapItems",
+    "va": "0x006DF890",
+    "kind": "function",
+    "note": "swap inventory items"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AutoEquipCursorItem",
+    "va": "0x006DFC40",
+    "kind": "function",
+    "note": "auto-equip cursor item"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AutoEquipItem",
+    "va": "0x006DFEE0",
+    "kind": "function",
+    "note": "auto-equip item"
+  },
+  {
+    "path": "Unit::CGPlayer_C::ClearPendingEquip",
+    "va": "0x006E01A0",
+    "kind": "function",
+    "note": "clear pending equip"
+  },
+  {
+    "path": "Unit::CGPlayer_C::FindSlotIndex",
+    "va": "0x006D29F0",
+    "kind": "function",
+    "note": "find inventory slot"
+  },
+  {
+    "path": "Unit::CGPlayer_C::ReadItemResult",
+    "va": "0x006D5D90",
+    "kind": "function",
+    "note": "read item result"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetVisibleItemEntryId",
+    "va": "0x006DE330",
+    "kind": "function",
+    "note": "get visible item entry"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetSkillValue",
+    "va": "0x0051A250",
+    "kind": "function",
+    "note": "get skill value"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetSkillMaxRank",
+    "va": "0x00594710",
+    "kind": "function",
+    "note": "get skill max rank"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetSkillIndexById",
+    "va": "0x006DC1C0",
+    "kind": "function",
+    "note": "get skill by ID"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AcceptQuest",
+    "va": "0x006D4CA0",
+    "kind": "function",
+    "note": "accept quest"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GiveQuestItems",
+    "va": "0x006D4DD0",
+    "kind": "function",
+    "note": "give quest items"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CompleteQuest",
+    "va": "0x006D4D40",
+    "kind": "function",
+    "note": "complete quest"
+  },
+  {
+    "path": "Unit::CGPlayer_C::QuestLogRemoveQuest",
+    "va": "0x006D4F80",
+    "kind": "function",
+    "note": "remove quest from log"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnQuestGiverSendQuest",
+    "va": "0x006D0460",
+    "kind": "function",
+    "note": "quest giver send"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnQuestGiverChooseReward",
+    "va": "0x006D0AB0",
+    "kind": "function",
+    "note": "choose reward"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnQuestGiverListQuests",
+    "va": "0x006D0240",
+    "kind": "function",
+    "note": "list quests"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnQuestGiverRequestItems",
+    "va": "0x006D08F0",
+    "kind": "function",
+    "note": "request items"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnQuestGiverStatus",
+    "va": "0x006D11C0",
+    "kind": "function",
+    "note": "quest giver status"
+  },
+  {
+    "path": "Unit::CGPlayer_C::SendTextEmote",
+    "va": "0x006DD9E0",
+    "kind": "function",
+    "note": "send text emote"
+  },
+  {
+    "path": "Unit::CGPlayer_C::PlayEmote",
+    "va": "0x0073AD70",
+    "kind": "function",
+    "note": "play emote animation"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AcceptGuild",
+    "va": "0x006D4760",
+    "kind": "function",
+    "note": "accept guild invite"
+  },
+  {
+    "path": "Unit::CGPlayer_C::DeclineGuild",
+    "va": "0x006D47D0",
+    "kind": "function",
+    "note": "decline guild invite"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AcceptGroup",
+    "va": "0x006D4450",
+    "kind": "function",
+    "note": "accept group invite"
+  },
+  {
+    "path": "Unit::CGPlayer_C::DeclineGroup",
+    "va": "0x006D44D0",
+    "kind": "function",
+    "note": "decline group invite"
+  },
+  {
+    "path": "Unit::CGPlayer_C::LeaveGroup",
+    "va": "0x006D4540",
+    "kind": "function",
+    "note": "leave group"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetAFKText",
+    "va": "0x006DC8D0",
+    "kind": "function",
+    "note": "get AFK message"
+  },
+  {
+    "path": "Unit::CGPlayer_C::GetDNDText",
+    "va": "0x006DC940",
+    "kind": "function",
+    "note": "get DND message"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToBinder",
+    "va": "0x006D2120",
+    "kind": "function",
+    "note": "talk to innkeeper"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnTrainerList",
+    "va": "0x006D12C0",
+    "kind": "function",
+    "note": "trainer list"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TrainerBuySpell",
+    "va": "0x00594DA0",
+    "kind": "function",
+    "note": "buy spell from trainer"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToBanker",
+    "va": "0x006D2340",
+    "kind": "function",
+    "note": "talk to banker"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToAuctioneer",
+    "va": "0x006D2640",
+    "kind": "function",
+    "note": "talk to auctioneer"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToBattlemaster",
+    "va": "0x006D25C0",
+    "kind": "function",
+    "note": "talk to battlemaster"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToGuildBanker",
+    "va": "0x006D23C0",
+    "kind": "function",
+    "note": "talk to guild banker"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToStableMaster",
+    "va": "0x006D26C0",
+    "kind": "function",
+    "note": "talk to stable master"
+  },
+  {
+    "path": "Unit::CGPlayer_C::TalkToSpiritHealer",
+    "va": "0x006DB010",
+    "kind": "function",
+    "note": "talk to spirit healer"
+  },
+  {
+    "path": "Unit::CGPlayer_C::ShopFromMerchant",
+    "va": "0x006DAF60",
+    "kind": "function",
+    "note": "shop from merchant"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CTMAttackUnit",
+    "va": "0x0072EE20",
+    "kind": "function",
+    "note": "click-to-move attack"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CTMInteractGO",
+    "va": "0x0072B730",
+    "kind": "function",
+    "note": "CTM interact gameobject"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CTMFace",
+    "va": "0x0072B660",
+    "kind": "function",
+    "note": "CTM face direction"
+  },
+  {
+    "path": "Unit::CGPlayer_C::CTMClickTerrain",
+    "va": "0x0072B6D0",
+    "kind": "function",
+    "note": "CTM click terrain"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnAttackIconPressed",
+    "va": "0x0072C2B0",
+    "kind": "function",
+    "note": "attack icon pressed"
+  },
+  {
+    "path": "Unit::CGPlayer_C::SetCombatMode",
+    "va": "0x006E1660",
+    "kind": "function",
+    "note": "set combat mode"
+  },
+  {
+    "path": "Unit::CGPlayer_C::AcceptLevelGrant",
+    "va": "0x00521B00",
+    "kind": "function",
+    "note": "accept level grant"
+  },
+  {
+    "path": "Unit::CGPlayer_C::OnTerrainClick",
+    "va": "0x00519640",
+    "kind": "function",
+    "note": "**Uncertain**: body is a Map.dbc query (record type 1/2 & flag 0x100); no terrain-click semantics"
+  }
+]

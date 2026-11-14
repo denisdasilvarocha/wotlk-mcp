@@ -1,0 +1,81 @@
+[
+  {
+    "path": "Globals::PlayerName",
+    "va": "0x00C79D18",
+    "kind": "data",
+    "note": "current player name"
+  },
+  {
+    "path": "Globals::CurrentAccount",
+    "va": "0x00B6AA40",
+    "kind": "data",
+    "note": "current account name"
+  },
+  {
+    "path": "Globals::CurrentRealm",
+    "va": "0x00C79D08",
+    "kind": "data",
+    "note": "cached \"realmName\" CVar handle (string value at [handle+0x28])"
+  },
+  {
+    "path": "Globals::CurrentTargetGUID",
+    "va": "0x00BD07B0",
+    "kind": "data",
+    "note": "target GUID"
+  },
+  {
+    "path": "Globals::LastTargetGUID",
+    "va": "0x00BD07B8",
+    "kind": "data",
+    "note": "last target GUID"
+  },
+  {
+    "path": "Globals::MouseOverGUID",
+    "va": "0x00BD07A0",
+    "kind": "data",
+    "note": "mouseover GUID"
+  },
+  {
+    "path": "Globals::FollowGUID",
+    "va": "0x00CA11F8",
+    "kind": "data",
+    "note": "follow GUID"
+  },
+  {
+    "path": "Globals::IsLoadingOrConnecting",
+    "va": "0x00B6AA38",
+    "kind": "data",
+    "note": "connection/login operation enum (0..13), not a loading boolean"
+  },
+  {
+    "path": "Globals::Timestamp",
+    "va": "0x00B1D618",
+    "kind": "data",
+    "note": "UNVERIFIED: only zero-initialized by a static constructor (object at 0xB1D5E8), never read or written afterwards",
+    "status": "unverified"
+  },
+  {
+    "path": "Globals::LastHardwareAction",
+    "va": "0x00B499A4",
+    "kind": "data",
+    "note": "last input time"
+  },
+  {
+    "path": "Globals::BuildNumber",
+    "va": "0x00B3203C",
+    "kind": "data",
+    "note": "client build number"
+  },
+  {
+    "path": "Globals::LocalGUID",
+    "va": "0x00CA1238",
+    "kind": "data",
+    "note": "local player GUID"
+  },
+  {
+    "path": "Globals::ObjectManager_Ptr",
+    "va": "0x00C79CE0",
+    "kind": "data",
+    "note": "pointer to ObjectManager"
+  }
+]

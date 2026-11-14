@@ -1,0 +1,123 @@
+[
+  {
+    "path": "Warden::Warden::Tick",
+    "va": "0x007DA3D0",
+    "kind": "function",
+    "note": "warden tick/update"
+  },
+  {
+    "path": "Warden::Warden::GenerateKeys",
+    "va": "0x007DA360",
+    "kind": "function",
+    "note": "generate encryption keys — **label unverified**: body activates/instantiates the pending module (`D31A44` → export #1 → `D31A4C`)",
+    "status": "unverified"
+  },
+  {
+    "path": "Warden::Warden::UnloadMainModule",
+    "va": "0x007DA300",
+    "kind": "function",
+    "note": "unload main module"
+  },
+  {
+    "path": "Warden::Warden::ShutdownAndUnload",
+    "va": "0x007DA420",
+    "kind": "function",
+    "note": "shutdown and unload"
+  },
+  {
+    "path": "Warden::Warden::StateLoad",
+    "va": "0x007DA550",
+    "kind": "function",
+    "note": "load state"
+  },
+  {
+    "path": "Warden::Warden::StateSave",
+    "va": "0x007DA4F0",
+    "kind": "function",
+    "note": "save state"
+  },
+  {
+    "path": "Warden::Warden::MemAlloc",
+    "va": "0x007DA4B0",
+    "kind": "function",
+    "note": "warden memory alloc"
+  },
+  {
+    "path": "Warden::Warden::MemFree",
+    "va": "0x007DA4D0",
+    "kind": "function",
+    "note": "warden memory free"
+  },
+  {
+    "path": "Warden::Warden::ZlibDecompress",
+    "va": "0x00866770",
+    "kind": "function",
+    "note": "decompress data"
+  },
+  {
+    "path": "Warden::Warden::SendPacket",
+    "va": "0x007DAAB0",
+    "kind": "function",
+    "note": "send Warden packet"
+  },
+  {
+    "path": "Warden::Warden::SetWardenPacketHandler",
+    "va": "0x007DA8C0",
+    "kind": "function",
+    "note": "set packet handler"
+  },
+  {
+    "path": "Warden::Warden::SaveModule",
+    "va": "0x007DA9F0",
+    "kind": "function",
+    "note": "save module to disk"
+  },
+  {
+    "path": "Warden::WardenModule::LoadWardenModule",
+    "va": "0x00872350",
+    "kind": "function",
+    "note": "load Warden module"
+  },
+  {
+    "path": "Warden::WardenModule::UnloadWardenModule",
+    "va": "0x008722C0",
+    "kind": "function",
+    "note": "unload module"
+  },
+  {
+    "path": "Warden::CWardenClient::LoadModule",
+    "va": "0x007DA610",
+    "kind": "function",
+    "note": "client load module"
+  },
+  {
+    "path": "Warden::BLLLoader::GetExport",
+    "va": "0x00872320",
+    "kind": "function",
+    "note": "get export from module"
+  },
+  {
+    "path": "Warden::WardenCached::LoadKey",
+    "va": "0x007DA1C0",
+    "kind": "function",
+    "note": "load cached key"
+  },
+  {
+    "path": "Warden::WardenCachedModule::StoreToCDataStore",
+    "va": "0x007DA220",
+    "kind": "function",
+    "note": "store to data store"
+  },
+  {
+    "path": "Warden::WardenCachedModule::LoadFromCDataStore",
+    "va": "0x007DA260",
+    "kind": "function",
+    "note": "load from data store"
+  },
+  {
+    "path": "Warden::WardenCachedModule::Copy",
+    "va": "0x007DA5C0",
+    "kind": "function",
+    "note": "copy cached module"
+  }
+]
