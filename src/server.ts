@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import * as z from 'zod'
 
+import { getReferencePath } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
 import { kinds } from './schema.js'
 
@@ -36,13 +37,13 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
     }
   ]
 }))
-server.setRequestHandler(CallToolRequestSchema, (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     if (request.params.name !== 'get') throw new Error('unknown tool; use get')
     const parsed = input.safeParse(request.params.arguments)
     if (!parsed.success)
       throw new Error(`get requires 1–20 valid IDs; valid kinds: ${kinds.join(', ')}`)
-    const db = openReference()
+    const db = openReference(await getReferencePath())
     try {
       return { content: [{ type: 'text', text: getRecords(db, parsed.data.ids) }] }
     } finally {
