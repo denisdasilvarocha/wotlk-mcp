@@ -148,6 +148,14 @@ vp run import:world-enums -- reference.sqlite azerothcore.tar.gz
 
 This command validates mapped columns and pinned header definitions, and fails if the Client Data required for English reference names is missing. `get` presents mapped names after raw values; SQL and search remain raw. Unknown values, unknown flag bits, sentinel `-1`, and missing referenced rows are not invented. The parsed header definitions are from AzerothCore at commit `2948c203faa0d23c4772441119ebe98e5b7cad95` and retain its GPL-2.0-or-later licence and attribution in `world/azerothcore-LICENSE.txt` and `world/azerothcore-AUTHORS.txt`.
 
+After those imports, add the Spell enum families and build-specific Client Data foreign-key annotations with the same archive:
+
+```bash
+vp run import:spell-enums -- reference.sqlite azerothcore.tar.gz
+```
+
+The command validates Spell columns and pinned AzerothCore enums, and materializes available English reference names into the shared decoder tables. References whose target table or named row is unavailable retain their raw values; neither command changes source rows.
+
 WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
 
 ### Pinned client-inputs asset
