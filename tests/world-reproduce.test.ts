@@ -20,7 +20,7 @@ function run(mode: string): { status: number | null; output: string; report: boo
     patch: 'cat >/dev/null',
     docker: `case "$*" in
       *'SELECT 1'*) exit 0 ;;
-      *dbimport*) [ "$WORLD_TEST_MODE" != updater ] || exit 42 ;;
+      *'/build/src/tools/dbimport'*) [ "$WORLD_TEST_MODE" != updater ] || exit 42 ;;
       *--skip-column-names*)
         sql=$(cat)
         case "$sql" in *information_schema.columns*) part=columns ;; *) part=indexes ;; esac
