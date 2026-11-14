@@ -1,3 +1,5 @@
+export const acceptedSchemaMajor = 1
+
 export const kinds = [
   'spell',
   'talent',
