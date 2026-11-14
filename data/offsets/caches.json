@@ -1,0 +1,327 @@
+[
+  {
+    "path": "Cache::DBItemCache::GetInfoBlockByID",
+    "va": "0x0067CA30",
+    "kind": "function",
+    "note": "get item by ID"
+  },
+  {
+    "path": "Cache::DBItemCache::GetItemNameByIndex",
+    "va": "0x004FD200",
+    "kind": "function",
+    "note": "get item name by index"
+  },
+  {
+    "path": "Cache::DbItemCache::Load",
+    "va": "0x0067CDD0",
+    "kind": "function",
+    "note": "load item cache"
+  },
+  {
+    "path": "Cache::DbItemCache::Unpack",
+    "va": "0x0098D910",
+    "kind": "function",
+    "note": "unpack item cache"
+  },
+  {
+    "path": "Cache::DbCreatureCache::GetInfoBlockById",
+    "va": "0x0067B6A0",
+    "kind": "function",
+    "note": "get creature by ID"
+  },
+  {
+    "path": "Cache::DbCreatureCache::Load",
+    "va": "0x0067BA40",
+    "kind": "function",
+    "note": "load creature cache"
+  },
+  {
+    "path": "Cache::DbCreatureCache::Unpack",
+    "va": "0x0098D4C0",
+    "kind": "function",
+    "note": "unpack creature"
+  },
+  {
+    "path": "Cache::CreatureStats::GetName",
+    "va": "0x0053B8E0",
+    "kind": "function",
+    "note": "get creature name"
+  },
+  {
+    "path": "Cache::DbNpcCache::GetInfoBlockById",
+    "va": "0x0067D0D0",
+    "kind": "function",
+    "note": "get NPC by ID"
+  },
+  {
+    "path": "Cache::DbNpcCache::Load",
+    "va": "0x0067D470",
+    "kind": "function",
+    "note": "load NPC cache"
+  },
+  {
+    "path": "Cache::DbQuestCache::GetInfoBlockById",
+    "va": "0x0067DE90",
+    "kind": "function",
+    "note": "get quest by ID"
+  },
+  {
+    "path": "Cache::DbQuestCache::Load",
+    "va": "0x0067E0E0",
+    "kind": "function",
+    "note": "load quest cache"
+  },
+  {
+    "path": "Cache::DbQuestCache::Unpack",
+    "va": "0x007F70E0",
+    "kind": "function",
+    "note": "unpack quest"
+  },
+  {
+    "path": "Cache::QuestCache::Constructor",
+    "va": "0x00634E70",
+    "kind": "function",
+    "note": "quest cache constructor"
+  },
+  {
+    "path": "Cache::DbNameCache::GetInfoBlockById",
+    "va": "0x0067D770",
+    "kind": "function",
+    "note": "get name by ID"
+  },
+  {
+    "path": "Cache::DbNameCache::Load",
+    "va": "0x00680D70",
+    "kind": "function",
+    "note": "load name cache"
+  },
+  {
+    "path": "Cache::DbGuildCache::GetInfoBlockById",
+    "va": "0x0067D930",
+    "kind": "function",
+    "note": "get guild by ID"
+  },
+  {
+    "path": "Cache::DbGuildCache::Load_0",
+    "va": "0x0067DB90",
+    "kind": "function",
+    "note": "load guild cache"
+  },
+  {
+    "path": "Cache::DbGuildCache::Unpack",
+    "va": "0x0075B3E0",
+    "kind": "function",
+    "note": "unpack guild"
+  },
+  {
+    "path": "Cache::DbGameObjectCache::GetInfoBlockById",
+    "va": "0x0067BD40",
+    "kind": "function",
+    "note": "get GO by ID"
+  },
+  {
+    "path": "Cache::DbGameObjectCache::Load_0",
+    "va": "0x0067C0E0",
+    "kind": "function",
+    "note": "load GO cache"
+  },
+  {
+    "path": "Cache::DbGameObjectCache::Unpack",
+    "va": "0x0098D750",
+    "kind": "function",
+    "note": "unpack GO"
+  },
+  {
+    "path": "Cache::GameObjectStats::GetName",
+    "va": "0x004FD1E0",
+    "kind": "function",
+    "note": "get GO name"
+  },
+  {
+    "path": "Cache::DbPetNameCache::GetInfoBlockById",
+    "va": "0x0067EA30",
+    "kind": "function",
+    "note": "get pet name by ID"
+  },
+  {
+    "path": "Cache::DbPetNameCache::Load",
+    "va": "0x0067EC80",
+    "kind": "function",
+    "note": "load pet name cache"
+  },
+  {
+    "path": "Cache::DbPetNameCache::Invalidate",
+    "va": "0x0067A940",
+    "kind": "function",
+    "note": "invalidate pet cache"
+  },
+  {
+    "path": "Cache::DbArenaTeamCache::GetInfoBlockById",
+    "va": "0x00680170",
+    "kind": "function",
+    "note": "arena team"
+  },
+  {
+    "path": "Cache::DbItemTextCache::GetInfoBlockById",
+    "va": "0x0067F4C0",
+    "kind": "function",
+    "note": "item text"
+  },
+  {
+    "path": "Cache::DbPetitionCache::GetInfoBlockById",
+    "va": "0x0067EF70",
+    "kind": "function",
+    "note": "petition"
+  },
+  {
+    "path": "Cache::DbPageTextCache::GetInfoBlockById",
+    "va": "0x0067E3E0",
+    "kind": "function",
+    "note": "page text"
+  },
+  {
+    "path": "Cache::DbDanceCache::GetInfoBlockById",
+    "va": "0x006806D0",
+    "kind": "function",
+    "note": "dance"
+  },
+  {
+    "path": "Cache::DbItemNameCache::GetInfoBlockById",
+    "va": "0x0067C3E0",
+    "kind": "function",
+    "note": "item name"
+  },
+  {
+    "path": "Cache::DbWoWCache::Load",
+    "va": "0x0067FE00",
+    "kind": "function",
+    "note": "load WoW cache"
+  },
+  {
+    "path": "Cache::DbWoWCache::GetInfoBlockById",
+    "va": "0x0067FA80",
+    "kind": "function",
+    "note": "get info block"
+  },
+  {
+    "path": "Cache::DbWoWCache::Shutdown_WARDEN_UNLOAD",
+    "va": "0x007DA930",
+    "kind": "function",
+    "note": "cache shutdown on unload — **label unverified**: host-interface slot 1, *loads* the cached module (key + `DbWoWCache` lookup → `0x7DA610`)",
+    "status": "unverified"
+  },
+  {
+    "path": "Cache::DBCache::CancelCallback_0",
+    "va": "0x0067A3A0",
+    "kind": "function",
+    "note": "cancel callback"
+  },
+  {
+    "path": "Cache::DBCache::CancelCallback",
+    "va": "0x00679F00",
+    "kind": "function",
+    "note": "cancel callback (alt)"
+  },
+  {
+    "path": "Cache::DBCache::Warden",
+    "va": "0x00676AC0",
+    "kind": "function",
+    "note": "warden DB cache"
+  },
+  {
+    "path": "Cache::DBCache::WardenCachedModule_InternalDelete",
+    "va": "0x006791B0",
+    "kind": "function",
+    "note": "delete cached module"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_ItemStats_InternalNew",
+    "va": "0x006707C0",
+    "kind": "function",
+    "note": "new item stats (original: TSHashTable_DBCache_ItemStats...InternalNew)"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_CGPetition_InternalNew",
+    "va": "0x006713E0",
+    "kind": "function",
+    "note": "new petition (original: TSHashTable_DBCache_CGPetition...InternalNew)"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_GameObjectStats_InternalNew",
+    "va": "0x00670420",
+    "kind": "function",
+    "note": "new GO stats (original: TSHashTable_DBCache_GameObjectStats...InternalNew)"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_GameObjectStats_Destroy",
+    "va": "0x00672FF0",
+    "kind": "function",
+    "note": "destroy GO (original: TSHashTable_DBCache_GameObjectStats...Destroy)"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_ItemStats_Destroy",
+    "va": "0x00673550",
+    "kind": "function",
+    "note": "destroy item stats (original: TSHashTable_DBCache_ItemStats...Destroy)"
+  },
+  {
+    "path": "Cache::TSHashTable::DBCache_CGPetition_Destroy",
+    "va": "0x00674810",
+    "kind": "function",
+    "note": "destroy petition (original: TSHashTable_DBCache_CGPetition...Destroy)"
+  },
+  {
+    "path": "Cache::TSHashTable::ITEMCOOLDOWNHASHNODE_InternalNew",
+    "va": "0x0080A3A0",
+    "kind": "function",
+    "note": "new cooldown entry (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...InternalNew)"
+  },
+  {
+    "path": "Cache::TSHashTable::ITEMCOOLDOWNHASHNODE_InternalDelete",
+    "va": "0x0080A400",
+    "kind": "function",
+    "note": "delete cooldown entry (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...InternalDelete)"
+  },
+  {
+    "path": "Cache::TSHashTable::ITEMCOOLDOWNHASHNODE_Destroy",
+    "va": "0x0080A4D0",
+    "kind": "function",
+    "note": "destroy cooldown table (original row name TSHashTable_ITEMCOOLDOWNHASHNODE...Destroy)"
+  },
+  {
+    "path": "Cache::DBCache_CreatureStats::InternalNew",
+    "va": "0x00670270",
+    "kind": "function",
+    "note": "new creature stats"
+  },
+  {
+    "path": "Cache::DBCache_CreatureStats::Destroy",
+    "va": "0x00672D40",
+    "kind": "function",
+    "note": "destroy creature"
+  },
+  {
+    "path": "Cache::DBCache_ItemName::InternalNew",
+    "va": "0x00670650",
+    "kind": "function",
+    "note": "new item name"
+  },
+  {
+    "path": "Cache::DBCache_ItemName::Destroy",
+    "va": "0x006732A0",
+    "kind": "function",
+    "note": "destroy item name"
+  },
+  {
+    "path": "Cache::DBCache_NpcText::InternalNew",
+    "va": "0x00670970",
+    "kind": "function",
+    "note": "new NPC text"
+  },
+  {
+    "path": "Cache::DBCache_NpcText::Destroy",
+    "va": "0x00673800",
+    "kind": "function",
+    "note": "destroy NPC text"
+  }
+]

@@ -1,0 +1,290 @@
+[
+  {
+    "path": "Cache::DbCache::LoadAll",
+    "va": "0x00635060",
+    "kind": "function",
+    "note": "load all cache entries"
+  },
+  {
+    "path": "Cache::DbCache::LoadAll_Jmp",
+    "va": "0x00635520",
+    "kind": "function",
+    "note": "jump to load all (original: j_DbCache_LoadAll)"
+  },
+  {
+    "path": "Cache::DbCache::dbcLoadFunction",
+    "va": "0x006348B0",
+    "kind": "function",
+    "note": "load function"
+  },
+  {
+    "path": "Cache::ClientDB::Free",
+    "va": "0x00636270",
+    "kind": "function",
+    "note": "free client DB"
+  },
+  {
+    "path": "Cache::ClientDb::RegisterBase",
+    "va": "0x006337D0",
+    "kind": "function",
+    "note": "register base DB"
+  },
+  {
+    "path": "Cache::ClientDb::StringLookup",
+    "va": "0x00634910",
+    "kind": "function",
+    "note": "string lookup"
+  },
+  {
+    "path": "Cache::ClientDb::GetLocalizedRow",
+    "va": "0x004CFD20",
+    "kind": "function",
+    "note": "get localized row"
+  },
+  {
+    "path": "Cache::ClientDb::Unpack",
+    "va": "0x004CFBB0",
+    "kind": "function",
+    "note": "unpack DB"
+  },
+  {
+    "path": "Cache::ClientDb::GetRow",
+    "va": "0x0065C290",
+    "kind": "function",
+    "note": "get row from client DB (original: GetRow_ClientDB)"
+  },
+  {
+    "path": "Cache::CClientDb::CopyRowData",
+    "va": "0x004CFD90",
+    "kind": "function",
+    "note": "copy row data"
+  },
+  {
+    "path": "Cache::WowClientDB::GetRow",
+    "va": "0x004BB1C0",
+    "kind": "function",
+    "note": "get row (alt)"
+  },
+  {
+    "path": "Cache::RecordLookup::GetSpellVisualRow",
+    "va": "0x007FA290",
+    "kind": "function",
+    "note": "get spell visual"
+  },
+  {
+    "path": "Cache::RecordLookup::GetGameTableValue",
+    "va": "0x007F6990",
+    "kind": "function",
+    "note": "get game table value"
+  },
+  {
+    "path": "Cache::RecordLookup::GetMaxPlayersForMap",
+    "va": "0x00634AB0",
+    "kind": "function",
+    "note": "get max players"
+  },
+  {
+    "path": "Cache::RecordLookup::GetMapResetTime",
+    "va": "0x00634A80",
+    "kind": "function",
+    "note": "get map reset time"
+  },
+  {
+    "path": "Cache::RecordLookup::GetMapDifficultyInfoByMapIdAndDifficulty",
+    "va": "0x00634950",
+    "kind": "function",
+    "note": "map difficulty"
+  },
+  {
+    "path": "Cache::RecordLookup::GetAnimationDataRecField_6",
+    "va": "0x007176B0",
+    "kind": "function",
+    "note": "animation data"
+  },
+  {
+    "path": "Cache::RecordLookup::GetPetPersonalityRow",
+    "va": "0x0071F390",
+    "kind": "function",
+    "note": "pet personality"
+  },
+  {
+    "path": "Cache::RecordLookup::IsAnimationDataId_RifleRelated",
+    "va": "0x0071DAA0",
+    "kind": "function",
+    "note": "animation check"
+  },
+  {
+    "path": "Cache::RecordLookup::GetWMOAreaRec",
+    "va": "0x00990560",
+    "kind": "function",
+    "note": "get WMO area record"
+  },
+  {
+    "path": "Cache::RecordLookup::GetLiquidTypeRecForArea",
+    "va": "0x009905C0",
+    "kind": "function",
+    "note": "get liquid type"
+  },
+  {
+    "path": "Cache::FactionRec::LoadDB",
+    "va": "0x0063F080",
+    "kind": "function",
+    "note": "load faction DB"
+  },
+  {
+    "path": "Cache::Faction::GetReputationIndexForFaction",
+    "va": "0x00718B30",
+    "kind": "function",
+    "note": "get rep index"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Achievement",
+    "va": "0x00AD305C",
+    "kind": "data",
+    "note": "pointer to the Achievement ClientDB object; record type 0xEB"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Achievement_Criteria",
+    "va": "0x00AD3080",
+    "kind": "data",
+    "note": "pointer to the Achievement_Criteria ClientDB object; record type 0xEC"
+  },
+  {
+    "path": "Cache::ClientDbPointer::AnimationData",
+    "va": "0x00AD30C8",
+    "kind": "data",
+    "note": "pointer to the AnimationData ClientDB object; record type 0xEE"
+  },
+  {
+    "path": "Cache::ClientDbPointer::AreaTable",
+    "va": "0x00AD3134",
+    "kind": "data",
+    "note": "pointer to the AreaTable ClientDB object; record type 0xF1"
+  },
+  {
+    "path": "Cache::ClientDbPointer::AuctionHouse",
+    "va": "0x00AD31C4",
+    "kind": "data",
+    "note": "pointer to the AuctionHouse ClientDB object; record type 0xF5"
+  },
+  {
+    "path": "Cache::ClientDbPointer::BattlemasterList",
+    "va": "0x00AD3254",
+    "kind": "data",
+    "note": "pointer to the BattlemasterList ClientDB object; record type 0xF9"
+  },
+  {
+    "path": "Cache::ClientDbPointer::ChrClasses",
+    "va": "0x00AD3404",
+    "kind": "data",
+    "note": "pointer to the ChrClasses ClientDB object; record type 0x105"
+  },
+  {
+    "path": "Cache::ClientDbPointer::ChrRaces",
+    "va": "0x00AD3428",
+    "kind": "data",
+    "note": "pointer to the ChrRaces ClientDB object; record type 0x106"
+  },
+  {
+    "path": "Cache::ClientDbPointer::CreatureDisplayInfo",
+    "va": "0x00AD34B8",
+    "kind": "data",
+    "note": "pointer to the CreatureDisplayInfo ClientDB object; record type 0x109"
+  },
+  {
+    "path": "Cache::ClientDbPointer::CreatureModelData",
+    "va": "0x00AD3500",
+    "kind": "data",
+    "note": "pointer to the CreatureModelData ClientDB object; record type 0x10C"
+  },
+  {
+    "path": "Cache::ClientDbPointer::CreatureSpellData",
+    "va": "0x00AD356C",
+    "kind": "data",
+    "note": "pointer to the CreatureSpellData ClientDB object; record type 0x10F"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Faction",
+    "va": "0x00AD3860",
+    "kind": "data",
+    "note": "pointer to the Faction ClientDB object; record type 0x121"
+  },
+  {
+    "path": "Cache::ClientDbPointer::FactionTemplate",
+    "va": "0x00AD3884",
+    "kind": "data",
+    "note": "pointer to the FactionTemplate ClientDB object; record type 0x123"
+  },
+  {
+    "path": "Cache::ClientDbPointer::GameObjectDisplayInfo",
+    "va": "0x00AD3938",
+    "kind": "data",
+    "note": "pointer to the GameObjectDisplayInfo ClientDB object; record type 0x128"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Item",
+    "va": "0x00AD3D4C",
+    "kind": "data",
+    "note": "pointer to the Item ClientDB object; record type 0x145"
+  },
+  {
+    "path": "Cache::ClientDbPointer::ItemDisplayInfo",
+    "va": "0x00AD3DDC",
+    "kind": "data",
+    "note": "pointer to the ItemDisplayInfo ClientDB object; record type 0x149"
+  },
+  {
+    "path": "Cache::ClientDbPointer::ItemExtendedCost",
+    "va": "0x00AD3E00",
+    "kind": "data",
+    "note": "pointer to the ItemExtendedCost ClientDB object; record type 0x14A"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Map",
+    "va": "0x00AD4160",
+    "kind": "data",
+    "note": "pointer to the Map ClientDB object; record type 0x167"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Spell",
+    "va": "0x00AD49D0",
+    "kind": "data",
+    "note": "pointer to the Spell ClientDB object; record type 0x194"
+  },
+  {
+    "path": "Cache::ClientDbPointer::SpellCastTimes",
+    "va": "0x00AD4748",
+    "kind": "data",
+    "note": "pointer to the SpellCastTimes ClientDB object; record type 0x191"
+  },
+  {
+    "path": "Cache::ClientDbPointer::SpellDuration",
+    "va": "0x00AD4820",
+    "kind": "data",
+    "note": "pointer to the SpellDuration ClientDB object; record type 0x198"
+  },
+  {
+    "path": "Cache::ClientDbPointer::SpellItemEnchantment",
+    "va": "0x00AD48B0",
+    "kind": "data",
+    "note": "pointer to the SpellItemEnchantment ClientDB object; record type 0x19C"
+  },
+  {
+    "path": "Cache::ClientDbPointer::SpellRange",
+    "va": "0x00AD4988",
+    "kind": "data",
+    "note": "pointer to the SpellRange ClientDB object; record type 0x1A2"
+  },
+  {
+    "path": "Cache::ClientDbPointer::Talent",
+    "va": "0x00AD4B5C",
+    "kind": "data",
+    "note": "pointer to the Talent ClientDB object; record type 0x1AE"
+  },
+  {
+    "path": "Cache::ClientDbPointer::TalentTab",
+    "va": "0x00AD4B80",
+    "kind": "data",
+    "note": "pointer to the TalentTab ClientDB object; record type 0x1AF"
+  }
+]

@@ -1,0 +1,524 @@
+[
+  {
+    "path": "Movement::CMovement::MoveUnit",
+    "va": "0x006F09F0",
+    "kind": "function",
+    "note": "move unit"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveStart",
+    "va": "0x006F0CF0",
+    "kind": "function",
+    "note": "start moving"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveStop",
+    "va": "0x0098C8A0",
+    "kind": "function",
+    "note": "movement stop handler"
+  },
+  {
+    "path": "Movement::CMovement::OnJump",
+    "va": "0x006F0DD0",
+    "kind": "function",
+    "note": "jump handler"
+  },
+  {
+    "path": "Movement::CMovement::StopMove",
+    "va": "0x0098BD10",
+    "kind": "function",
+    "note": "force stop movement"
+  },
+  {
+    "path": "Movement::CMovement::OnStrafeStart",
+    "va": "0x006F0D60",
+    "kind": "function",
+    "note": "start strafing"
+  },
+  {
+    "path": "Movement::CMovement::OnStrafeStop",
+    "va": "0x00988DC0",
+    "kind": "function",
+    "note": "stop strafing"
+  },
+  {
+    "path": "Movement::CMovement::StartTurn",
+    "va": "0x00988DF0",
+    "kind": "function",
+    "note": "start turning"
+  },
+  {
+    "path": "Movement::CMovement::OnTurnStart",
+    "va": "0x006F1010",
+    "kind": "function",
+    "note": "turn start handler"
+  },
+  {
+    "path": "Movement::CMovement::OnTurnStop",
+    "va": "0x00989010",
+    "kind": "function",
+    "note": "turn stop handler"
+  },
+  {
+    "path": "Movement::CMovement::OnPitchStop",
+    "va": "0x00989450",
+    "kind": "function",
+    "note": "pitch stop handler"
+  },
+  {
+    "path": "Movement::CMovement::IsFalling",
+    "va": "0x005FEDE0",
+    "kind": "function",
+    "note": "check if falling"
+  },
+  {
+    "path": "Movement::CMovement::CreateMovementStatus",
+    "va": "0x00987140",
+    "kind": "function",
+    "note": "create movement status"
+  },
+  {
+    "path": "Movement::CMovement::CreateMovementStatus_NoMovementFlags",
+    "va": "0x006E90E0",
+    "kind": "function",
+    "note": "status without flags"
+  },
+  {
+    "path": "Movement::CMovement::FillFromStatus",
+    "va": "0x009872C0",
+    "kind": "function",
+    "note": "fill from status"
+  },
+  {
+    "path": "Movement::CMovement::FillFromStatus_Falling",
+    "va": "0x00988990",
+    "kind": "function",
+    "note": "fill falling status"
+  },
+  {
+    "path": "Movement::CMovement::UpdateStatus",
+    "va": "0x006ED990",
+    "kind": "function",
+    "note": "update status"
+  },
+  {
+    "path": "Movement::CMovement::GetMoveStartTime",
+    "va": "0x006E9F50",
+    "kind": "function",
+    "note": "get move start time"
+  },
+  {
+    "path": "Movement::CMovement::GetMoveEventMsgId",
+    "va": "0x006E9870",
+    "kind": "function",
+    "note": "get event message ID"
+  },
+  {
+    "path": "Movement::CMovement::CalcCurrentSpeed",
+    "va": "0x00987570",
+    "kind": "function",
+    "note": "calculate current speed"
+  },
+  {
+    "path": "Movement::CMovement::ReCalcCurrentSpeed",
+    "va": "0x009880C0",
+    "kind": "function",
+    "note": "recalculate speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetRunSpeed",
+    "va": "0x006EDB80",
+    "kind": "function",
+    "note": "set run speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetRunBackSpeed",
+    "va": "0x006EDC70",
+    "kind": "function",
+    "note": "set run back speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetWalkSpeed",
+    "va": "0x006EDD60",
+    "kind": "function",
+    "note": "set walk speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetSwimSpeed",
+    "va": "0x006EDE50",
+    "kind": "function",
+    "note": "set swim speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetSwimBackSpeed",
+    "va": "0x006EDF40",
+    "kind": "function",
+    "note": "set swim back speed"
+  },
+  {
+    "path": "Movement::CMovement::OnFlightSpeedChange_ActiveMover",
+    "va": "0x006EE030",
+    "kind": "function",
+    "note": "flight speed change"
+  },
+  {
+    "path": "Movement::CMovement::OnFlightBackSpeedChange",
+    "va": "0x006EE180",
+    "kind": "function",
+    "note": "flight back speed"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveSetTurnRate",
+    "va": "0x006EE210",
+    "kind": "function",
+    "note": "set turn rate"
+  },
+  {
+    "path": "Movement::CMovement::OnPitchSpeedChange_ActiveMover",
+    "va": "0x006EE300",
+    "kind": "function",
+    "note": "pitch speed change"
+  },
+  {
+    "path": "Movement::CMovement::SplineFlags",
+    "va": "0x006E9AD0",
+    "kind": "function",
+    "note": "get spline flags"
+  },
+  {
+    "path": "Movement::CMovement::SplineEnableFlying",
+    "va": "0x00989890",
+    "kind": "function",
+    "note": "enable spline flying"
+  },
+  {
+    "path": "Movement::CMovement::SplineToggleEnableFlying",
+    "va": "0x006EBE50",
+    "kind": "function",
+    "note": "toggle flying"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineMoveUnRoot",
+    "va": "0x006EBA20",
+    "kind": "function",
+    "note": "spline unroot"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineStopSwim",
+    "va": "0x006EB020",
+    "kind": "function",
+    "note": "spline stop swim"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineMoveToggleHover",
+    "va": "0x006EB060",
+    "kind": "function",
+    "note": "toggle hover"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineMoveToggleRunMode",
+    "va": "0x006E90D0",
+    "kind": "function",
+    "note": "toggle run mode"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineMoveToggleWaterWalk",
+    "va": "0x006E9240",
+    "kind": "function",
+    "note": "toggle water walk"
+  },
+  {
+    "path": "Movement::CMovement::OnSplineMoveToggleFeatherFall",
+    "va": "0x006E9250",
+    "kind": "function",
+    "note": "toggle feather fall"
+  },
+  {
+    "path": "Movement::CMovement::ToggleMovementFlag_0x20000000_FeatherFall",
+    "va": "0x00987440",
+    "kind": "function",
+    "note": "toggle feather fall; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ToggleMovementFlag_0x10000000_WaterWalk",
+    "va": "0x009873F0",
+    "kind": "function",
+    "note": "toggle water walk; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ToggleMovementFlag_0x40000000_Hover",
+    "va": "0x00987460",
+    "kind": "function",
+    "note": "toggle hover; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::SetMovementFlag_0x8000000",
+    "va": "0x009872A0",
+    "kind": "function",
+    "note": "set flag; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ClearMovementFlag_0x8000000",
+    "va": "0x009872B0",
+    "kind": "function",
+    "note": "clear flag; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ToggleMovementFlag2_0x80",
+    "va": "0x0098B570",
+    "kind": "function",
+    "note": "toggle flag2; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ToggleMovementFlag2_0x100",
+    "va": "0x0098B590",
+    "kind": "function",
+    "note": "toggle flag2; flag bit is named in the identifier"
+  },
+  {
+    "path": "Movement::CMovement::ProcessMoveEvent",
+    "va": "0x006ED0F0",
+    "kind": "function",
+    "note": "process move event"
+  },
+  {
+    "path": "Movement::CMovement::AddPlayerMoveEvent",
+    "va": "0x006EC8B0",
+    "kind": "function",
+    "note": "add player move event"
+  },
+  {
+    "path": "Movement::CMovement::HandleSplinePackets_1235_1236",
+    "va": "0x006EBC20",
+    "kind": "function",
+    "note": "handle spline packets"
+  },
+  {
+    "path": "Movement::CMovement::WriteMovementStatusToPacket",
+    "va": "0x007164B0",
+    "kind": "function",
+    "note": "write status to packet"
+  },
+  {
+    "path": "Movement::CMovement::CalcFallStartElevation",
+    "va": "0x00986F00",
+    "kind": "function",
+    "note": "calculate fall start"
+  },
+  {
+    "path": "Movement::CMovement::Swimming_FallCalc",
+    "va": "0x0098BFF0",
+    "kind": "function",
+    "note": "swimming fall calc"
+  },
+  {
+    "path": "Movement::CMovement::IsFallingSwimmingFlying_6636D0",
+    "va": "0x006EABA0",
+    "kind": "function",
+    "note": "check state"
+  },
+  {
+    "path": "Movement::CMovement::OnStartAscendOrDescendPacket",
+    "va": "0x006EF5C0",
+    "kind": "function",
+    "note": "ascend/descend"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveStopAscendPacket",
+    "va": "0x006EF630",
+    "kind": "function",
+    "note": "stop ascend"
+  },
+  {
+    "path": "Movement::CMovement::OnFallChangePacket",
+    "va": "0x006EEE50",
+    "kind": "function",
+    "note": "fall change"
+  },
+  {
+    "path": "Movement::CMovement::OnFallLand_OnHeartbeat",
+    "va": "0x006EF680",
+    "kind": "function",
+    "note": "fall land heartbeat"
+  },
+  {
+    "path": "Movement::CMovement::DisableFlying",
+    "va": "0x0098C240",
+    "kind": "function",
+    "note": "disable flying"
+  },
+  {
+    "path": "Movement::CMovement::EnableHover",
+    "va": "0x009883F0",
+    "kind": "function",
+    "note": "enable hover"
+  },
+  {
+    "path": "Movement::CMovement::DisableHover",
+    "va": "0x0098B710",
+    "kind": "function",
+    "note": "disable hover"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveHover",
+    "va": "0x006EEF60",
+    "kind": "function",
+    "note": "move hover handler"
+  },
+  {
+    "path": "Movement::CMovement::OnMoveUpdateCanFlyPacket",
+    "va": "0x006EF0D0",
+    "kind": "function",
+    "note": "can fly update"
+  },
+  {
+    "path": "Movement::CMovement::OnCanFlyChangePacket",
+    "va": "0x006EF060",
+    "kind": "function",
+    "note": "can fly change"
+  },
+  {
+    "path": "Movement::CMovement::ForceSetTransportInt",
+    "va": "0x006EC400",
+    "kind": "function",
+    "note": "force set transport"
+  },
+  {
+    "path": "Movement::CMovement::SetTransportAndSend_909",
+    "va": "0x006F0C70",
+    "kind": "function",
+    "note": "set transport and send"
+  },
+  {
+    "path": "Movement::CMovement::OnKnockback",
+    "va": "0x006F0E30",
+    "kind": "function",
+    "note": "knockback handler"
+  },
+  {
+    "path": "Movement::CMovement::OnKnockbackPacket",
+    "va": "0x007187F0",
+    "kind": "function",
+    "note": "knockback packet"
+  },
+  {
+    "path": "Movement::CMovementStatus::ctor",
+    "va": "0x004F4C50",
+    "kind": "function",
+    "note": "status constructor"
+  },
+  {
+    "path": "Movement::CMovementStatus::Read",
+    "va": "0x004F4D40",
+    "kind": "function",
+    "note": "read status"
+  },
+  {
+    "path": "Movement::CMovementStatus::Skip",
+    "va": "0x004F4CA0",
+    "kind": "function",
+    "note": "skip status"
+  },
+  {
+    "path": "Movement::CMovementStatus::Write",
+    "va": "0x004F4ED0",
+    "kind": "function",
+    "note": "write status"
+  },
+  {
+    "path": "Movement::CMoveSpline::Read",
+    "va": "0x004F4B50",
+    "kind": "function",
+    "note": "read spline"
+  },
+  {
+    "path": "Movement::CMoveSpline::Skip",
+    "va": "0x004F4A50",
+    "kind": "function",
+    "note": "skip spline"
+  },
+  {
+    "path": "Movement::CMoveSpline::CopyFrom",
+    "va": "0x006F1240",
+    "kind": "function",
+    "note": "copy spline"
+  },
+  {
+    "path": "Movement::CMoveSpline::Dtor",
+    "va": "0x0074B7E0",
+    "kind": "function",
+    "note": "spline destructor"
+  },
+  {
+    "path": "Movement::CMoveSpline::Alloc",
+    "va": "0x0074B810",
+    "kind": "function",
+    "note": "allocate spline"
+  },
+  {
+    "path": "Movement::Movement::LoadMovePacket",
+    "va": "0x0071EF80",
+    "kind": "function",
+    "note": "load move packet"
+  },
+  {
+    "path": "Movement::Movement::WriteMovementPacket",
+    "va": "0x0071F060",
+    "kind": "function",
+    "note": "write move packet"
+  },
+  {
+    "path": "Movement::Movement::AllocPlayerMoveEvent",
+    "va": "0x006EBC70",
+    "kind": "function",
+    "note": "allocate move event"
+  },
+  {
+    "path": "Movement::Movement::AllocCMoveSpline",
+    "va": "0x0074B7B0",
+    "kind": "function",
+    "note": "allocate move spline"
+  },
+  {
+    "path": "Movement::Movement::MovementAddTransport",
+    "va": "0x0074B730",
+    "kind": "function",
+    "note": "add transport"
+  },
+  {
+    "path": "Movement::Movement::MovementMoveTransports",
+    "va": "0x0074B6E0",
+    "kind": "function",
+    "note": "move transports"
+  },
+  {
+    "path": "Movement::Movement::MovementRemoveTransport",
+    "va": "0x0074B750",
+    "kind": "function",
+    "note": "remove transport"
+  },
+  {
+    "path": "Movement::Movement::MovementGetTransportMatrix",
+    "va": "0x0074B4C0",
+    "kind": "function",
+    "note": "get transport matrix"
+  },
+  {
+    "path": "Movement::Movement::MovementGetTransportMatrixInternal",
+    "va": "0x0074B430",
+    "kind": "function",
+    "note": "get matrix internal"
+  },
+  {
+    "path": "Movement::CPlayerMoveEvent::FromMoveStatus",
+    "va": "0x006E9050",
+    "kind": "function",
+    "note": "create from status"
+  },
+  {
+    "path": "World::IsInFlyableArea",
+    "va": "0x0051A1D0",
+    "kind": "function",
+    "note": "check flyable area"
+  }
+]

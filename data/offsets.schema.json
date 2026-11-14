@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)+$"
+      },
+      "va": {
+        "type": "string",
+        "pattern": "^0x[0-9A-F]{8}$"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["function", "data"]
+      },
+      "note": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["not-present", "unverified"]
+      }
+    },
+    "required": ["path", "va", "kind", "note"],
+    "additionalProperties": false
+  }
+}
