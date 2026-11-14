@@ -3,8 +3,8 @@ import { createReadStream, readFileSync, statSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { createBrotliDecompress } from 'node:zlib'
 
+import { canonicalTableHash } from '../build/table-hash.ts'
 import { kinds, relations } from '../src/schema.ts'
-import { canonicalTableHash } from './canonical-table-hash.ts'
 
 const args = process.argv.slice(2).filter((arg) => arg !== '--')
 const prepare = args.includes('--prepare')

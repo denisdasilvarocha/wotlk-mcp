@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,6 +7,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+import { initReference } from '../build/offsets.ts'
+import { buildWorldLinks } from '../build/world-links.ts'
 import { unpackPackage } from './package.ts'
 
 test('world keys navigate both ways while SQL retains source evidence', async () => {
@@ -15,7 +16,7 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
   const database = path.join(dir, 'reference.sqlite')
   const client = new Client({ name: 'world-links-test', version: '1' })
   try {
-    execFileSync('vpx', ['scripts/init-reference.ts', database])
+    initReference(database)
     const db = new DatabaseSync(database)
     db.exec(`
       CREATE TABLE world_creature_queststarter (id INTEGER, quest INTEGER);
@@ -39,7 +40,7 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
       INSERT INTO record VALUES ('creature:1','creature','Creature','world_creature_queststarter',1,'',''), ('gameobject:2','gameobject','Object','world_gameobject_queststarter',1,'',''), ('quest:3','quest','Quest','world_quest_template',1,'',''), ('item:4','item','Item','world_item_template',1,'',''), ('spell:5','spell','Spell','world_item_template',1,'',''), ('spell:6','spell','Spell 6','world_item_template',1,'','');
     `)
     db.close()
-    execFileSync('vpx', ['scripts/build-world-links.ts', database])
+    buildWorldLinks(database)
     unpackPackage(dir)
     await client.connect(
       new StdioClientTransport({
@@ -82,11 +83,11 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
     const casts = await text('related', { id: 'item:4', rel: 'casts' })
     expect(casts).toContain('spellid_1')
     expect(casts).toContain('spellid_5')
-    expect(
-      await text('sql', {
-        query: 'SELECT slot, maxcount, incrtime, ExtendedCost FROM world_npc_vendor ORDER BY slot'
-      })
-    ).toContain('60')
+    const vendors = await text('sql', {
+      query: 'SELECT slot, maxcount, incrtime, ExtendedCost FROM world_npc_vendor ORDER BY slot'
+    })
+    expect(vendors).toContain('1\\t2\\t60\\t7')
+    expect(vendors).toContain('2\\t0\\t0\\t0')
   } finally {
     await client.close()
     rmSync(dir, { recursive: true, force: true })

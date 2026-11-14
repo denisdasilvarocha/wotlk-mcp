@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,6 +7,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
+import { buildClientFactionSpawnLinks } from '../build/client-faction-spawn-links.ts'
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-client-links-'))
@@ -19,7 +20,7 @@ function columns(prefix: string, count: number): string {
 }
 
 beforeAll(async () => {
-  execFileSync('vpx', ['scripts/init-reference.ts', file])
+  initReference(file)
   const db = new DatabaseSync(file)
   db.exec(`CREATE TABLE dbc_ItemSet (ID INTEGER, ${columns('ItemID', 17)});
     CREATE TABLE dbc_Talent (ID INTEGER, ${columns('SpellRank', 9)});
@@ -55,7 +56,7 @@ beforeAll(async () => {
   ])
     insert.run(id, id.split(':')[0], id, 'dbc_ItemSet', 1, '', '')
   db.close()
-  execFileSync('vpx', ['scripts/build-client-faction-spawn-links.ts', file])
+  buildClientFactionSpawnLinks(file)
   unpackPackage(dir)
   await client.connect(
     new StdioClientTransport({

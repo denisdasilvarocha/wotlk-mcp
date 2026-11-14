@@ -28,7 +28,7 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   const terms = query.split(/\s+/)
   const files = input.kind?.includes('file') ?? false
   if (files && characters(query).length < 3) throw new Error('source search needs ≥ 3 characters')
-  const params: Record<string, SQLInputValue> = { query, prefix: `${literalLike(query)}%` }
+  let params: Record<string, SQLInputValue> = { query, prefix: `${literalLike(query)}%` }
   let kindFilter = ''
   if (!files) kindFilter = "AND r.kind <> 'file'"
   if (input.kind)
@@ -87,10 +87,7 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
       .join(' + ')
     sql = `SELECT r.id, r.kind, r.name, r.search_text, r.hint, 0 AS tier, 0 AS line, (${score}) AS score FROM record r WHERE r.id IN (SELECT id FROM record_fts WHERE record_fts MATCH $fts) ${kindFilter} AND (${score}) > 0`
     count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(fuzzyParams)?.total)
-    Object.keys(params).forEach((key) => {
-      delete params[key]
-    })
-    Object.assign(params, fuzzyParams)
+    params = fuzzyParams
     fuzzy = true
   }
   params.limit = input.limit

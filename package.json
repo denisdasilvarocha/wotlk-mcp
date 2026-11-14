@@ -22,25 +22,10 @@
     "access": "public"
   },
   "scripts": {
-    "acceptance": "vpx scripts/acceptance.ts",
-    "build": "vp pack",
-    "build:client-faction-spawn-links": "vpx scripts/build-client-faction-spawn-links.ts",
-    "build:complete-reference": "vpx scripts/complete-reference.ts",
-    "build:world-links": "vpx scripts/build-world-links.ts",
-    "check": "vp check",
+    "build": "vpx build/main.ts",
     "dev": "vp pack --watch",
-    "import:client-data": "vpx scripts/import-client-data.ts",
-    "import:codex": "node scripts/import-codex.ts",
-    "import:interface": "vpx scripts/import-interface.ts",
-    "import:native": "vpx scripts/import-native.ts",
-    "import:spell-enums": "vpx scripts/import-spell-enums.ts",
-    "import:world-enums": "vpx scripts/import-world-enums.ts",
-    "init:reference": "vpx scripts/init-reference.ts",
     "prepare": "vp config",
-    "prepare:reference": "vpx scripts/prepare-reference.ts",
-    "prepublishOnly": "vp run build",
-    "test": "vp test",
-    "validate:offsets": "vpx scripts/validate-offsets.ts"
+    "prepublishOnly": "vp pack"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

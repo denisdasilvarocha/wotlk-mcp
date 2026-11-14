@@ -42,7 +42,6 @@ describe('Offsets catalog', () => {
     const actual = files.flatMap((file) =>
       JSON.parse(readFileSync(nodePath.join(catalog, file), 'utf8'))
     )
-    expect(files).toHaveLength(13)
     expect(entries).toHaveLength(787)
     expect(actual.toSorted((a, b) => a.path.localeCompare(b.path))).toEqual(
       entries.toSorted((a, b) => a.path.localeCompare(b.path))

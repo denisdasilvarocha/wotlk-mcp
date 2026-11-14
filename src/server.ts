@@ -9,8 +9,8 @@ import * as z from 'zod'
 
 import { getReferencePath, takeUpdateWarning } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
-import { getRelated, parseRelated, relatedTool } from './related.js'
-import { kinds } from './schema.js'
+import { getRelated } from './related.js'
+import { kinds, relations } from './schema.js'
 import { searchRecords } from './search.js'
 import { runSql } from './sql.js'
 
@@ -22,13 +22,23 @@ const searchInput = z.strictObject({
 })
 
 const idPattern = `^(${kinds.join('|')}):.+$`
-const input = z.strictObject({
+const getInput = z.strictObject({
   ids: z
     .array(z.string().regex(new RegExp(idPattern)))
     .min(1)
     .max(20),
   from: z.number().int().min(1).optional(),
   to: z.number().int().min(1).optional()
+})
+const relationNames = relations.flat()
+const relatedInput = z.strictObject({
+  id: z.string().regex(new RegExp(idPattern)),
+  rel: z
+    .string()
+    .refine((value) => relationNames.includes(value))
+    .optional(),
+  limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().nonnegative().default(0)
 })
 const sqlInput = z.strictObject({
   query: z.string().min(1),
@@ -90,7 +100,22 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
       },
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
-    relatedTool
+    {
+      name: 'related',
+      description: 'Navigate one-hop Links in either direction. Results are compact and paginated.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', pattern: idPattern },
+          rel: { type: 'string', enum: relationNames },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          offset: { type: 'integer', minimum: 0, default: 0 }
+        },
+        required: ['id'],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    }
   ]
 }))
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -107,10 +132,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
       if (request.params.name === 'related') {
-        const args = parseRelated(request.params.arguments)
+        const parsed = relatedInput.safeParse(request.params.arguments)
+        if (!parsed.success)
+          throw new Error(
+            `related requires a valid ID, relation, limit 1–100 and nonnegative integer offset; valid kinds: ${kinds.join(', ')}; valid relations: ${relationNames.join(', ')}`
+          )
         const db = openReference(await getReferencePath())
         try {
-          return { content: [{ type: 'text', text: getRelated(db, args) }] }
+          return { content: [{ type: 'text', text: getRelated(db, parsed.data) }] }
         } finally {
           db.close()
         }
@@ -130,7 +159,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       if (request.params.name !== 'get')
         throw new Error('unknown tool; use get, related, search or sql')
-      const parsed = input.safeParse(request.params.arguments)
+      const parsed = getInput.safeParse(request.params.arguments)
       if (!parsed.success)
         throw new Error(
           `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`

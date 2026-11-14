@@ -1,16 +1,33 @@
-import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { expect, test } from 'vite-plus/test'
 
+import { writeProvenance } from '../build/provenance.ts'
+import type { Sources } from '../build/sources.ts'
 import { schema } from '../src/schema.ts'
 
 function digest(value: string | Buffer): string {
   return createHash('sha256').update(value).digest('hex')
+}
+function fixtureSources(directory: string): Sources {
+  const archive = { directory, archive: '', revision: '', sha256: '' }
+  writeFileSync(path.join(directory, 'LICENSE.md'), 'Fixture definitions licence')
+  writeFileSync(path.join(directory, 'LICENSE'), 'Fixture world licence')
+  writeFileSync(path.join(directory, 'AUTHORS'), 'Fixture world authors')
+  return {
+    client: '',
+    clientManifestHash: digest(readFileSync('data/client-inputs/manifest.json')),
+    clientBundle: '',
+    wowdbdefs: archive,
+    azerothcore: archive,
+    worldImporterImage: '',
+    codex: { directory, revision: '', files: {}, sha256: '' },
+    codexNodeImage: ''
+  }
 }
 
 test('final provenance hashes typed logical tables and emits notices from the embedded manifest', () => {
@@ -51,15 +68,11 @@ test('final provenance hashes typed logical tables and emits notices from the em
       JSON.stringify({ client_inputs: manifestHash })
     )
     db.close()
-    function run(): ReturnType<typeof spawnSync> {
-      return spawnSync(
-        process.execPath,
-        ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice],
-        { encoding: 'utf8' }
-      )
+    const inputs = fixtureSources(dir)
+    function run(): void {
+      writeProvenance(database, notice, inputs)
     }
-    const first = run()
-    expect(first.status).toBe(0)
+    run()
     const result = new DatabaseSync(database)
     function meta(): Record<string, unknown> {
       return Object.fromEntries(
@@ -80,27 +93,24 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(initial['canonical_hash.record_fts']).toBeUndefined()
     expect(initial['canonical_hash.record_fts_data']).toBeUndefined()
     const text = readFileSync(notice, 'utf8')
-    expect(text).toContain(readFileSync('data/wowdbdefs-LICENSE.txt', 'utf8').trim())
-    expect(text).toContain(readFileSync('world/azerothcore-LICENSE.txt', 'utf8').trim())
-    expect(text).toContain(readFileSync('world/azerothcore-AUTHORS.txt', 'utf8').trim())
+    expect(text).toContain('Fixture definitions licence')
+    expect(text).toContain('Fixture world licence')
+    expect(text).toContain('Fixture world authors')
     expect(text).toContain('not evidence of Blizzard permission')
     expect(text).toContain('not proof of byte-identical enUS')
     expect(text).toContain('client-inputs-12340-engb-1')
     expect(text).toContain('9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136')
     expect(text).toContain('aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8')
-    const second = run()
-    expect(second.status).toBe(0)
+    run()
     expect(meta()['canonical_hash.source']).toBe(initial['canonical_hash.source'])
     expect(readFileSync(notice, 'utf8')).toBe(text)
     result.exec(
       "DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)"
     )
-    const reordered = run()
-    expect(reordered.status).toBe(0)
+    run()
     expect(meta()['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
     result.exec("UPDATE typed SET value = '42' WHERE typeof(value) = 'integer'")
-    const changed = run()
-    expect(changed.status).toBe(0)
+    run()
     expect(meta()['canonical_hash.typed']).not.toBe(initial['canonical_hash.typed'])
     result.close()
   } finally {
@@ -119,13 +129,9 @@ test('a mismatched client pin fails without altering the manifest or writing a n
       "INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')"
     )
     db.close()
-    const run = spawnSync(
-      process.execPath,
-      ['--experimental-strip-types', 'scripts/reference-provenance.ts', database, notice],
-      { encoding: 'utf8' }
+    expect(() => writeProvenance(database, notice, fixtureSources(dir))).toThrow(
+      'Client manifest pin does not match'
     )
-    expect(run.status).not.toBe(0)
-    expect(run.stderr).toContain('Client manifest pin does not match')
     const result = new DatabaseSync(database, { readOnly: true })
     expect(result.prepare('SELECT name FROM source').all()).toEqual([{ name: 'client-data' }])
     expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({

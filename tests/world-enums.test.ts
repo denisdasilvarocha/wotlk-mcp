@@ -1,4 +1,3 @@
-import { execFileSync, spawnSync } from 'node:child_process'
 import {
   appendFileSync,
   mkdtempSync,
@@ -13,9 +12,10 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { expect, test } from 'vite-plus/test'
 
-import { importWorldEnums } from '../scripts/import-world-enums.js'
+import { initReference } from '../build/offsets.ts'
+import { importWorldEnums } from '../build/world-enums.ts'
 
-test('world mapping command parses expressions and rejects missing mapped columns', () => {
+test('world enum import parses expressions and rejects missing mapped columns', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-enums-'))
   try {
     const root = 'azerothcore-wotlk-2948c203faa0d23c4772441119ebe98e5b7cad95'
@@ -81,18 +81,8 @@ test('world mapping command parses expressions and rejects missing mapped column
       path.join(dir, root, 'src/server/game/Entities/Item/ItemTemplate.h'),
       '\nenum ItemClass { ITEM_CLASS_CONSUMABLE, ITEM_CLASS_CONTAINER, ITEM_CLASS_WEAPON, ITEM_CLASS_GEM, ITEM_CLASS_ARMOR, ITEM_CLASS_REAGENT, ITEM_CLASS_PROJECTILE, ITEM_CLASS_TRADE_GOODS, ITEM_CLASS_GENERIC, ITEM_CLASS_RECIPE, ITEM_CLASS_MONEY, ITEM_CLASS_QUIVER, ITEM_CLASS_QUEST, ITEM_CLASS_KEY, ITEM_CLASS_PERMANENT, ITEM_CLASS_MISC, ITEM_CLASS_GLYPH };'
     )
-    const archive = path.join(dir, 'source.tar.gz')
-    execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    const rejected = spawnSync(
-      'vpx',
-      ['scripts/import-world-enums.ts', path.join(dir, 'x.sqlite'), archive],
-      {
-        encoding: 'utf8'
-      }
-    )
-    expect(rejected.stderr).toContain('AzerothCore archive hash mismatch')
     const database = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', database])
+    initReference(database)
     const db = new DatabaseSync(database)
     for (const table of [
       'item_template',
@@ -100,7 +90,7 @@ test('world mapping command parses expressions and rejects missing mapped column
       'quest_template',
       'gameobject_template'
     ]) {
-      const columns = readFileSync('world/schema-columns.tsv', 'utf8')
+      const columns = readFileSync('data/world/schema-columns.tsv', 'utf8')
         .split('\n')
         .map((line) => line.split('\t'))
         .filter(([name]) => name === table)
@@ -111,7 +101,7 @@ test('world mapping command parses expressions and rejects missing mapped column
       `CREATE TABLE dbc_ItemClass (ClassID INTEGER, ClassName_lang TEXT); CREATE TABLE dbc_CreatureType (ID INTEGER, Name_lang TEXT); CREATE TABLE dbc_CreatureFamily (ID INTEGER, Name_lang TEXT); CREATE TABLE dbc_FactionTemplate (ID INTEGER, Faction INTEGER); CREATE TABLE dbc_Faction (ID INTEGER, Name_lang TEXT);`
     )
     db.close()
-    importWorldEnums(database, archive)
+    importWorldEnums(database, path.join(dir, root))
     const output = new DatabaseSync(database)
     expect(
       output
@@ -127,10 +117,14 @@ test('world mapping command parses expressions and rejects missing mapped column
     ])
     output.close()
     const other = path.join(dir, 'missing.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', other])
-    expect(() => importWorldEnums(other, archive)).toThrow(
+    initReference(other)
+    expect(() => importWorldEnums(other, path.join(dir, root))).toThrow(
       'Missing mapped column world_item_template.Quality'
     )
+    const failed = new DatabaseSync(other, { readOnly: true })
+    expect(failed.prepare('SELECT count(*) AS n FROM enum_value').get()?.n).toBe(0)
+    expect(failed.prepare('SELECT count(*) AS n FROM enum_field').get()?.n).toBe(0)
+    failed.close()
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

@@ -1,11 +1,14 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
+
+import { initReference } from '../build/offsets.ts'
+import { packPackage } from './package.ts'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
@@ -31,11 +34,9 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
   const client = new Client({ name: 'install-test', version: '1' })
   try {
     const database = path.join(directory, 'reference.sqlite')
-    run('vpx', ['scripts/init-reference.ts', database])
-    run('vp', ['pm', 'pack', '--pack-destination', directory])
-    const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
-    if (!archive) throw new Error('Package archive not created')
-    const files = execFileSync('tar', ['-tzf', path.join(directory, archive)], { encoding: 'utf8' })
+    initReference(database)
+    const archive = packPackage(directory)
+    const files = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' })
     expect(files).not.toMatch(/\.sqlite(?:\.br)?$/m)
     expect(files).not.toContain('src/')
     writeFileSync(
@@ -43,7 +44,7 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
       JSON.stringify({
         name: 'clean-install',
         private: true,
-        dependencies: { 'wotlk-mcp': `file:${path.join(directory, archive)}` }
+        dependencies: { 'wotlk-mcp': `file:${archive}` }
       })
     )
     run('vp', ['install'], directory)
@@ -70,6 +71,8 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
       arguments: { ids: ['offset:Globals::PlayerName'] }
     })
     expect(JSON.stringify(result)).toContain('offset:Globals::PlayerName')
+    expect(JSON.stringify(result)).toContain('va: 0x00C79D18')
+    expect(JSON.stringify(result)).not.toContain('not found:')
     expect(result.isError).not.toBe(true)
   } finally {
     await client.close()

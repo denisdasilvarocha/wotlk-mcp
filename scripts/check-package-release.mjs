@@ -28,7 +28,7 @@ if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITH
 const registry = await fetch(registryUrl)
 if (registry.status === 404)
   throw new Error(
-    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see README)'
+    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see docs/releases.md)'
   )
 if (!registry.ok) throw new Error(`npm registry lookup failed: ${registry.status}`)
 if (registry.ok) {

@@ -1,22 +1,23 @@
-import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { expect, test } from 'vite-plus/test'
 
+import { initReference } from '../build/offsets.ts'
+import { packPackage } from './package.ts'
+
 test('acceptance rejects malformed fixtures and unapproved World Data for a real packed server', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'acceptance-'))
   try {
     const db = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', db])
-    execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
-    const archive = readdirSync(dir).find((file) => file.endsWith('.tgz'))
-    if (!archive) throw new Error('package archive missing')
+    initReference(db)
+    const archive = packPackage(dir)
     const bad = path.join(dir, 'invalid.json')
     writeFileSync(bad, JSON.stringify([{ id: 'broken' }]))
     function run(file: string): ReturnType<typeof spawnSync> {
-      return spawnSync('vpx', ['scripts/acceptance.ts', path.join(dir, archive ?? ''), db, file], {
+      return spawnSync('vpx', ['scripts/acceptance.ts', archive, db, file], {
         encoding: 'utf8'
       })
     }

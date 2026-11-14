@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -7,6 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { expect, test } from 'vite-plus/test'
 
+import { importInterface } from '../build/interface.ts'
 import { schema } from '../src/schema.ts'
 
 function hash(content: string | Uint8Array): string {
@@ -48,28 +48,25 @@ test('maintainer import preserves source, command evidence and atomic hash verif
     const db = new DatabaseSync(database)
     db.exec(schema)
     db.close()
-    function run(expectedHash: string): ReturnType<typeof spawnSync> {
-      return spawnSync(
-        process.execPath,
-        ['--experimental-strip-types', 'scripts/import-interface.ts', database, dir, expectedHash],
-        { encoding: 'utf8' }
-      )
-    }
-    expect(run('0'.repeat(64)).status).not.toBe(0)
+    expect(() => importInterface(database, dir, '0'.repeat(64))).toThrow(
+      'Client manifest SHA-256 mismatch'
+    )
     const failed = new DatabaseSync(database)
     expect(
       failed.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name = 'ui_file'").get()
     ).toMatchObject({ n: 0 })
     failed.close()
     writeFileSync(path.join(dir, files[0].path), 'tampered')
-    expect(run(hash(manifest)).status).not.toBe(0)
+    expect(() => importInterface(database, dir, hash(manifest))).toThrow(
+      'Interface SHA-256 mismatch'
+    )
     const corrupted = new DatabaseSync(database)
     expect(
       corrupted.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name = 'ui_file'").get()
     ).toMatchObject({ n: 0 })
     corrupted.close()
     writeFileSync(path.join(dir, files[0].path), source)
-    expect(run(hash(manifest)).status).toBe(0)
+    importInterface(database, dir, hash(manifest))
     const result = new DatabaseSync(database, { readOnly: true })
     expect(
       result.prepare('SELECT path, manifest_path, locale FROM ui_file ORDER BY path').all()
@@ -89,7 +86,13 @@ test('maintainer import preserves source, command evidence and atomic hash verif
       result
         .prepare('SELECT line, text FROM ui_line WHERE path = ? ORDER BY line')
         .all('FrameXML/GlobalStrings.lua')
-    ).toHaveLength(5)
+    ).toEqual([
+      { line: 1, text: 'SLASH_CAST1 = "/cast";' },
+      { line: 2, text: 'SLASH_CAST2 = "/spell";' },
+      { line: 3, text: 'SecureCmdList["CAST"] = function() end' },
+      { line: 4, text: 'EMOTE102_CMD1 = "/wave";' },
+      { line: 5, text: '--SlashCmdList["CAST"] = function() end' }
+    ])
     expect(
       result
         .prepare('SELECT path, line FROM ui_line_fts WHERE ui_line_fts MATCH ?')

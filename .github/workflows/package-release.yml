@@ -27,14 +27,14 @@ jobs:
         run: node scripts/check-package-release.mjs "$GITHUB_REF_NAME"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - run: vp run build
+      - run: vp pack
       - run: vp test tests/package-release.test.ts tests/package-install.test.ts
       - name: Publish with npm trusted publishing
         run: |
           vp pm pack --pack-destination "$RUNNER_TEMP"
           cd "$RUNNER_TEMP"
           npm publish "./wotlk-mcp-${GITHUB_REF_NAME#v}.tgz" --ignore-scripts || {
-            echo "::error::npm publish failed; verify the package exists and its npm trusted publisher permits this workflow (see README)."
+            echo "::error::npm publish failed; verify the package exists and its npm trusted publisher permits this workflow (see docs/releases.md)."
             exit 1
           }
       - name: Create GitHub package release

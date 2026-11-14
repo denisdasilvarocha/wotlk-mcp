@@ -1,113 +1,34 @@
 import { spawnSync } from 'node:child_process'
 import type { SpawnSyncReturns } from 'node:child_process'
-import { copyFileSync, mkdtempSync, readFileSync, truncateSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  truncateSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliCompressSync } from 'node:zlib'
 
-import { expect, test } from 'vite-plus/test'
+import { afterAll, expect, test } from 'vite-plus/test'
 
-import { canonicalTableHash } from '../scripts/canonical-table-hash.ts'
+import { createReleaseFixture, sealReleaseFixture } from './release-fixture.ts'
 
-const kinds = [
-  'spell',
-  'talent',
-  'itemset',
-  'skillline',
-  'map',
-  'area',
-  'faction',
-  'class',
-  'race',
-  'achievement',
-  'creature',
-  'item',
-  'quest',
-  'gameobject',
-  'fn',
-  'event',
-  'widget',
-  'method',
-  'cvar',
-  'type',
-  'cle',
-  'template',
-  'slash',
-  'offset',
-  'file'
-]
-const relations = [
-  'drops',
-  'starts',
-  'ends',
-  'rewards',
-  'sells',
-  'teaches',
-  'casts',
-  'contains',
-  'grants',
-  'belongs to',
-  'faction',
-  'spawns in',
-  'implemented by'
-]
+const directory = mkdtempSync(path.join(tmpdir(), 'release-gate-'))
+afterAll(() => rmSync(directory, { recursive: true, force: true }))
+
 function fixture(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), 'release-gate-'))
+  const dir = mkdtempSync(path.join(directory, 'candidate-'))
   const file = path.join(dir, 'candidate.sqlite')
-  const db = new DatabaseSync(file)
-  db.exec(`CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-    INSERT INTO meta VALUES('schema_version','1.0.0'),('input_pins','{"fixture":"one"}');
-    CREATE TABLE source(name TEXT PRIMARY KEY,pin TEXT,sha256 TEXT,licence TEXT,attribution TEXT);
-    INSERT INTO source VALUES('fixture','one','abc','test','test');
-    CREATE TABLE record(id TEXT,kind TEXT,name TEXT,source_table TEXT,source_row INTEGER,search_text TEXT,hint TEXT);
-    CREATE TABLE link(source_id TEXT,relation TEXT,destination_id TEXT,notes TEXT);
-    CREATE TABLE entity(ID INTEGER,name TEXT); CREATE TABLE offsets_entry(path TEXT,va TEXT);
-    CREATE TABLE lua_native_registration(record_id TEXT,va TEXT);
-    CREATE TABLE ui_line(path TEXT,line INTEGER,text TEXT);
-    CREATE VIRTUAL TABLE record_fts USING fts5(id UNINDEXED,name,text,tokenize='trigram');
-    CREATE VIRTUAL TABLE ui_line_fts USING fts5(path UNINDEXED,line UNINDEXED,text,tokenize='trigram');`)
-  const row = db.prepare('INSERT INTO entity VALUES (?, ?)')
-  const record = db.prepare('INSERT INTO record VALUES (?,?,?,?,?,?,?)')
-  const index = db.prepare('INSERT INTO record_fts VALUES (?,?,?)')
-  for (const kind of kinds) {
-    const id = `${kind}:1`
-    const result = row.run(kinds.indexOf(kind) + 1, kind)
-    record.run(id, kind, kind, 'entity', result.lastInsertRowid, '', '')
-    index.run(id, kind, '')
-  }
-  db.exec(
-    "INSERT INTO offsets_entry VALUES ('one','0x00400000'); UPDATE record SET source_table='offsets_entry',source_row=1 WHERE id='offset:1'; INSERT INTO lua_native_registration VALUES ('fn:1','0x00400000'); INSERT INTO ui_line VALUES('test.lua',1,'hello'); INSERT INTO ui_line_fts VALUES('test.lua',1,'hello');"
-  )
-  const link = db.prepare('INSERT INTO link VALUES (?,?,?,?)')
-  for (const rel of relations) {
-    let target = 'item:1'
-    if (rel === 'implemented by') target = 'offset:1'
-    link.run('fn:1', rel, target, '')
-  }
-  db.close()
-  seal(file)
+  createReleaseFixture(file)
+  sealReleaseFixture(file)
   return file
 }
-function seal(file: string): void {
-  const db = new DatabaseSync(file)
-  db.exec("DELETE FROM meta WHERE key LIKE 'canonical_hash.%' OR key LIKE 'canonical_count.%'")
-  const names = db
-    .prepare(
-      "SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%' AND name<>'meta'"
-    )
-    .all()
-  const insert = db.prepare('INSERT INTO meta VALUES (?,?)')
-  for (const row of names) {
-    const name = String(row.name)
-    const { hash, count } = canonicalTableHash(db, name)
-    insert.run(`canonical_hash.${name}`, hash)
-    insert.run(`canonical_count.${name}`, count)
-  }
-  db.close()
-}
 function gate(file: string, ...args: string[]): SpawnSyncReturns<string> {
-  seal(file)
+  sealReleaseFixture(file)
   writeFileSync(`${file}.br`, brotliCompressSync(readFileSync(file)))
   return spawnSync('vpx', ['scripts/release-gate.ts', file, `${file}.br`, ...args], {
     encoding: 'utf8'
@@ -243,7 +164,7 @@ test('duplicate names and reordered physical rows do not change stable source id
   )
   db.close()
   const previous = `${candidate}.previous`
-  seal(candidate)
+  sealReleaseFixture(candidate)
   copyFileSync(candidate, previous)
   const changed = new DatabaseSync(candidate)
   changed.exec(
@@ -270,7 +191,7 @@ test.each(['kind', 'relation'])('rejects %s shrink independently of table counts
     for (let i = 0; i < 10; i++)
       db.prepare("INSERT INTO link VALUES ('event:1','starts','item:1',?)").run(String(i))
   db.close()
-  seal(candidate)
+  sealReleaseFixture(candidate)
   const previous = `${candidate}.previous`
   copyFileSync(candidate, previous)
   db = new DatabaseSync(previous)

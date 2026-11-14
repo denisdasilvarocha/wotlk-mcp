@@ -1,4 +1,4 @@
-import { execSync, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { once } from 'node:events'
 import {
@@ -24,12 +24,15 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 import * as z from 'zod'
 
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-acquire-'))
 const dbPath = path.join(dir, 'reference.sqlite')
 const preload = path.join(dir, 'redirect.mjs')
 let data: Buffer
+let olderData: Buffer
+let newerData: Buffer
 let base: string
 let scenario = 'good'
 let requests: string[] = []
@@ -53,6 +56,39 @@ const server = createServer((req, res) => {
     if (scenario === 'missing') digest = undefined
     if (scenario === 'bad') digest = `sha256:${'0'.repeat(64)}`
     const asset = { name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }
+    if (scenario === 'selection') {
+      const releases = [
+        {
+          tag_name: 'db-v1.9.0',
+          published_at: '2025-01-01T00:00:00Z',
+          prerelease: false,
+          draft: false,
+          assets: [
+            {
+              ...asset,
+              digest: `sha256:${createHash('sha256').update(olderData).digest('hex')}`,
+              browser_download_url: `${base}/older`
+            }
+          ]
+        },
+        {
+          tag_name: 'db-v1.1.0',
+          published_at: '2025-02-01T00:00:00Z',
+          prerelease: false,
+          draft: false,
+          assets: [
+            {
+              ...asset,
+              digest: `sha256:${createHash('sha256').update(newerData).digest('hex')}`,
+              browser_download_url: `${base}/newer`
+            }
+          ]
+        }
+      ]
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify(releases))
+      return
+    }
     res.setHeader('content-type', 'application/json')
     const releases = [
       { tag_name: 'v9.0.0', prerelease: false, draft: false, assets: [] },
@@ -78,6 +114,11 @@ const server = createServer((req, res) => {
       }
     else res.end(body)
   } else {
+    if (scenario === 'selection') {
+      if (req.url === '/newer') res.end(newerData)
+      else res.end(olderData)
+      return
+    }
     res.setHeader('content-length', data.length)
     if (scenario === 'slow') {
       res.write(data.subarray(0, 10))
@@ -92,9 +133,18 @@ const server = createServer((req, res) => {
 })
 
 beforeAll(async () => {
-  execSync(`vpx scripts/init-reference.ts "${dbPath}"`)
+  initReference(dbPath)
   unpackPackage(dir)
   data = brotliCompressSync(readFileSync(dbPath))
+  for (const name of ['older', 'newer']) {
+    const file = path.join(dir, `${name}.sqlite`)
+    copyFileSync(dbPath, file)
+    const db = new DatabaseSync(file)
+    db.prepare("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', ?)").run(name)
+    db.close()
+    if (name === 'older') olderData = brotliCompressSync(readFileSync(file))
+    else newerData = brotliCompressSync(readFileSync(file))
+  }
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
   if (!address || typeof address === 'string') throw new Error('missing server address')
@@ -145,14 +195,59 @@ async function marker(client: Client): Promise<string> {
   )
 }
 
+function cacheDirectory(cache: string): string {
+  if (process.platform === 'darwin') return path.join(cache, 'Library', 'Caches', 'wotlk-mcp')
+  return path.join(cache, 'wotlk-mcp')
+}
+
+function cacheStates(directory: string): {
+  name: string
+  file: string
+  version: string
+  lastCheck: number | null
+  warningMajor?: number
+}[] {
+  return readdirSync(directory)
+    .filter((name) => name.startsWith('state-'))
+    .toSorted()
+    .map((name) => {
+      const state = z
+        .object({
+          file: z.string(),
+          version: z.string(),
+          lastCheck: z.number().nullable(),
+          warningMajor: z.number().optional()
+        })
+        .parse(JSON.parse(readFileSync(path.join(directory, name), 'utf8')))
+      return {
+        name,
+        file: state.file,
+        version: state.version,
+        lastCheck: state.lastCheck,
+        warningMajor: state.warningMajor
+      }
+    })
+}
+
+async function waitUntil(
+  check: () => boolean | Promise<boolean>,
+  message: string,
+  remaining = 500
+): Promise<void> {
+  if (await check()) return
+  if (!remaining) throw new Error(message)
+  await delay(10)
+  await waitUntil(check, message, remaining - 1)
+}
+
 test('acquires the newest compatible published reference and uses optional token', async () => {
-  scenario = 'good'
+  scenario = 'selection'
   requests = []
   const client = await launch({ GITHUB_TOKEN: 'example-token' })
   try {
     expect((await client.listTools()).tools.map((tool) => tool.name)).toContain('get')
-    expect((await call(client)).isError).not.toBe(true)
-    expect(requests).toEqual(['/releases', '/asset'])
+    expect(await marker(client)).toContain('newer')
+    expect(requests).toEqual(['/releases', '/newer'])
     expect(authorization).toBe('Bearer example-token')
   } finally {
     await client.close()
@@ -262,19 +357,7 @@ test('shared cache survives concurrent first downloads and offline restarts', as
     await Promise.all(clients.map((client) => client.close()))
   }
   scenario = 'offline'
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
-  const stateFiles = readdirSync(directory)
-    .filter((name) => name.startsWith('state-'))
-    .toSorted()
-  expect(stateFiles).toHaveLength(2)
-  const current = z
-    .object({ file: z.string(), version: z.string(), lastCheck: z.number() })
-    .parse(JSON.parse(readFileSync(path.join(directory, stateFiles[1]), 'utf8')))
-  expect(current.version).toBe('db-v1.2.0')
-  expect(current.lastCheck).toBeGreaterThan(0)
-  writeFileSync(path.join(directory, current.file), 'corrupt')
+  const directory = cacheDirectory(cache)
   const abandoned = path.join(directory, '99999999-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.br.partial')
   writeFileSync(abandoned, 'partial')
   utimesSync(abandoned, new Date(0), new Date(0))
@@ -292,20 +375,15 @@ test('shared cache survives concurrent first downloads and offline restarts', as
 test('another process pruning old copies preserves a live session snapshot', async () => {
   const cache = mkdtempSync(path.join(dir, 'active-'))
   const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
+  const directory = cacheDirectory(cache)
   scenario = 'good'
   const active = await launch(env)
   try {
     expect((await call(active)).isError).not.toBe(true)
     const names = readdirSync(directory)
     const snapshot = names.find((name) => name.startsWith('session-'))
-    const stateName = names.find((name) => name.startsWith('state-'))
-    if (!snapshot || !stateName) throw new Error('missing active snapshot or state')
-    const state = z
-      .object({ file: z.string(), version: z.string(), lastCheck: z.number() })
-      .parse(JSON.parse(readFileSync(path.join(directory, stateName), 'utf8')))
+    const state = cacheStates(directory).at(-1)
+    if (!snapshot || !state) throw new Error('missing active snapshot or state')
     for (const suffix of [
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
@@ -317,7 +395,7 @@ test('another process pruning old copies preserves a live session snapshot', asy
         JSON.stringify({ ...state, file })
       )
     }
-    utimesSync(path.join(directory, stateName), new Date(0), new Date(0))
+    utimesSync(path.join(directory, state.name), new Date(0), new Date(0))
     utimesSync(path.join(directory, state.file), new Date(0), new Date(0))
     scenario = 'offline'
     const other = await launch(env)
@@ -342,7 +420,7 @@ test.skipIf(process.platform !== 'win32')(
     const initial = await launch(env)
     expect((await call(initial)).isError).not.toBe(true)
     await initial.close()
-    const directory = path.join(cache, 'wotlk-mcp')
+    const directory = cacheDirectory(cache)
     const locked = path.join(
       directory,
       'db-v1.0.0-99999999-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.sqlite'
@@ -387,21 +465,16 @@ test.skipIf(process.platform !== 'win32')(
 test('an interrupted download leaves no usable partial and a later start recovers', async () => {
   const cache = mkdtempSync(path.join(dir, 'interrupted-'))
   const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
+  const directory = cacheDirectory(cache)
   scenario = 'slow'
   const client = await launch(env)
-  async function waitForPartial(remaining: number): Promise<string> {
-    if (existsSync(directory)) {
-      const partial = readdirSync(directory).find((name) => name.endsWith('.br.partial'))
-      if (partial) return partial
-    }
-    if (!remaining) throw new Error('download partial was not created')
-    await delay(20)
-    return waitForPartial(remaining - 1)
-  }
-  const partial = await waitForPartial(250)
+  await waitUntil(
+    () =>
+      existsSync(directory) && readdirSync(directory).some((name) => name.endsWith('.br.partial')),
+    'download partial was not created'
+  )
+  const partial = readdirSync(directory).find((name) => name.endsWith('.br.partial'))
+  if (!partial) throw new Error('download partial disappeared')
   await client.close()
   download.finish()
   expect(readdirSync(directory).some((name) => name.startsWith('state-'))).toBe(false)
@@ -423,7 +496,7 @@ test.each(['bad', 'missing', 'offline', 'broken', 'schema'])(
     const original = data
     if (mode === 'broken') data = Buffer.from('not brotli')
     if (mode === 'schema') {
-      const newer = path.join(dir, 'newer.sqlite')
+      const newer = path.join(dir, 'schema-invalid.sqlite')
       const db = new DatabaseSync(newer)
       db.exec(
         "CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '2.0.0')"
@@ -462,15 +535,10 @@ test('cached higher-major guidance reaches one result without blocking the sessi
   const initial = await launch(env)
   expect((await call(initial)).isError).not.toBe(true)
   await initial.close()
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
-  const state = readdirSync(directory).find((name) => name.startsWith('state-'))
-  if (!state) throw new Error('missing cache state')
-  const old = z
-    .object({ file: z.string(), version: z.string() })
-    .parse(JSON.parse(readFileSync(path.join(directory, state), 'utf8')))
-  writeFileSync(path.join(directory, state), JSON.stringify({ ...old, lastCheck: 0 }))
+  const directory = cacheDirectory(cache)
+  const old = cacheStates(directory).at(-1)
+  if (!old) throw new Error('missing cache state')
+  writeFileSync(path.join(directory, old.name), JSON.stringify({ ...old, lastCheck: 0 }))
   requests = []
   scenario = 'higher'
   metadata.hold = true
@@ -478,40 +546,30 @@ test('cached higher-major guidance reaches one result without blocking the sessi
   try {
     const first = await call(cached)
     expect(first.isError).not.toBe(true)
-    expect(JSON.stringify(first)).not.toContain('note: newer reference data')
-    async function waitForMetadata(remaining: number): Promise<void> {
-      if (requests.includes('/releases')) return
-      if (!remaining) throw new Error('update request did not start')
-      await delay(10)
-      await waitForMetadata(remaining - 1)
-    }
-    await waitForMetadata(200)
+    const results = [JSON.stringify(first)]
+    await waitUntil(() => requests.includes('/releases'), 'update request did not start')
     metadata.finish()
-    async function guidance(remaining: number): Promise<void> {
-      const result = JSON.stringify(await call(cached))
-      if (result.includes('note: newer reference data needs wotlk-mcp@2; update your config'))
-        return
-      if (!remaining) throw new Error('missing update guidance')
-      await delay(10)
-      await guidance(remaining - 1)
-    }
-    await guidance(200)
+    if (!results[0].includes('note: newer reference data'))
+      await waitUntil(async () => {
+        results.push(JSON.stringify(await call(cached)))
+        return (
+          results
+            .at(-1)
+            ?.includes('note: newer reference data needs wotlk-mcp@2; update your config') ?? false
+        )
+      }, 'missing update guidance')
+
     expect(requests).toContain('/releases')
-    expect(JSON.stringify(await call(cached))).not.toContain('note: newer reference data')
-    async function waitForJournal(remaining: number): Promise<void> {
-      const saved = readdirSync(directory).some((name) => {
-        if (!name.startsWith('state-')) return false
-        const entry = z
-          .object({ warningMajor: z.number().optional() })
-          .parse(JSON.parse(readFileSync(path.join(directory, name), 'utf8')))
-        return entry.warningMajor === 2
-      })
-      if (saved) return
-      if (!remaining) throw new Error('update journal was not saved')
-      await delay(10)
-      await waitForJournal(remaining - 1)
-    }
-    await waitForJournal(200)
+    results.push(JSON.stringify(await call(cached)))
+    expect(
+      results.filter((result) =>
+        result.includes('note: newer reference data needs wotlk-mcp@2; update your config')
+      )
+    ).toHaveLength(1)
+    await waitUntil(
+      () => cacheStates(directory).some((entry) => entry.warningMajor === 2),
+      'update journal was not saved'
+    )
   } finally {
     metadata.hold = false
     metadata.finish()
@@ -537,75 +595,62 @@ test('a published rollback is activated at the next process start', async () => 
   const db = new DatabaseSync(replacement)
   db.exec("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', 'rollback')")
   db.close()
+  data = olderData
   scenario = 'good'
   const first = await launch(env)
-  expect((await call(first)).isError).not.toBe(true)
+  expect(await marker(first)).toContain('older')
   await first.close()
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
-  const stateName = readdirSync(directory).find((name) => name.startsWith('state-'))
-  if (!stateName) throw new Error('missing initial cache state')
-  const state = z
-    .object({ file: z.string(), version: z.string() })
-    .parse(JSON.parse(readFileSync(path.join(directory, stateName), 'utf8')))
-  writeFileSync(path.join(directory, stateName), JSON.stringify({ ...state, lastCheck: 0 }))
+  const directory = cacheDirectory(cache)
+  const state = cacheStates(directory).at(-1)
+  if (!state) throw new Error('missing initial cache state')
+  writeFileSync(path.join(directory, state.name), JSON.stringify({ ...state, lastCheck: 0 }))
   data = brotliCompressSync(readFileSync(replacement))
   scenario = 'rollback'
+  requests = []
   const active = await launch(env)
-  async function waitForPromotion(remaining: number): Promise<void> {
-    const names = readdirSync(directory)
-      .filter((name) => name.startsWith('state-'))
-      .toSorted()
-    const latest = names.at(-1)
-    if (latest) {
-      const entry = z
-        .object({ version: z.string() })
-        .parse(JSON.parse(readFileSync(path.join(directory, latest), 'utf8')))
-      if (entry.version === 'db-v1.1.0') return
-    }
-    if (!remaining) throw new Error('rollback was not promoted')
-    await delay(10)
-    await waitForPromotion(remaining - 1)
-  }
   try {
-    expect(await marker(active)).not.toContain('rollback')
-    await waitForPromotion(500)
-    expect(await marker(active)).not.toContain('rollback')
+    expect(await marker(active)).toContain('older')
+    await waitUntil(
+      () => cacheStates(directory).at(-1)?.version === 'db-v1.1.0',
+      'rollback was not promoted'
+    )
+    expect(await marker(active)).toContain('older')
+    expect(requests).toEqual(['/releases', '/asset'])
     const next = await launch(env)
     try {
       expect(await marker(next)).toContain('rollback')
     } finally {
       await next.close()
     }
-    const currentName = readdirSync(directory)
-      .filter((name) => name.startsWith('state-'))
-      .toSorted()
-      .at(-1)
-    if (!currentName) throw new Error('missing promoted cache state')
-    const current = z
-      .object({ file: z.string(), version: z.string() })
-      .parse(JSON.parse(readFileSync(path.join(directory, currentName), 'utf8')))
+    const current = cacheStates(directory).at(-1)
+    if (!current) throw new Error('missing promoted cache state')
     const clock = 2_000_000_000_000
     scenario = 'offline'
+    requests = []
     const checker = await launch({ ...env, TEST_NOW: String(clock) })
     expect(await marker(checker)).toContain('rollback')
-    async function waitForFailure(remaining: number): Promise<void> {
-      if (readdirSync(directory).some((name) => name.startsWith(`state-${clock + 1}-`))) return
-      if (!remaining) throw new Error('failed check was not saved')
-      await delay(10)
-      await waitForFailure(remaining - 1)
-    }
-    await waitForFailure(500)
+    await waitUntil(
+      () =>
+        requests.includes('/releases') &&
+        cacheStates(directory).some((entry) => entry.lastCheck === clock),
+      'failed check was not saved'
+    )
+    expect(requests).toEqual(['/releases'])
     await checker.close()
     const pruner = await launch({ ...env, TEST_NOW: String(clock + 1) })
     expect(await marker(pruner)).toContain('rollback')
     await pruner.close()
+    requests = []
     writeFileSync(path.join(directory, current.file), 'corrupt')
     const fallback = await launch({ ...env, TEST_NOW: String(clock + 2) })
     try {
       expect((await call(fallback)).isError).not.toBe(true)
-      expect(await marker(fallback)).not.toContain('rollback')
+      expect(await marker(fallback)).toContain('older')
+      await waitUntil(
+        () => requests.includes('/releases'),
+        'older fallback check was not attempted'
+      )
+      expect(requests).toEqual(['/releases'])
     } finally {
       await fallback.close()
     }
@@ -624,20 +669,7 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   const initial = await launch({ ...env, TEST_NOW: String(start) })
   expect((await call(initial)).isError).not.toBe(true)
   await initial.close()
-  let root = cache
-  if (process.platform === 'darwin') root = path.join(cache, 'Library', 'Caches')
-  const directory = path.join(root, 'wotlk-mcp')
-  async function waitForCheck(timestamp: number, remaining: number): Promise<void> {
-    if (
-      requests.includes('/releases') &&
-      readdirSync(directory).some((name) => name.startsWith(`state-${timestamp + 1}-`))
-    )
-      return
-    if (!remaining)
-      throw new Error(`update check did not finish: ${JSON.stringify(readdirSync(directory))}`)
-    await delay(10)
-    await waitForCheck(timestamp, remaining - 1)
-  }
+  const directory = cacheDirectory(cache)
   scenario = '403'
   requests = []
   const early = await launch({ ...env, TEST_NOW: String(start + day - 1) })
@@ -650,7 +682,12 @@ test('failed checks persist the full 24-hour attempt window', async () => {
     launch({ ...env, TEST_NOW: String(start + day) })
   ])
   expect((await Promise.all(boundaries.map(call))).every((result) => !result.isError)).toBe(true)
-  await waitForCheck(start + day, 500)
+  await waitUntil(
+    () =>
+      requests.includes('/releases') &&
+      cacheStates(directory).some((entry) => entry.lastCheck === start + day),
+    'update check did not finish'
+  )
   expect(requests).toEqual(['/releases'])
   await Promise.all(boundaries.map((client) => client.close()))
   requests = []
@@ -662,7 +699,12 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   await throttled.close()
   const retry = await launch({ ...env, TEST_NOW: String(start + 2 * day) })
   expect((await call(retry)).isError).not.toBe(true)
-  await waitForCheck(start + 2 * day, 500)
+  await waitUntil(
+    () =>
+      requests.includes('/releases') &&
+      cacheStates(directory).some((entry) => entry.lastCheck === start + 2 * day),
+    'retry check did not finish'
+  )
   expect(requests).toEqual(['/releases'])
   await retry.close()
 }, 20000)

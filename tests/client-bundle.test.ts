@@ -10,7 +10,7 @@ test('client bundle verification rejects altered bytes', () => {
   try {
     const bundle = path.join(dir, 'client-inputs.tar.gz')
     writeFileSync(bundle, 'not the pinned release asset')
-    const result = spawnSync('python3', ['scripts/verify-client-inputs.py', bundle], {
+    const result = spawnSync('python3', ['build/verify-client-inputs.py', bundle], {
       encoding: 'utf8'
     })
     expect(result.status).toBe(1)

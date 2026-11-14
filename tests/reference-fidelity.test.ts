@@ -1,4 +1,3 @@
-import { execFileSync, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -7,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { expect, test } from 'vite-plus/test'
 
-const command = 'scripts/reference-fidelity.ts'
+import { writeFidelity } from '../build/fidelity.ts'
 const tables =
   `item_template quest_template quest_template_addon trainer_spell npc_trainer creature_template_spell npc_spellclick_spells playercreateinfo_cast_spell playercreateinfo_spell_custom skill_discovery_template skill_extra_item_template skill_perfect_item_template spell_area spell_bonus_data spell_cone spell_cooldown_overrides spell_custom_attr spell_jump_distance spell_linked_spell spell_loot_template spell_mixology spell_pet_auras spell_proc spell_ranks spell_required spell_target_position spell_threat spell_group chrraces_dbc creaturespelldata_dbc glyphproperties_dbc itemset_dbc liquidtype_dbc overridespelldata_dbc skilllineability_dbc spelldifficulty_dbc spellshapeshiftform_dbc talent_dbc spell_dbc`.split(
     ' '
@@ -20,7 +19,7 @@ test('reports cross-source discrepancies with bounded evidence without changing 
   try {
     const db = new DatabaseSync(file)
     const columns = new Map<string, string[]>()
-    for (const line of readFileSync('world/schema-columns.tsv', 'utf8').split('\n')) {
+    for (const line of readFileSync('data/world/schema-columns.tsv', 'utf8').split('\n')) {
       const [table, , column] = line.split('\t')
       if (!tables.includes(table)) continue
       const existing = columns.get(table) ?? []
@@ -51,7 +50,7 @@ test('reports cross-source discrepancies with bounded evidence without changing 
     }
     db.close()
     const before = createHash('sha256').update(readFileSync(file)).digest('hex')
-    execFileSync(process.execPath, [command, file, report])
+    writeFidelity(file, report)
     const result = JSON.parse(readFileSync(report, 'utf8'))
     expect(result.commonItems).toBe(25)
     expect(result.itemMismatches.class.count).toBe(25)
@@ -68,7 +67,9 @@ test('reports cross-source discrepancies with bounded evidence without changing 
       examples: [{ itemset: 4, slot: 17, item: 200 }]
     })
     expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(before)
-    expect(spawnSync(process.execPath, [command, file, file]).status).not.toBe(0)
+    expect(() => writeFidelity(file, file)).toThrow(
+      'Report path must not be the reference database'
+    )
     expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(before)
   } finally {
     rmSync(dir, { recursive: true, force: true })

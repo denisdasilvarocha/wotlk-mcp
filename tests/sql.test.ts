@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,6 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-sql-'))
@@ -18,7 +18,7 @@ const client = new Client({ name: 'sql-test', version: '1' })
 beforeAll(async () => {
   if (process.env.WOTLK_TEST_NODE && process.version !== process.env.WOTLK_TEST_NODE)
     throw new Error(`Expected Node ${process.env.WOTLK_TEST_NODE}, found ${process.version}`)
-  execFileSync('vpx', ['scripts/init-reference.ts', database], { stdio: 'pipe' })
+  initReference(database)
   const db = new DatabaseSync(database)
   db.exec("CREATE TABLE world_sql (value TEXT); INSERT INTO world_sql VALUES ('original')")
   db.close()

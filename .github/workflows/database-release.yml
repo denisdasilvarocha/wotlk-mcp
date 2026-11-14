@@ -11,7 +11,7 @@ on:
     branches: [main]
     paths:
       - 'data/**'
-      - 'world/**'
+      - 'build/**'
       - 'scripts/**'
       - 'src/**'
       - 'tests/fixtures/acceptance.json'
@@ -45,16 +45,12 @@ jobs:
         env:
           DATABASE_RELEASE_AUTHORIZATION: ${{ secrets.DATABASE_RELEASE_AUTHORIZATION }}
         run: test "$DATABASE_RELEASE_AUTHORIZATION" = owner-authorized
-      - name: Enable ARM64 execution
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
-        with:
-          platforms: arm64
       - name: Build complete candidate and verify previous release
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          vp run build:complete-reference "$RUNNER_TEMP/candidate"
+          vp run build "$RUNNER_TEMP/candidate"
           node scripts/database-release.mjs previous "$RUNNER_TEMP/previous.sqlite" "$RUNNER_TEMP/versions.json"
       - name: Prepare and validate final candidate
         env:
@@ -67,10 +63,8 @@ jobs:
           if test -f "$RUNNER_TEMP/previous.sqlite"; then args+=("$RUNNER_TEMP/previous.sqlite"); fi
           if test "$ALLOW_SHRINK" = true; then args+=(--allow-shrink); fi
           vpx scripts/prepare-reference.ts "${args[@]}"
-      - name: Build actual package
-        run: |
-          vp run build
-          vp pm pack --pack-destination "$RUNNER_TEMP/candidate"
+      - name: Pack npm tarball
+        run: vp pm pack --pack-destination "$RUNNER_TEMP/candidate"
       - name: Create draft and verify uploaded assets
         id: create
         env:

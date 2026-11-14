@@ -1,4 +1,3 @@
-import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,6 +7,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, expect, test } from 'vite-plus/test'
 
+import { buildLootLinks } from '../build/loot-links.ts'
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-loot-'))
@@ -15,7 +16,7 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
 function fixture(name: string): string {
   const file = path.join(dir, `${name}.sqlite`)
-  execFileSync('vpx', ['scripts/init-reference.ts', file])
+  initReference(file)
   const db = new DatabaseSync(file)
   db.exec(`CREATE TABLE world_creature_template (entry INTEGER, lootid INTEGER, skinloot INTEGER, pickpocketloot INTEGER);
     CREATE TABLE world_gameobject_template (entry INTEGER, type INTEGER, Data1 INTEGER);
@@ -46,9 +47,6 @@ function fixture(name: string): string {
   db.close()
   return file
 }
-function run(file: string): ReturnType<typeof spawnSync> {
-  return spawnSync('vpx', ['scripts/build-loot.ts', file], { encoding: 'utf8' })
-}
 function text(result: Awaited<ReturnType<Client['callTool']>>): string {
   const { content } = result
   if (!Array.isArray(content) || content[0]?.type !== 'text') throw new Error('Expected text')
@@ -57,8 +55,7 @@ function text(result: Awaited<ReturnType<Client['callTool']>>): string {
 
 test('loot paths survive artifact and packed related/sql surfaces', async () => {
   const file = fixture('valid')
-  const result = run(file)
-  expect(result.status).toBe(0)
+  buildLootLinks(file)
   const db = new DatabaseSync(file, { readOnly: true })
   const links = db
     .prepare(
@@ -123,10 +120,12 @@ test('broken and cyclic references fail atomically with source diagnostics', () 
       `INSERT INTO world_reference_loot_template VALUES (31,9,${ref},100,0,1,0,1,1,'invalid')`
     )
     db.close()
-    const result = run(file)
-    expect(result.status).not.toBe(0)
-    expect(String(result.stderr).toLowerCase()).toContain(message)
-    expect(result.stderr).toContain('world_reference_loot_template')
+    expect(() => buildLootLinks(file)).toThrow(
+      new RegExp(
+        `world_reference_loot_template.*${message}|${message}.*world_reference_loot_template`,
+        'i'
+      )
+    )
     const check = new DatabaseSync(file, { readOnly: true })
     expect(check.prepare("SELECT count(*) AS n FROM link WHERE relation='drops'").get()?.n).toBe(0)
     check.close()

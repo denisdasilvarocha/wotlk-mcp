@@ -54,27 +54,7 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
         .prepare(`SELECT * FROM "${table}" WHERE rowid = ?`)
         .get(Number(record.source_row))
       if (!row) throw new Error(`missing source row for ${id}; rebuild the reference database`)
-      if (id.startsWith('file:')) {
-        const path = id.slice(colon + 1)
-        const total = Number(
-          db.prepare('SELECT count(*) AS total FROM ui_line WHERE path = ?').get(path)?.total
-        )
-        const rows = db
-          .prepare(
-            'SELECT line, text FROM ui_line WHERE path = ? AND line BETWEEN ? AND ? ORDER BY line'
-          )
-          .all(path, from, to)
-        const lines = [id]
-        if (row.locale) lines.push(`locale: ${String(row.locale)}`)
-        if (row.provenance) lines.push(`provenance: ${String(row.provenance)}`)
-        lines.push(...rows.map((line) => `${String(line.line)}: ${String(line.text)}`))
-        const start = Number(rows[0]?.line ?? 0)
-        const end = Number(rows.at(-1)?.line ?? 0)
-        let continuation = 'end'
-        if (end && end < total) continuation = `next from: ${end + 1}`
-        lines.push(`${start}–${end} of ${total}; ${continuation}`)
-        return lines.join('\n')
-      }
+      if (id.startsWith('file:')) return renderFileWindow(db, id, row, from, to)
       const fields = mappings.all(table)
       const lines = [id]
       for (const [key, value] of Object.entries(row)) {
@@ -93,27 +73,12 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
             (field.condition_field === null ||
               row[String(field.condition_field)] === field.condition_value)
         )
-        if (mapping && typeof value === 'number' && Number.isSafeInteger(value) && value !== -1) {
-          const entries = values.all(String(mapping.enum_name))
-          if (mapping.flags) {
-            let remaining = BigInt(value)
-            const names: string[] = []
-            if (remaining > 0n) {
-              for (const entry of entries) {
-                const bit = BigInt(Number(entry.value))
-                if (bit > 0n && (bit & (bit - 1n)) === 0n && (remaining & bit) === bit) {
-                  names.push(String(entry.name))
-                  remaining &= ~bit
-                }
-              }
-              if (remaining && names.length) names.push(remaining.toString())
-              if (names.length) rendered += ` (${names.join(', ')})`
-            }
-          } else {
-            const entry = entries.find((candidate) => candidate.value === value)
-            if (entry) rendered += ` (${String(entry.name)})`
-          }
-        }
+        if (mapping && typeof value === 'number' && Number.isSafeInteger(value) && value !== -1)
+          rendered = renderEnumValue(
+            value,
+            values.all(String(mapping.enum_name)),
+            Boolean(mapping.flags)
+          )
         lines.push(`${key}: ${rendered.replace(/\r?\n/g, '\n  ')}`)
       }
       if (
@@ -138,4 +103,59 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
       return lines.join('\n')
     })
     .join('\n\n')
+}
+
+function renderFileWindow(
+  db: DatabaseSync,
+  id: string,
+  row: Record<string, unknown>,
+  from: number,
+  to: number
+): string {
+  const path = id.slice(id.indexOf(':') + 1)
+  const total = Number(
+    db.prepare('SELECT count(*) AS total FROM ui_line WHERE path = ?').get(path)?.total
+  )
+  const rows = db
+    .prepare('SELECT line, text FROM ui_line WHERE path = ? AND line BETWEEN ? AND ? ORDER BY line')
+    .all(path, from, to)
+  const lines = [id]
+  // oxlint-disable-next-line typescript/no-base-to-string -- Preserve SQLite metadata rendering through the shared unknown row shape.
+  if (row.locale) lines.push(`locale: ${String(row.locale)}`)
+  // oxlint-disable-next-line typescript/no-base-to-string -- Preserve SQLite metadata rendering through the shared unknown row shape.
+  if (row.provenance) lines.push(`provenance: ${String(row.provenance)}`)
+  lines.push(...rows.map((line) => `${String(line.line)}: ${String(line.text)}`))
+  const start = Number(rows[0]?.line ?? 0)
+  const end = Number(rows.at(-1)?.line ?? 0)
+  let continuation = 'end'
+  if (end && end < total) continuation = `next from: ${end + 1}`
+  lines.push(`${start}–${end} of ${total}; ${continuation}`)
+  return lines.join('\n')
+}
+
+function renderEnumValue(
+  value: number,
+  entries: Record<string, unknown>[],
+  flags: boolean
+): string {
+  let rendered = String(value)
+  if (flags) {
+    let remaining = BigInt(value)
+    const names: string[] = []
+    if (remaining > 0n) {
+      for (const entry of entries) {
+        const bit = BigInt(Number(entry.value))
+        if (bit > 0n && (bit & (bit - 1n)) === 0n && (remaining & bit) === bit) {
+          names.push(String(entry.name))
+          remaining &= ~bit
+        }
+      }
+      if (remaining && names.length) names.push(remaining.toString())
+      if (names.length) rendered += ` (${names.join(', ')})`
+    }
+  } else {
+    const entry = entries.find((candidate) => candidate.value === value)
+    if (entry) rendered += ` (${String(entry.name)})`
+  }
+  return rendered
 }

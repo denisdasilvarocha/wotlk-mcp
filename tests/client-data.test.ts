@@ -9,7 +9,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
-import { importClientData } from '../scripts/import-client-data.js'
+import { importClientData } from '../build/client.js'
+import { initReference } from '../build/offsets.js'
 import { unpackPackage } from './package.js'
 
 function digest(data: Buffer | string): string {
@@ -21,7 +22,7 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
   const client = new Client({ name: 'test', version: '1' })
   try {
     const db = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', db])
+    initReference(db)
     mkdirSync(path.join(dir, 'DBFilesClient'))
     mkdirSync(path.join(dir, 'fixture', 'definitions'), { recursive: true })
     const files: { path: string; sha256: string }[] = []
@@ -91,13 +92,16 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       files
     })
     writeFileSync(path.join(dir, 'manifest.json'), manifest)
+    const definitions = {
+      directory: path.join(dir, 'fixture'),
+      archive,
+      revision: 'fixture',
+      sha256: digest(readFileSync(archive))
+    }
     expect(() =>
-      execFileSync('vpx', ['scripts/import-client-data.ts', db, dir, digest(manifest), archive], {
-        stdio: 'pipe'
-      })
+      importClientData(db, dir, digest(manifest), { ...definitions, sha256: '0'.repeat(64) })
     ).toThrow(/WoWDBDefs archive hash mismatch/)
-    const definitionsHash = digest(readFileSync(archive))
-    importClientData(db, dir, digest(manifest), archive, definitionsHash)
+    importClientData(db, dir, digest(manifest), definitions)
     const result = new DatabaseSync(db, { readOnly: true })
     expect(result.prepare('SELECT Effect_1, Effect_2, Effect_3 FROM dbc_Spell').get()).toEqual({
       Effect_1: 10,
@@ -105,6 +109,14 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       Effect_3: 30
     })
     expect(result.prepare('SELECT ID, ClassID FROM dbc_Item').get()).toEqual({ ID: 42, ClassID: 2 })
+    expect(result.prepare('SELECT * FROM dbc_foreign_key').all()).toEqual([
+      {
+        source_table: 'dbc_Talent',
+        field: 'TabID',
+        target_table: 'dbc_TalentTab',
+        target_field: 'ID'
+      }
+    ])
     expect(result.prepare("SELECT count(*) AS n FROM record WHERE kind = 'item'").get()?.n).toBe(0)
     expect(result.prepare("SELECT name, hint FROM record WHERE id = 'talent:5'").get()).toEqual({
       name: 'Fireball',
@@ -129,27 +141,54 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
     const originalItem = readFileSync(itemFile)
     writeFileSync(path.join(dir, 'DBFilesClient', 'Item.dbc'), Buffer.from('invalid'))
     const other = path.join(dir, 'other.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', other])
-    expect(() => importClientData(other, dir, digest(manifest), archive, definitionsHash)).toThrow(
+    initReference(other)
+    const seed = new DatabaseSync(other)
+    seed.exec(
+      "CREATE TABLE dbc_fixture (ID INTEGER); INSERT INTO dbc_fixture VALUES (9); INSERT INTO record VALUES ('fixture:9', 'fixture', 'Marker', 'dbc_fixture', 9, 'marker', ''); INSERT INTO record_fts VALUES ('fixture:9', 'Marker', 'marker')"
+    )
+    seed.close()
+    function snapshot(): unknown {
+      const state = new DatabaseSync(other, { readOnly: true })
+      try {
+        return {
+          tables: state
+            .prepare(
+              "SELECT name FROM sqlite_schema WHERE type = 'table' AND name LIKE 'dbc_%' ORDER BY name"
+            )
+            .all(),
+          fixture: state.prepare('SELECT * FROM dbc_fixture').all(),
+          records: state.prepare('SELECT * FROM record ORDER BY id').all(),
+          fts: state.prepare('SELECT * FROM record_fts ORDER BY id').all(),
+          pins: state.prepare("SELECT * FROM meta WHERE key LIKE '%pin%' ORDER BY key").all()
+        }
+      } finally {
+        state.close()
+      }
+    }
+    const before = snapshot()
+    expect(() => importClientData(other, dir, digest(manifest), definitions)).toThrow(
       /hash mismatch/
     )
+    expect(snapshot()).toEqual(before)
     const badSchema = Buffer.from(originalItem)
     badSchema.writeUInt32LE(3, 8)
     writeFileSync(itemFile, badSchema)
     const schemaManifest = manifest.replace(digest(originalItem), digest(badSchema))
     writeFileSync(path.join(dir, 'manifest.json'), schemaManifest)
-    expect(() =>
-      importClientData(other, dir, digest(schemaManifest), archive, definitionsHash)
-    ).toThrow(/schema mismatch/)
+    expect(() => importClientData(other, dir, digest(schemaManifest), definitions)).toThrow(
+      /schema mismatch/
+    )
+    expect(snapshot()).toEqual(before)
     writeFileSync(itemFile, originalItem)
     const missingManifest = manifest.replace(
       /,?\{"path":"DBFilesClient\/ItemSet\.dbc","sha256":"[a-f0-9]+"\}/,
       ''
     )
     writeFileSync(path.join(dir, 'manifest.json'), missingManifest)
-    expect(() =>
-      importClientData(other, dir, digest(missingManifest), archive, definitionsHash)
-    ).toThrow(/Missing required Client Data/)
+    expect(() => importClientData(other, dir, digest(missingManifest), definitions)).toThrow(
+      /Missing required Client Data/
+    )
+    expect(snapshot()).toEqual(before)
   } finally {
     await client.close()
     rmSync(dir, { recursive: true, force: true })

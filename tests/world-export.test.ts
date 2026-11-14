@@ -8,7 +8,21 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
+
+function runner(dir: string): string {
+  const file = path.join(dir, 'run-world.ts')
+  writeFileSync(
+    file,
+    `import { importWorld } from ${JSON.stringify(path.resolve('build/world.ts'))}
+await importWorld(process.argv[2], { directory: ${JSON.stringify(dir)}, archive: 'fixture', revision: '${'a'.repeat(40)}', sha256: '${'b'.repeat(64)}' }, 'acore/importer@sha256:${'c'.repeat(64)}', process.argv[3])
+`
+  )
+  mkdirSync(path.join(dir, 'data/sql/custom'), { recursive: true })
+  mkdirSync(path.join(dir, 'modules'), { recursive: true })
+  return file
+}
 
 test('exported artifact preserves world rows and indexes only curated templates', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-export-'))
@@ -16,12 +30,13 @@ test('exported artifact preserves world rows and indexes only curated templates'
     const bin = path.join(dir, 'bin')
     const rows = path.join(dir, 'rows')
     const database = path.join(dir, 'reference.sqlite')
-    const world = path.join(dir, 'world')
-    const exporter = path.resolve('scripts/export-world.ts')
+    const world = path.join(dir, 'data/world')
     const sqlNull: null = JSON.parse('null')
     mkdirSync(bin)
     mkdirSync(rows)
-    cpSync('world', world, { recursive: true })
+    mkdirSync(path.join(dir, 'data'))
+    cpSync('data/world', world, { recursive: true })
+    const exporter = runner(dir)
     const schema = path.join(world, 'schema-columns.tsv')
     writeFileSync(
       schema,
@@ -119,6 +134,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
     writeFileSync(
       path.join(bin, 'docker'),
       `#!/bin/sh
+case "$1" in rm|network) exit 0 ;; esac
 for query do :; done
 case "$query" in
   *'SELECT VERSION()'*) printf '%s\\n' '8.4.3	ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION	+00:00	utf8mb4	utf8mb4_general_ci'; exit ;;
@@ -134,10 +150,8 @@ esac
 `,
       { mode: 0o755 }
     )
-    expect(
-      spawnSync('vpx', ['scripts/init-reference.ts', database], { encoding: 'utf8' }).status
-    ).toBe(0)
-    const result = spawnSync('vpx', [exporter, 'fixture', database], {
+    initReference(database)
+    const result = spawnSync('vpx', [exporter, database, path.join(dir, 'work')], {
       cwd: dir,
       encoding: 'utf8',
       env: {
@@ -150,6 +164,20 @@ esac
     expect(result.status).toBe(0)
     const db = new DatabaseSync(database, { readOnly: true })
     try {
+      expect(
+        db.prepare("SELECT pin, sha256, attribution FROM source WHERE name = 'world'").get()
+      ).toMatchObject({
+        pin: 'a'.repeat(40),
+        sha256: 'b'.repeat(64),
+        attribution: expect.stringContaining(
+          `https://github.com/azerothcore/azerothcore-wotlk/tree/${'a'.repeat(40)}`
+        )
+      })
+      expect(db.prepare("SELECT value FROM meta WHERE key = 'world.importer_image'").get()).toEqual(
+        {
+          value: `acore/importer@sha256:${'c'.repeat(64)}`
+        }
+      )
       const indexed = db
         .prepare(
           "SELECT id, name, source_table, source_row, search_text, hint FROM record WHERE kind IN ('creature', 'item', 'quest', 'gameobject') ORDER BY id"
@@ -295,10 +323,8 @@ esac
       await client.close()
     }
     const failedDatabase = path.join(dir, 'failed.sqlite')
-    expect(
-      spawnSync('vpx', ['scripts/init-reference.ts', failedDatabase], { encoding: 'utf8' }).status
-    ).toBe(0)
-    const failed = spawnSync('vpx', [exporter, 'fixture', failedDatabase], {
+    initReference(failedDatabase)
+    const failed = spawnSync('vpx', [exporter, failedDatabase, path.join(dir, 'failed-work')], {
       cwd: dir,
       encoding: 'utf8',
       env: {
@@ -325,7 +351,7 @@ esac
     const edgeFields = readFileSync(edgeFile, 'utf8').trimEnd().split('\t')
     edgeFields[4] = 'V2D30'
     writeFileSync(edgeFile, `${edgeFields.join('\t')}\n`)
-    const loss = spawnSync('vpx', [exporter, 'fixture', failedDatabase], {
+    const loss = spawnSync('vpx', [exporter, failedDatabase, path.join(dir, 'loss-work')], {
       cwd: dir,
       encoding: 'utf8',
       env: {
@@ -365,12 +391,12 @@ test('exporter reports a failed MySQL command without changing the reference', (
         mode: 0o755
       }
     )
-    const built = spawnSync('vpx', ['scripts/init-reference.ts', database], { encoding: 'utf8' })
-    expect(built.status).toBe(0)
+    initReference(database)
+    const exporter = runner(dir)
     const before = new DatabaseSync(database)
     const count = before.prepare('SELECT count(*) AS n FROM record').get()
     before.close()
-    const result = spawnSync('vpx', ['scripts/export-world.ts', 'fixture', database], {
+    const result = spawnSync('vpx', [exporter, database, path.join(dir, 'work')], {
       encoding: 'utf8',
       env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` }
     })

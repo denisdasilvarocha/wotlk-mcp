@@ -1,4 +1,3 @@
-import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,14 +7,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
-import { importSpellEnums } from '../scripts/import-spell-enums.js'
+import { initReference } from '../build/offsets.ts'
+import { importSpellEnums } from '../build/spell-enums.ts'
 import { unpackPackage } from './package.js'
 
 test('spell mappings validate fields and materialize named references without changing raw data', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'spell-enums-'))
   try {
     const database = path.join(dir, 'reference.sqlite')
-    execFileSync('vpx', ['scripts/init-reference.ts', database])
+    initReference(database)
     const db = new DatabaseSync(database)
     const columns = [
       'Attributes',
@@ -81,13 +81,7 @@ test('spell mappings validate fields and materialize named references without ch
           .join('\n')
       )
     }
-    const archive = path.join(dir, 'source.tar.gz')
-    execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    const rejected = spawnSync('vpx', ['scripts/import-spell-enums.ts', database, archive], {
-      encoding: 'utf8'
-    })
-    expect(rejected.stderr).toContain('AzerothCore archive hash mismatch')
-    importSpellEnums(database, archive)
+    importSpellEnums(database, path.join(dir, root))
     const output = new DatabaseSync(database)
     expect(
       output
@@ -173,10 +167,20 @@ test('spell mappings validate fields and materialize named references without ch
     }
     const invalid = new DatabaseSync(database)
     invalid.exec('ALTER TABLE dbc_Spell DROP COLUMN Effect_3')
+    const values = invalid.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()
+    const fields = invalid.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
     invalid.close()
-    expect(() => importSpellEnums(database, archive)).toThrow(
+    expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
       'Missing mapped column dbc_Spell.Effect_3'
     )
+    const unchanged = new DatabaseSync(database, { readOnly: true })
+    expect(unchanged.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()).toEqual(
+      values
+    )
+    expect(
+      unchanged.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
+    ).toEqual(fields)
+    unchanged.close()
     const restored = new DatabaseSync(database)
     restored.exec('ALTER TABLE dbc_Spell ADD COLUMN Effect_3 INTEGER')
     restored.close()
@@ -185,8 +189,17 @@ test('spell mappings validate fields and materialize named references without ch
       shared,
       readFileSync(shared, 'utf8').replace('enum SpellEffects', 'enum RemovedSpellEffects')
     )
-    execFileSync('tar', ['-czf', archive, '-C', dir, root])
-    expect(() => importSpellEnums(database, archive)).toThrow('Missing pinned enum SpellEffects')
+    expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
+      'Missing pinned enum SpellEffects'
+    )
+    const afterMissingEnum = new DatabaseSync(database, { readOnly: true })
+    expect(
+      afterMissingEnum.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()
+    ).toEqual(values)
+    expect(
+      afterMissingEnum.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
+    ).toEqual(fields)
+    afterMissingEnum.close()
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,6 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
+import { initReference } from '../build/offsets.ts'
 import { unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-test-'))
@@ -16,7 +16,7 @@ const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'test', version: '1' })
 
 beforeAll(async () => {
-  execFileSync('vpx', ['scripts/init-reference.ts', database], { stdio: 'pipe' })
+  initReference(database)
   unpackPackage(directory)
   const db = new DatabaseSync(database)
   db.exec(`CREATE TABLE world_example (name TEXT, description TEXT, empty TEXT, zero INTEGER);

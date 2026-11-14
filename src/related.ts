@@ -1,48 +1,15 @@
 import type { DatabaseSync } from 'node:sqlite'
 
-import * as z from 'zod'
+import { relations } from './schema.js'
 
-import { kinds, relations } from './schema.js'
-
-const names = relations.flat()
-const idPattern = `^(${kinds.join('|')}):.+$`
-const input = z.strictObject({
-  id: z.string().regex(new RegExp(idPattern)),
-  rel: z
-    .string()
-    .refine((value) => names.includes(value))
-    .optional(),
-  limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().nonnegative().default(0)
-})
-
-export const relatedTool = {
-  name: 'related',
-  description: 'Navigate one-hop Links in either direction. Results are compact and paginated.',
-  inputSchema: {
-    type: 'object' as const,
-    properties: {
-      id: { type: 'string', pattern: idPattern },
-      rel: { type: 'string', enum: names },
-      limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-      offset: { type: 'integer', minimum: 0, default: 0 }
-    },
-    required: ['id'],
-    additionalProperties: false
-  },
-  annotations: { readOnlyHint: true, openWorldHint: false }
+interface RelatedInput {
+  id: string
+  rel?: string
+  limit: number
+  offset: number
 }
 
-export function parseRelated(args: unknown): z.infer<typeof input> {
-  const result = input.safeParse(args)
-  if (!result.success)
-    throw new Error(
-      `related requires a valid ID, relation, limit 1–100 and nonnegative integer offset; valid kinds: ${kinds.join(', ')}; valid relations: ${names.join(', ')}`
-    )
-  return result.data
-}
-
-export function getRelated(db: DatabaseSync, args: z.infer<typeof input>): string {
+export function getRelated(db: DatabaseSync, args: RelatedInput): string {
   const inverse = relations
     .map(([forward, reverse]) => `WHEN '${forward}' THEN '${reverse}'`)
     .join(' ')
