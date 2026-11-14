@@ -45,6 +45,12 @@ vp run import:codex -- reference.sqlite /path/to/milkyway-codex
 
 The importer verifies each directly imported TypeScript data file against `data/codex-pins.json` before executing it with Node's type stripping; it does not build the upstream application or import its DBC data. The optional third argument selects an alternate pins manifest for isolated fixtures. The source manifest records the revision and a combined hash (sorted in importer file order, each path followed by a NUL and its file bytes). The Codex has no declared licence; the owner accepts the redistribution risk, which is not evidence of permission. Codex `memoryAddress` values are unverified source claims and are never used as native linking evidence.
 
+After the Codex import, `vp run import:native -- reference.sqlite /path/to/client-inputs <manifest-sha256> [overrides.json]` imports the fingerprint-derived registrations. Supply the independently trusted SHA-256 of `manifest.json`; the command checks its native dump hash and executable fingerprint. It retains raw glue/game registrations, table and row identity, and call sites. `get` shows associated native facts; `implemented by` links are created only for equal curated VAs, never from Codex `memoryAddress`.
+
+Every native method table must match exactly one Codex widget's own method names. The optional decisions JSON contains `overrides` and `missing_widgets` maps keyed by table VA. Each entry supplies `widget`, `methods_sha256` (SHA-256 of the JSON array of distinct method names in sorted order), and an independent-evidence `reason`. Overrides identify a widget from evidence, not similarity. For inherited methods, association requires an explicit Codex inheritance path and exactly one declaring ancestor; native facts and Link notes retain the registering widget, so an override callback is not presented as a universal ancestor implementation. Ambiguous methods remain raw. The owner-approved `missing_widgets` allowlist is limited to independently identified widgets absent from Codex and preserves their rows without association or Links. Missing, ambiguous, stale and unused decisions fail the transaction. Decisions in `data/native-widget-decisions.json` refer to executable SHA-256 `aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8`.
+
+The documented binary evidence connects the iterator's method-table callback to its initializer, which saves the Lua registration token. A virtual method returns that exact token, while the slot 20 bytes later in the same class vtable returns the named type string. The common vtable identifies the class; merely finding nearby strings or similar method names would not establish this association. The shared base callback is called at `0x0049CA98` before Region's own registration and uses the exact Codex ParentedObject and UIObject inherited-method union.
+
 - Build the executable:
 
 ```bash
@@ -87,6 +93,8 @@ SQLite REAL cannot retain the sign of negative zero. The exporter rejects a sour
 
 Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
+After importing both World Data and Client Data, run `vp run build:world-links -- reference.sqlite` to derive quest, reward, vendor, default-trainer and item-spell Links from their stored keys. Only existing Records become endpoints; original World Data rows remain available through SQL. Notes identify reward and spell slots, vendor details and trainer keys; scripts and names are not used to infer Links.
+
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 
 ## Extracting maintainer client inputs
@@ -117,6 +125,14 @@ vp run import:client-data -- reference.sqlite /path/to/client-inputs MANIFEST_SH
 ```
 
 The importer verifies the manifest, every imported DBC and the definition archive SHA-256 `b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca`. It imports build 12340 layouts into `dbc_` tables, expands arrays with one-based suffixes, and records definition references in `dbc_foreign_key`. The enGB extraction remains an English stand-in, not proof of enUS identity. The local extraction is not the reviewed or published #30 production asset.
+
+After importing both Client Data and World Data into the same reference, build their item-set, talent-rank, skill-line, faction and stored-spawn Links:
+
+```bash
+vp run build:client-faction-spawn-links -- reference.sqlite
+```
+
+The command uses existing Records only and leaves all source rows intact. Creature spawn counts include stored alternate entries in `world_creature_multispawn`, counting each spawn once per creature and map. Counts are stored rows, not probabilities or inferred areas. Item-set members absent from World Data are omitted from Links and remain a report-only fidelity discrepancy.
 
 WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
 
