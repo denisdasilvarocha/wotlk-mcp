@@ -1,17 +1,17 @@
 import { DatabaseSync } from 'node:sqlite'
 
-import { kinds } from './schema.js'
+import { acceptedSchemaMajor, kinds } from './schema.js'
 
-export function openReference(): DatabaseSync {
-  const path = process.env.WOTLK_MCP_DB
-  if (!path)
-    throw new Error('no reference database: set WOTLK_MCP_DB to a compatible local database')
+export function openReference(path: string): DatabaseSync {
   let db: DatabaseSync | undefined
   try {
     db = new DatabaseSync(path, { readOnly: true })
     const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
     const version = row?.value
-    if (typeof version !== 'string' || !/^1\.\d+\.\d+$/.test(version))
+    if (
+      typeof version !== 'string' ||
+      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`).test(version)
+    )
       throw new Error(
         `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
       )
@@ -27,10 +27,7 @@ export function openReference(): DatabaseSync {
     return db
   } catch (error) {
     db?.close()
-    throw new Error(
-      `invalid WOTLK_MCP_DB: ${String(error).replace(/[\r\n]+/g, ' ')}; select a compatible reference database`,
-      { cause: error }
-    )
+    throw error
   }
 }
 

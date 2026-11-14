@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import * as z from 'zod'
 
+import { getReferencePath } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated, parseRelated, relatedTool } from './related.js'
 import { kinds } from './schema.js'
@@ -68,11 +69,11 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
     relatedTool
   ]
 }))
-server.setRequestHandler(CallToolRequestSchema, (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     if (request.params.name === 'related') {
       const args = parseRelated(request.params.arguments)
-      const db = openReference()
+      const db = openReference(await getReferencePath())
       try {
         return { content: [{ type: 'text', text: getRelated(db, args) }] }
       } finally {
@@ -85,7 +86,7 @@ server.setRequestHandler(CallToolRequestSchema, (request) => {
         throw new Error(
           `search requires a nonempty query, valid kinds (${kinds.join(', ')}), limit 1–100 and nonnegative integer offset`
         )
-      const db = openReference()
+      const db = openReference(await getReferencePath())
       try {
         return { content: [{ type: 'text', text: searchRecords(db, parsed.data) }] }
       } finally {
@@ -98,7 +99,7 @@ server.setRequestHandler(CallToolRequestSchema, (request) => {
       throw new Error(
         `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`
       )
-    const db = openReference()
+    const db = openReference(await getReferencePath())
     try {
       return {
         content: [
