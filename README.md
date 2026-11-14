@@ -92,6 +92,19 @@ The synthetic archive test uses a local StormLib shared library. Set `STORMLIB_T
 
 The PE fixture checks section-based VA translation, a global shared by both contexts, a game-only global, a shared method table, and inventory hashing. It models registration instructions, not the complete executable. The actual fingerprinted executable must also be extracted and its result reviewed before the #30 production publication gate. The scanner covers the pinned client's known global registrar and widget iterator paths; it does not claim coverage of Lua-defined functions or other registration mechanisms.
 
+## Importing Client Data
+
+Build the reference first, then supply the extracted client directory, the independently pinned SHA-256 of its `manifest.json`, and the upstream archive:
+
+```bash
+curl -L https://codeload.github.com/wowdev/WoWDBDefs/tar.gz/fe771f93091b18db417c99621cfe9e36a228a590 -o wowdbdefs.tar.gz
+vp run import:client-data -- reference.sqlite /path/to/client-inputs MANIFEST_SHA256 wowdbdefs.tar.gz
+```
+
+The importer verifies the manifest, every imported DBC and the definition archive SHA-256 `b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca`. It imports build 12340 layouts into `dbc_` tables, expands arrays with one-based suffixes, and records definition references in `dbc_foreign_key`. The enGB extraction remains an English stand-in, not proof of enUS identity. The local extraction is not the reviewed or published #30 production asset.
+
+WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
+
 ### Pinned client-inputs asset
 
 The owner-approved input release is `client-inputs-12340-engb-1`, asset `client-inputs-12340-engb-1.tar.gz`, SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`. The committed `data/client-inputs/manifest.json` records every input file and source archive hash, the original executable fingerprint and extraction environment. This is Blizzard-derived material and this project's native registration dump, not MIT-licensed package code; redistribution risk is accepted by the owner, not a claim of permission. The executable is never included.
