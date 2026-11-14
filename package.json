@@ -27,6 +27,7 @@
     "check": "vp check",
     "dev": "vp pack --watch",
     "import:codex": "node scripts/import-codex.ts",
+    "import:native": "vpx scripts/import-native.ts",
     "prepare": "vp config",
     "prepublishOnly": "vp run build",
     "test": "vp test",
