@@ -1,0 +1,11 @@
+--- a/src/tools/CMakeLists.txt
++++ b/src/tools/CMakeLists.txt
+@@ -122,8 +122,6 @@
+       PUBLIC
+         database
+       PRIVATE
+-        modules
+-        scripts
+         acore-core-interface)
+ 
+     # Install config
