@@ -7,8 +7,8 @@ import { getReferencePath } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated, parseRelated, relatedTool } from './related.js'
 import { kinds } from './schema.js'
-import { runSql } from './sql.js'
 import { searchRecords } from './search.js'
+import { runSql } from './sql.js'
 
 const searchInput = z.strictObject({
   query: z.string().trim().min(1),
@@ -90,7 +90,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const parsed = sqlInput.safeParse(request.params.arguments)
       if (!parsed.success) throw new Error('sql requires a query and an integer limit of 1–1000')
       const path = await getReferencePath()
-      return { content: [{ type: 'text', text: await runSql(path, parsed.data.query, parsed.data.limit) }] }
+      return {
+        content: [{ type: 'text', text: await runSql(path, parsed.data.query, parsed.data.limit) }]
+      }
     }
     if (request.params.name === 'related') {
       const args = parseRelated(request.params.arguments)

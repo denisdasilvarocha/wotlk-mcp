@@ -14,6 +14,8 @@ const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'sql-test', version: '1' })
 
 beforeAll(async () => {
+  if (process.env.WOTLK_TEST_NODE && process.version !== process.env.WOTLK_TEST_NODE)
+    throw new Error(`Expected Node ${process.env.WOTLK_TEST_NODE}, found ${process.version}`)
   execFileSync('vpx', ['scripts/build-reference.ts', database], { stdio: 'pipe' })
   const db = new DatabaseSync(database)
   db.exec("CREATE TABLE world_sql (value TEXT); INSERT INTO world_sql VALUES ('original')")
