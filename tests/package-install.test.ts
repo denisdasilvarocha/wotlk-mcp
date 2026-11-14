@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -8,13 +8,20 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 function run(command: string, args: string[], cwd?: string): void {
-  if (process.platform === 'win32')
-    execFileSync('cmd', ['/d', '/s', '/c', [command, ...args].map((arg) => `"${arg}"`).join(' ')], {
-      cwd,
-      stdio: 'pipe',
-      timeout: 120_000
-    })
-  else execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
+  if (process.platform === 'win32') {
+    const result = spawnSync(
+      'cmd',
+      ['/d', '/s', '/c', `${command} ${args.map((arg) => `"${arg}"`).join(' ')}`],
+      {
+        cwd,
+        encoding: 'utf8',
+        timeout: 120_000,
+        windowsVerbatimArguments: true
+      }
+    )
+    if (result.error) throw result.error
+    if (result.status !== 0) throw new Error(result.stderr)
+  } else execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
 }
 
 test('a clean installed tarball exposes an executable MCP server without a bundled database', async () => {
