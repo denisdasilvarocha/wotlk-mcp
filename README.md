@@ -81,6 +81,8 @@ vpx scripts/export-world.ts <container> reference.sqlite
 
 The exporter checks the selected schema, stores the source tables with the `world_` prefix, and indexes creature, item, quest and gameobject Records. The source's `*_dbc` overrides remain separate from Client Data. Spawn rows retain their stored map, coordinates, zone and area values; no area is inferred. The reference's source and metadata tables record the pin and export evidence. The pinned AzerothCore [licence](world/azerothcore-LICENSE.txt) and [authors notice](world/azerothcore-AUTHORS.txt) accompany these sources. The database also contains data with separate rights; the package's MIT licence does not apply to the database as a whole.
 
+SQLite REAL cannot retain the sign of negative zero. When a source floating-point value is negative zero, the exporter stores the ASCII bytes `-0` as a BLOB in that REAL column instead; ordinary floating-point values remain REAL.
+
 Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.

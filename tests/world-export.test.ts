@@ -32,7 +32,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
     const schema = path.join(world, 'schema-columns.tsv')
     writeFileSync(
       schema,
-      `${readFileSync(schema, 'utf8')}synthetic_types\t1\tamount\tdecimal(30,10)\tNO\tNULL\t\t\t\nsynthetic_types\t2\tpayload\tvarbinary(8)\tNO\tNULL\t\t\t\nsynthetic_types\t3\tmissing\tvarchar(10)\tYES\tNULL\t\tutf8mb4\tutf8mb4_unicode_ci\nsynthetic_types\t4\tcreated\tdatetime\tNO\tNULL\t\t\t\n`
+      `${readFileSync(schema, 'utf8')}synthetic_types\t1\tamount\tdecimal(30,10)\tNO\tNULL\t\t\t\nsynthetic_types\t2\tpayload\tvarbinary(8)\tNO\tNULL\t\t\t\nsynthetic_types\t3\tmissing\tvarchar(10)\tYES\tNULL\t\tutf8mb4\tutf8mb4_unicode_ci\nsynthetic_types\t4\tcreated\tdatetime\tNO\tNULL\t\t\t\nsynthetic_types\t5\tnegative_zero\tdouble\tNO\tNULL\t\t\t\nsynthetic_types\t6\tfraction\tfloat\tNO\tNULL\t\t\t\n`
     )
     const fixtures: Record<string, Record<string, string | Buffer | null>> = {
       creature_template: {
@@ -95,7 +95,9 @@ test('exported artifact preserves world rows and indexes only curated templates'
         amount: '12345678901234567890.1234567890',
         payload: Buffer.from([0, 127, 128, 255]),
         missing: sqlNull,
-        created: '0000-00-00 00:00:00'
+        created: '0000-00-00 00:00:00',
+        negative_zero: '-0',
+        fraction: '0.10000000149011612'
       }
     }
     const columns = new Map<string, { name: string; type: string; nullable: boolean }[]>()
@@ -253,12 +255,18 @@ esac
         length: '9007199254740993'
       })
       expect(
-        db.prepare('SELECT amount, payload, missing, created FROM world_synthetic_types').get()
+        db
+          .prepare(
+            'SELECT amount, payload, missing, created, negative_zero, fraction FROM world_synthetic_types'
+          )
+          .get()
       ).toMatchObject({
         amount: '12345678901234567890.1234567890',
         payload: new Uint8Array([0, 127, 128, 255]),
         missing: sqlNull,
-        created: '0000-00-00 00:00:00'
+        created: '0000-00-00 00:00:00',
+        negative_zero: new Uint8Array([45, 48]),
+        fraction: 0.10000000149011612
       })
       expect(db.prepare('SELECT ID, ShapeshiftMask FROM world_spell_dbc').get()).toMatchObject({
         ID: 777,

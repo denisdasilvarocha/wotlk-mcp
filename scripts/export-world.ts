@@ -110,6 +110,8 @@ function decode(field: string, kind: Kind): Value {
   if (kind === 'real') {
     const value = Number(text)
     if (!text || !Number.isFinite(value)) throw new Error(`Invalid floating point value ${text}`)
+    // SQLite normalizes REAL negative zero, so retain its ASCII bytes as a BLOB.
+    if (Object.is(value, -0)) return Buffer.from('-0')
     return value
   }
   return text
@@ -122,7 +124,9 @@ function hashRow(hash: Hash, columns: Column[], values: Value[]): void {
     if (
       value !== null &&
       ((kind === 'integer' && typeof value !== 'bigint') ||
-        (kind === 'real' && typeof value !== 'number') ||
+        (kind === 'real' &&
+          typeof value !== 'number' &&
+          !(value instanceof Uint8Array && Buffer.from(value).equals(Buffer.from('-0')))) ||
         ((kind === 'unsigned' || kind === 'text') && typeof value !== 'string') ||
         (kind === 'blob' && !(value instanceof Uint8Array)))
     )
