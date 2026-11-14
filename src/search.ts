@@ -26,14 +26,12 @@ function prepare(db: DatabaseSync, sql: string): StatementSync {
 export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   const query = input.query.trim()
   const terms = query.split(/\s+/)
-  if (input.kind?.includes('file')) {
-    if (characters(query).length < 3) throw new Error('source search needs ≥ 3 characters')
-    throw new Error('Interface source search is not available in this database')
-  }
+  const files = input.kind?.includes('file') ?? false
+  if (files && characters(query).length < 3) throw new Error('source search needs ≥ 3 characters')
   const params: Record<string, SQLInputValue> = { query, prefix: `${literalLike(query)}%` }
   let kindFilter = "AND r.kind <> 'file'"
   if (input.kind)
-    kindFilter = `AND r.kind IN (${
+    kindFilter += ` AND r.kind IN (${
       input.kind
         .map((kind, i) => {
           params[`kind${i}`] = kind
@@ -63,11 +61,16 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   let match = `(${allTerms})`
   if (short) match = "r.name LIKE $prefix ESCAPE '\\'"
   const tier = `CASE WHEN ${priority} THEN 0 WHEN lower(r.name) = lower($query) THEN 1 WHEN r.name LIKE $prefix ESCAPE '\\' THEN 2 WHEN ${nameTerms} THEN 3 ELSE 4 END`
-  const normal = `SELECT r.id, r.kind, r.name, r.search_text, r.hint, ${tier} AS tier FROM record r WHERE (${priority} OR ${match}) ${kindFilter} ${candidate}`
+  const normal = `SELECT r.id, r.kind, r.name, r.search_text, r.hint, ${tier} AS tier, 0 AS line FROM record r WHERE (${priority} OR ${match}) ${kindFilter} ${candidate}`
+  const lineTests = terms.map((_, i) => `instr(lower(text), lower($term${i})) > 0`).join(' AND ')
+  let lineCandidate = ''
+  if (longest) lineCandidate = 'AND ui_line_fts MATCH $fts'
+  const source = `SELECT 'file:' || path AS id, 'file' AS kind, path AS name, text AS search_text, '' AS hint, 5 AS tier, CAST(line AS INTEGER) AS line FROM ui_line_fts WHERE ${lineTests} ${lineCandidate}`
   let sql = normal
+  if (files) sql += ` UNION ALL ${source}`
   let fuzzy = false
   let count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(params)?.total)
-  if (count === 0 && characters(query).length >= 4) {
+  if (count === 0 && characters(query).length >= 4 && !files) {
     const chars = characters(query.toLowerCase())
     const trigrams = [...new Set(chars.slice(0, -2).map((_, i) => chars.slice(i, i + 3).join('')))]
     const fuzzyParams: Record<string, SQLInputValue> = { fts: trigrams.map(quoteFts).join(' OR ') }
@@ -81,7 +84,7 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
         return `(instr(lower(r.name), $tri${i}) > 0)`
       })
       .join(' + ')
-    sql = `SELECT r.id, r.kind, r.name, r.search_text, r.hint, 0 AS tier, (${score}) AS score FROM record r WHERE r.id IN (SELECT id FROM record_fts WHERE record_fts MATCH $fts) ${kindFilter} AND (${score}) > 0`
+    sql = `SELECT r.id, r.kind, r.name, r.search_text, r.hint, 0 AS tier, 0 AS line, (${score}) AS score FROM record r WHERE r.id IN (SELECT id FROM record_fts WHERE record_fts MATCH $fts) ${kindFilter} AND (${score}) > 0`
     count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(fuzzyParams)?.total)
     Object.keys(params).forEach((key) => {
       delete params[key]
@@ -91,11 +94,17 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   }
   params.limit = input.limit
   params.offset = input.offset
-  let order = 'tier, length(name), kind, id'
+  let order =
+    'tier, CASE WHEN tier = 5 THEN name END, CASE WHEN tier = 5 THEN line END, length(name), kind, id'
   if (fuzzy) order = 'score DESC, length(name), kind, id'
-  const rows = prepare(db, `${sql} ORDER BY ${order} LIMIT $limit OFFSET $offset`).all(params)
+  const rows = prepare(
+    db,
+    `SELECT * FROM (${sql}) ORDER BY ${order} LIMIT $limit OFFSET $offset`
+  ).all(params)
   const lines = rows.map((row) => {
     const id = String(row.id)
+    if (row.kind === 'file')
+      return `${id}:${String(row.line)} — ${String(row.search_text).replace(/\s+/g, ' ').trim().slice(0, 160)}`
     const name = String(row.name)
     let detailValue = row.hint
     if (row.tier === 4) detailValue = row.search_text

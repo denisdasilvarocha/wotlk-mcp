@@ -20,7 +20,9 @@ const input = z.strictObject({
   ids: z
     .array(z.string().regex(new RegExp(idPattern)))
     .min(1)
-    .max(20)
+    .max(20),
+  from: z.number().int().min(1).optional(),
+  to: z.number().int().min(1).optional()
 })
 const server = new Server({ name: 'wotlk', version: '1.0.0' }, { capabilities: { tools: {} } })
 server.setRequestHandler(ListToolsRequestSchema, () => ({
@@ -44,7 +46,8 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
     },
     {
       name: 'get',
-      description: 'Retrieve complete Records by ID. Empty values are omitted.',
+      description:
+        'Retrieve complete Records by ID, or numbered file windows. Empty values are omitted.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -53,7 +56,9 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
             minItems: 1,
             maxItems: 20,
             items: { type: 'string', pattern: idPattern }
-          }
+          },
+          from: { type: 'integer', minimum: 1 },
+          to: { type: 'integer', minimum: 1 }
         },
         required: ['ids'],
         additionalProperties: false
@@ -90,10 +95,16 @@ server.setRequestHandler(CallToolRequestSchema, (request) => {
     if (request.params.name !== 'get') throw new Error('unknown tool; use get, related or search')
     const parsed = input.safeParse(request.params.arguments)
     if (!parsed.success)
-      throw new Error(`get requires 1–20 valid IDs; valid kinds: ${kinds.join(', ')}`)
+      throw new Error(
+        `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`
+      )
     const db = openReference()
     try {
-      return { content: [{ type: 'text', text: getRecords(db, parsed.data.ids) }] }
+      return {
+        content: [
+          { type: 'text', text: getRecords(db, parsed.data.ids, parsed.data.from, parsed.data.to) }
+        ]
+      }
     } finally {
       db.close()
     }
