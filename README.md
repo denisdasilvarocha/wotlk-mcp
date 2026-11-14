@@ -73,3 +73,27 @@ The selected path set is checked against the lowercase, sorted inventory from fi
 The synthetic archive test uses a local StormLib shared library. Set `STORMLIB_TEST_LIBRARY` to its absolute path if it is not installed at the default macOS or Linux location.
 
 The PE fixture checks section-based VA translation, a global shared by both contexts, a game-only global, a shared method table, and inventory hashing. It models registration instructions, not the complete executable. The actual fingerprinted executable must also be extracted and its result reviewed before the #30 production publication gate. The scanner covers the pinned client's known global registrar and widget iterator paths; it does not claim coverage of Lua-defined functions or other registration mechanisms.
+
+### Pinned client-inputs asset
+
+The owner-approved input release is `client-inputs-12340-engb-1`, asset `client-inputs-12340-engb-1.tar.gz`, SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`. The committed `data/client-inputs/manifest.json` records every input file and source archive hash, the original executable fingerprint and extraction environment. This is Blizzard-derived material and this project's native registration dump, not MIT-licensed package code; redistribution risk is accepted by the owner, not a claim of permission. The executable is never included.
+
+For the private repository, authenticate `gh` as a principal with release-read access, then download and verify before ingestion:
+
+```bash
+gh release download client-inputs-12340-engb-1 --repo denisdasilvarocha/wotlk-mcp --pattern client-inputs-12340-engb-1.tar.gz --dir .
+python3 scripts/verify-client-inputs.py client-inputs-12340-engb-1.tar.gz
+```
+
+For the authorized one-time publication of these exact bytes, the preflight must find neither the tag nor release; it must fail closed on a GitHub API error. The command creates the release only after verification, never replaces an asset, and must not be rerun to alter a published release:
+
+```bash
+set -euo pipefail
+python3 scripts/verify-client-inputs.py client-inputs-12340-engb-1.tar.gz
+gh api graphql -f query='query { repository(owner:"denisdasilvarocha", name:"wotlk-mcp") { ref(qualifiedName:"refs/tags/client-inputs-12340-engb-1") { id } release(tagName:"client-inputs-12340-engb-1") { id } } }' --jq '.data.repository | .ref == null and .release == null' | jq -e . >/dev/null
+gh release create client-inputs-12340-engb-1 client-inputs-12340-engb-1.tar.gz --repo denisdasilvarocha/wotlk-mcp --target main --latest=false --title 'Client inputs 12340 enGB 1' --notes 'Owner-approved enGB client extraction for build 12340; English stand-in, not verified enUS identity. Includes DBC and eligible Interface source files, native registration dump, and SHA-256 manifest; no client executable. Blizzard-derived content carries separately accepted redistribution risk, not MIT package licensing. Asset SHA-256: 9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136. Immutable by project policy: do not replace assets or reuse this tag.'
+```
+
+The verifier checks the pinned bundle and committed manifest hashes, inventory, permitted paths and every file hash without extracting the archive. The release is immutable by project policy: never replace an asset or reuse a tag; publish a new pin for any changed bytes. GitHub's repository-wide immutable releases setting is not enabled, so GitHub does not enforce that policy. No database or npm release is implied.
+
+The asset is enGB, accepted as an English stand-in, not proven byte-identical to enUS. [Fingerprint research](https://github.com/denisdasilvarocha/wotlk-mcp/issues/14) found enGB `Localization.lua` and a calendar first-weekday difference compared with the older enUS 12213 Interface snapshot; `GlobalStrings.lua` matched. Fourteen locale-sourced DBC text tables differed from an independent dump; that comparison does not prove enUS identity. Three `Blizzard_GMChatUI.lua` lines also differed and were considered a likely build-12340 hotfix, not established locale corrections. These differences are flagged, not silently patched.
