@@ -41,12 +41,18 @@ afterAll(async () => {
 
 test('packaged server retrieves Offsets and reports missing IDs individually', async () => {
   const tools = await client.listTools()
-  expect(tools.tools.map((tool) => tool.name)).toEqual(['get'])
-  expect(tools.tools[0]?.inputSchema).toMatchObject({
+  expect(tools.tools.map((tool) => tool.name).toSorted()).toEqual([
+    'get',
+    'related',
+    'search',
+    'sql'
+  ])
+  const get = tools.tools.find((tool) => tool.name === 'get')
+  expect(get?.inputSchema).toMatchObject({
     properties: { ids: { minItems: 1, maxItems: 20 } },
     additionalProperties: false
   })
-  expect(tools.tools[0]?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
+  expect(get?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
   const result = await client.callTool({
     name: 'get',
     arguments: {

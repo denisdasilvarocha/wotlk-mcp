@@ -11,7 +11,7 @@ vp run build:reference reference.sqlite
 WOTLK_MCP_DB="$PWD/reference.sqlite" node dist/index.mjs
 ```
 
-The last command starts an MCP server over stdio; connect an MCP client rather than typing commands into it. `WOTLK_MCP_DB` must point to a compatible database. No database is bundled or downloaded yet. The `get` tool accepts up to 20 kind-qualified IDs, such as `offset:Globals::PlayerName`.
+The last command starts an MCP server over stdio; connect an MCP client rather than typing commands into it. Without `WOTLK_MCP_DB`, the server downloads a compatible published database from GitHub Releases, verifies its compressed SHA-256 digest and schema, and stores it in the OS cache. First use requires a network connection; if the download is still in progress after 20 seconds, retry the tool call. Set `GITHUB_TOKEN` or `GH_TOKEN` optionally for authenticated GitHub requests. `WOTLK_MCP_DB` selects a compatible local database and disables network access; an invalid override fails rather than falling back. No database is bundled. The `get` tool accepts up to 20 kind-qualified IDs, such as `offset:Globals::PlayerName`.
 
 The package code is MIT licensed; the database contains source data with separate provenance recorded in its `source` table.
 
@@ -57,6 +57,16 @@ The documented binary evidence connects the iterator's method-table callback to 
 vp pack
 ```
 
+## Releasing the npm package
+
+Package releases are independent of `db-v<semver>` database releases. Set the package version explicitly in `package.json` and tag the same commit `v<version>`. The tag starts `.github/workflows/package-release.yml`. Its guard requires a published, non-prerelease database of the accepted schema major, downloads and verifies its GitHub SHA-256 digest, and checks the database's schema metadata before publishing. It also rejects an already published package version and a schema-major change within an existing package major. Keep old immutable database releases available for older package majors; data-only updates do not require npm releases.
+
+`src/schema.ts` hard-codes the accepted schema major and `wotlkSchemaMajor` in the package metadata records it for future release comparisons. Update both together. A schema-major change or breaking tool-contract change requires a new package major; review tool-contract changes explicitly before tagging. Publish the compatible database first. Never delete old database releases as part of a package release.
+
+For #52, the owner must first ensure the unscoped `wotlk-mcp` package exists and is under their control: npm's [trust command](https://docs.npmjs.com/cli/v11/commands/npm-trust/) requires an existing package. If necessary, npm documents that staging a new package creates a public placeholder; this bootstrap is a separate owner authorization, not performed by this workflow. In npm package settings configure GitHub Actions trusted publishing with organization/user `denisdasilvarocha`, repository `wotlk-mcp`, workflow filename `package-release.yml`, no environment, and **Allow npm publish**. Do not grant dist-tag management. Configure it only when ready: npm expires an unused new trust configuration after two days. The repository and package must be public for automatic provenance. The GitHub-hosted workflow uses npm CLI 11.5.1 or newer, `id-token: write`, and no stored npm token. The owner should restrict token publishing after OIDC works. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+
+If npm publication succeeds but GitHub release creation fails, the package version cannot be published again; create the missing GitHub release for the existing tag after inspecting the failed job rather than retrying publication.
+
 ## Reproduce World Data
 
 Requires Docker with linux/arm64 and linux/amd64 support, `curl`, `openssl`, `patch`, and a POSIX shell. Download the pinned AzerothCore archive and provide a new output directory:
@@ -67,6 +77,19 @@ sh world/reproduce.sh azerothcore.tar.gz world-output
 ```
 
 The command verifies the archive, builds the pinned upstream database importer, creates isolated fresh databases, applies upstream updates, and compares the selected World Data schema to the committed manifests. The output contains the importer log, observed schema, and a report; it does not publish data. On success the report names the running MySQL container and its private network for the export step. Remove both with `docker rm -f <container>` and `docker network rm <network>` when finished.
+
+To add World Data to a newly built reference, pass the container name from the report and the reference database path:
+
+```bash
+vp run build:reference reference.sqlite
+vpx scripts/export-world.ts <container> reference.sqlite
+```
+
+The exporter checks the selected schema, stores the source tables with the `world_` prefix, and indexes creature, item, quest and gameobject Records. The source's `*_dbc` overrides remain separate from Client Data. Spawn rows retain their stored map, coordinates, zone and area values; no area is inferred. The reference's source and metadata tables record the pin and export evidence. The pinned AzerothCore [licence](world/azerothcore-LICENSE.txt) and [authors notice](world/azerothcore-AUTHORS.txt) accompany these sources. The database also contains data with separate rights; the package's MIT licence does not apply to the database as a whole.
+
+SQLite REAL cannot retain the sign of negative zero. The exporter rejects a source negative zero with a table, column and value diagnostic rather than changing its SQL type or silently losing the sign. Ordinary floating-point values remain REAL.
+
+Use the unmodified container created by the reproduction command; schema checks alone cannot prove the contents came from that source. The [observed pinned export](world/export-proof.json) records per-table counts and logical hashes; [proof details](world/proof.txt) describe the run and independent source checks.
 
 The build-only patch removes links to disabled scripts and modules; updater code is unchanged. Custom and module SQL are rejected. The local container uses disposable, known credentials and must not be exposed to an untrusted network.
 
@@ -87,3 +110,40 @@ The selected path set is checked against the lowercase, sorted inventory from fi
 The synthetic archive test uses a local StormLib shared library. Set `STORMLIB_TEST_LIBRARY` to its absolute path if it is not installed at the default macOS or Linux location.
 
 The PE fixture checks section-based VA translation, a global shared by both contexts, a game-only global, a shared method table, and inventory hashing. It models registration instructions, not the complete executable. The actual fingerprinted executable must also be extracted and its result reviewed before the #30 production publication gate. The scanner covers the pinned client's known global registrar and widget iterator paths; it does not claim coverage of Lua-defined functions or other registration mechanisms.
+
+## Importing Client Data
+
+Build the reference first, then supply the extracted client directory, the independently pinned SHA-256 of its `manifest.json`, and the upstream archive:
+
+```bash
+curl -L https://codeload.github.com/wowdev/WoWDBDefs/tar.gz/fe771f93091b18db417c99621cfe9e36a228a590 -o wowdbdefs.tar.gz
+vp run import:client-data -- reference.sqlite /path/to/client-inputs MANIFEST_SHA256 wowdbdefs.tar.gz
+```
+
+The importer verifies the manifest, every imported DBC and the definition archive SHA-256 `b35205cb31c27204f05ae8528ca214af02381585f5d0d2697bea30a2d58123ca`. It imports build 12340 layouts into `dbc_` tables, expands arrays with one-based suffixes, and records definition references in `dbc_foreign_key`. The enGB extraction remains an English stand-in, not proof of enUS identity. The local extraction is not the reviewed or published #30 production asset.
+
+WoWDBDefs definitions are copyright WoWDBDefs Contributors and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The importer transforms those definitions into database columns and foreign-key metadata; retain attribution, indicate these changes, provide the licence and source at the pinned [revision](https://github.com/wowdev/WoWDBDefs/tree/fe771f93091b18db417c99621cfe9e36a228a590), and comply with applicable share-alike obligations in database releases.
+
+### Pinned client-inputs asset
+
+The owner-approved input release is `client-inputs-12340-engb-1`, asset `client-inputs-12340-engb-1.tar.gz`, SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`. The committed `data/client-inputs/manifest.json` records every input file and source archive hash, the original executable fingerprint and extraction environment. This is Blizzard-derived material and this project's native registration dump, not MIT-licensed package code; redistribution risk is accepted by the owner, not a claim of permission. The executable is never included.
+
+For the private repository, authenticate `gh` as a principal with release-read access, then download and verify before ingestion:
+
+```bash
+gh release download client-inputs-12340-engb-1 --repo denisdasilvarocha/wotlk-mcp --pattern client-inputs-12340-engb-1.tar.gz --dir .
+python3 scripts/verify-client-inputs.py client-inputs-12340-engb-1.tar.gz
+```
+
+For the authorized one-time publication of these exact bytes, the preflight must find neither the tag nor release; it must fail closed on a GitHub API error. The command creates the release only after verification, never replaces an asset, and must not be rerun to alter a published release:
+
+```bash
+set -euo pipefail
+python3 scripts/verify-client-inputs.py client-inputs-12340-engb-1.tar.gz
+gh api graphql -f query='query { repository(owner:"denisdasilvarocha", name:"wotlk-mcp") { ref(qualifiedName:"refs/tags/client-inputs-12340-engb-1") { id } release(tagName:"client-inputs-12340-engb-1") { id } } }' --jq '.data.repository | .ref == null and .release == null' | jq -e . >/dev/null
+gh release create client-inputs-12340-engb-1 client-inputs-12340-engb-1.tar.gz --repo denisdasilvarocha/wotlk-mcp --target main --latest=false --title 'Client inputs 12340 enGB 1' --notes 'Owner-approved enGB client extraction for build 12340; English stand-in, not verified enUS identity. Includes DBC and eligible Interface source files, native registration dump, and SHA-256 manifest; no client executable. Blizzard-derived content carries separately accepted redistribution risk, not MIT package licensing. Asset SHA-256: 9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136. Immutable by project policy: do not replace assets or reuse this tag.'
+```
+
+The verifier checks the pinned bundle and committed manifest hashes, inventory, permitted paths and every file hash without extracting the archive. The release is immutable by project policy: never replace an asset or reuse a tag; publish a new pin for any changed bytes. GitHub's repository-wide immutable releases setting is not enabled, so GitHub does not enforce that policy. No database or npm release is implied.
+
+The asset is enGB, accepted as an English stand-in, not proven byte-identical to enUS. [Fingerprint research](https://github.com/denisdasilvarocha/wotlk-mcp/issues/14) found enGB `Localization.lua` and a calendar first-weekday difference compared with the older enUS 12213 Interface snapshot; `GlobalStrings.lua` matched. Fourteen locale-sourced DBC text tables differed from an independent dump; that comparison does not prove enUS identity. Three `Blizzard_GMChatUI.lua` lines also differed and were considered a likely build-12340 hotfix, not established locale corrections. These differences are flagged, not silently patched.

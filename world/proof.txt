@@ -11,3 +11,21 @@ Selected schema: 282 tables, 3953 columns and 415 index entries
 Columns SHA-256: f7504ddcabad88972db939c56c23050c7c2560b3f52ab355ba489d84befd81c2
 Indexes SHA-256: d6a491d11b45cf7f08e28549a15863b28afc1e436233a24ee9792fc014082556
 Actual updater log SHA-256: 3dbb64cf8bc43d02acf2117a9b6394316c1d76a459e89e0d703433d766be37e5
+
+Ticket 35 actual export: the live reproduced container above was exported to
+the shared reference with `vpx scripts/export-world.ts` on 2026-11-14. The
+command exited 0 after independently scanning source and export rows and
+comparing their typed logical hashes and counts to the stored SQLite rows.
+`export-proof.json` records all 282 table hashes and counts: 1,144,745 rows in
+total. The resulting SQLite file was 126,234,624 bytes, SHA-256
+`e2e9ed965c2bd6dadcbab7aeb015544abe26569047faa4a2d8447b1b49b2f0bd`.
+It also contained the Offsets reference built immediately before import.
+This file hash is an observation, not a byte-for-byte reproducibility promise.
+
+Independent source queries and SQLite queries agreed on item 19019, creature
+68, quest 2 and gameobject 31, and on the stored map, zone, area and coordinates
+for creature spawn 189 and gameobject spawn 42495. Source and SQLite counts
+agreed for 150,176 creature spawns, 96,691 gameobject spawns and 4,491 spell_dbc
+overrides.
+The packed CLI over MCP/stdio returned all four of those independently queried
+Records from this SQLite artifact.

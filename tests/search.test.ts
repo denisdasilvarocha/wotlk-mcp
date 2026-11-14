@@ -41,6 +41,23 @@ beforeAll(async () => {
     insert.run(id, kind, name, 'world_example', 1, description, hint)
     fts.run(id, name, description)
   }
+  db.exec(
+    'CREATE TABLE ui_file (path TEXT); CREATE TABLE ui_line (path TEXT, line INTEGER, text TEXT)'
+  )
+  db.prepare('INSERT INTO ui_file VALUES (?)').run('FrameXML/Test.lua')
+  insert.run('file:FrameXML/Test.lua', 'file', 'FrameXML/Test.lua', 'ui_file', 1, '', '')
+  const line = db.prepare('INSERT INTO ui_line VALUES (?, ?, ?)')
+  const lineFts = db.prepare('INSERT INTO ui_line_fts VALUES (?, ?, ?)')
+  for (let i = 1; i <= 205; i++) {
+    let value = `source line ${i}`
+    if (i === 2) value = 'Fire Bolt literal %_ token'
+    line.run('FrameXML/Test.lua', i, value)
+    lineFts.run('FrameXML/Test.lua', i, value)
+  }
+  db.prepare('INSERT INTO ui_file VALUES (?)').run('GlueXML/Other.xml')
+  insert.run('file:GlueXML/Other.xml', 'file', 'GlueXML/Other.xml', 'ui_file', 2, '', '')
+  line.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
+  lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   db.close()
   execFileSync('vp', ['pm', 'pack', '--pack-destination', dir], { stdio: 'pipe' })
   const archive = readdirSync(dir).find((name) => name.endsWith('.tgz'))
@@ -62,6 +79,9 @@ afterAll(async () => {
 
 async function search(args: Record<string, unknown>): ReturnType<typeof client.callTool> {
   return client.callTool({ name: 'search', arguments: args })
+}
+async function get(args: Record<string, unknown>): ReturnType<typeof client.callTool> {
+  return client.callTool({ name: 'get', arguments: args })
 }
 async function text(args: Record<string, unknown>): Promise<string> {
   const result = await search(args)
@@ -120,4 +140,28 @@ test('punctuation, short queries and fuzzy fallback stay literal', async () => {
     ].map((args) => search(args))
   )
   for (const result of invalid) expect(result.isError).toBe(true)
+})
+
+test('explicit source lines are literal, paginated, and isolated from ordinary search', async () => {
+  expect(await text({ query: 'literal %_', kind: ['file'] })).toContain('file:FrameXML/Test.lua:2')
+  expect(await text({ query: 'literal %_', kind: ['file'], limit: 1, offset: 1 })).toContain(
+    'file:GlueXML/Other.xml:1'
+  )
+  expect(await text({ query: 'literal %_' })).not.toContain('file:')
+  expect(await text({ query: 'Fire Bolt', kind: ['file', 'spell'] })).toContain('spell:42')
+  expect(await text({ query: 'Fire Bolt', kind: ['file', 'spell'] })).toContain(
+    'file:FrameXML/Test.lua:2'
+  )
+  expect(await text({ query: 'literaX', kind: ['file'] })).toContain('0–0 of 0; end')
+  const short = await search({ query: 'ab', kind: ['file', 'spell'] })
+  expect(short.isError).toBe(true)
+  expect(JSON.stringify(short.content)).toContain('source search needs ≥ 3 characters')
+  const first = await get({ ids: ['file:FrameXML/Test.lua'] })
+  expect(JSON.stringify(first.content)).toContain('200: source line 200')
+  expect(JSON.stringify(first.content)).toContain('next from: 201')
+  const next = await get({ ids: ['file:FrameXML/Test.lua'], from: 201 })
+  expect(JSON.stringify(next.content)).toContain('205: source line 205')
+  expect(JSON.stringify(next.content)).toContain('end')
+  expect((await get({ ids: ['file:FrameXML/Test.lua'], from: 0 })).isError).toBe(true)
+  expect((await get({ ids: ['file:FrameXML/Test.lua'], from: 3, to: 2 })).isError).toBe(true)
 })
