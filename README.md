@@ -45,10 +45,13 @@ executable SHA-256 before reading archives and rejects the installed
 large-address-aware `Wow.exe` variant. The executable is never copied.
 
 The output contains DBC files, FrameXML, GlueXML and Blizzard addon Lua, XML
-and TOC files, plus `manifest.json` with archive and file SHA-256 hashes,
-winning archives, extractor revision and library hash. Later archives win;
-deletion markers remove earlier files. An output directory must not already
-exist. The inventory uses enGB as the accepted English stand-in: enUS byte
+and TOC files, `native-registrations.json`, and `manifest.json` with archive
+and file SHA-256 hashes, winning archives, extractor revision and library hash.
+The native dump reads the fingerprinted PE's registration tables offline and
+retains each table, row index, callback VA, call site and glue/game context.
+Widget names are not inferred from method sets; consumers must resolve each
+table independently. Later archives win; deletion markers remove earlier files.
+The output directory must not already exist. The inventory uses enGB as the accepted English stand-in: enUS byte
 identity has not been verified. Keep client-derived files private until the
 owner performs the trusted-client production bundle and publication in #30;
 the command's development fixtures do not replace that proof.
@@ -64,3 +67,11 @@ byte-identical compiler environment on every host.
 The synthetic archive test uses a local StormLib shared library. Set
 `STORMLIB_TEST_LIBRARY` to its absolute path if it is not installed at the
 default macOS or Linux location.
+
+The PE fixture checks section-based VA translation, a global shared by both
+contexts, a game-only global, a shared method table, and inventory hashing.
+It models registration instructions, not the complete executable. The actual
+fingerprinted executable must also be extracted and its result reviewed before
+the #30 production publication gate. The scanner covers the pinned client's
+known global registrar and widget iterator paths; it does not claim coverage of
+Lua-defined functions or other registration mechanisms.
