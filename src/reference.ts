@@ -34,6 +34,12 @@ export function openReference(path: string): DatabaseSync {
 export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from + 199): string {
   if (to < from) throw new Error('get requires to ≥ from')
   const index = db.prepare('SELECT name, source_table, source_row FROM record WHERE id = ?')
+  const mappings = db.prepare(
+    'SELECT field, enum_name, flags, condition_field, condition_value FROM enum_field WHERE source_table = ?'
+  )
+  const values = db.prepare(
+    'SELECT value, name FROM enum_value WHERE enum_name = ? ORDER BY value, name'
+  )
   return ids
     .map((id) => {
       const colon = id.indexOf(':')
@@ -69,6 +75,7 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
         lines.push(`${start}–${end} of ${total}; ${continuation}`)
         return lines.join('\n')
       }
+      const fields = mappings.all(table)
       const lines = [id]
       for (const [key, value] of Object.entries(row)) {
         if (
@@ -79,7 +86,35 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
             String(value) === id.slice(colon + 1))
         )
           continue
-        lines.push(`${key}: ${String(value).replace(/\r?\n/g, '\n  ')}`)
+        let rendered = String(value)
+        const mapping = fields.find(
+          (field) =>
+            field.field === key &&
+            (field.condition_field === null ||
+              row[String(field.condition_field)] === field.condition_value)
+        )
+        if (mapping && typeof value === 'number' && Number.isSafeInteger(value) && value !== -1) {
+          const entries = values.all(String(mapping.enum_name))
+          if (mapping.flags) {
+            let remaining = BigInt(value)
+            const names: string[] = []
+            if (remaining > 0n) {
+              for (const entry of entries) {
+                const bit = BigInt(Number(entry.value))
+                if (bit > 0n && (bit & (bit - 1n)) === 0n && (remaining & bit) === bit) {
+                  names.push(String(entry.name))
+                  remaining &= ~bit
+                }
+              }
+              if (remaining && names.length) names.push(remaining.toString())
+              if (names.length) rendered += ` (${names.join(', ')})`
+            }
+          } else {
+            const entry = entries.find((candidate) => candidate.value === value)
+            if (entry) rendered += ` (${String(entry.name)})`
+          }
+        }
+        lines.push(`${key}: ${rendered.replace(/\r?\n/g, '\n  ')}`)
       }
       return lines.join('\n')
     })
