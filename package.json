@@ -28,6 +28,7 @@
     "dev": "vp pack --watch",
     "import:client-data": "vpx scripts/import-client-data.ts",
     "import:codex": "node scripts/import-codex.ts",
+    "import:interface": "vpx scripts/import-interface.ts",
     "prepare": "vp config",
     "prepublishOnly": "vp run build",
     "test": "vp test",
