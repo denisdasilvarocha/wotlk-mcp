@@ -115,6 +115,14 @@ test('maintainer import preserves source, command evidence and atomic hash verif
         .all('slash:CAST', 'file:FrameXML/GlobalStrings.lua')
     ).toHaveLength(2)
     expect(
+      result
+        .prepare("SELECT id, name, text FROM record_fts WHERE substr(id,1,5) = 'file:' ORDER BY id")
+        .all()
+    ).toEqual([
+      { id: 'file:AddOns/Blizzard_Test/Test.xml', name: 'AddOns/Blizzard_Test/Test.xml', text: '' },
+      { id: 'file:FrameXML/GlobalStrings.lua', name: 'FrameXML/GlobalStrings.lua', text: '' }
+    ])
+    expect(
       result.prepare('SELECT attribution FROM source WHERE name = ?').get('interface')?.attribution
     ).toContain('enUS byte identity is not verified')
     result.close()

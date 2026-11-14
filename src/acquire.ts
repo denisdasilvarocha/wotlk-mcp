@@ -159,10 +159,22 @@ async function cached(directory: string): Promise<{ path: string; state: CacheSt
   return selected
 }
 
-async function download(existing?: CacheState): Promise<string | undefined> {
-  const response = await fetch(releasesUrl, { headers })
+async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>> {
+  const response = await fetch(url, { headers })
   if (!response.ok) throw new Error(`GitHub releases request returned HTTP ${response.status}`)
-  const releases = releasesSchema.parse(await response.json())
+  const page = releasesSchema.parse(await response.json())
+  const next = response.headers
+    .get('link')
+    ?.split(',')
+    .map((part) => part.trim())
+    .find((part) => /;\s*rel="next"/.test(part))
+    ?.match(/^<([^>]+)>/)?.[1]
+  if (next) page.push(...(await releasePages(next)))
+  return page
+}
+
+async function download(existing?: CacheState): Promise<string | undefined> {
+  const releases = await releasePages(releasesUrl)
   const candidates = releases
     .flatMap((release) => {
       const match = /^db-v(\d+)\.(\d+)\.(\d+)$/.exec(release.tag_name)
@@ -172,8 +184,8 @@ async function download(existing?: CacheState): Promise<string | undefined> {
     .toSorted((a, b) => (b.release.published_at ?? '').localeCompare(a.release.published_at ?? ''))
   const selected = candidates.find(({ version }) => version[0] === acceptedSchemaMajor)
   const higher = candidates.find(({ version }) => version[0] > acceptedSchemaMajor)
-  if (existing) warningMajor = higher?.version[0]
-  if (existing && higher)
+  warningMajor = higher?.version[0]
+  if (higher)
     console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
   if (!selected) {
     if (higher)

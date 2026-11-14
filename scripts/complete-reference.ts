@@ -1,12 +1,20 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { createReadStream, createWriteStream, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import {
+  createReadStream,
+  createWriteStream,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from 'node:fs'
 import path from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { constants, createBrotliCompress } from 'node:zlib'
 
 const [argument, ...extra] = process.argv.slice(2).filter((arg) => arg !== '--')
-if (!argument || extra.length) throw new Error('Usage: vpx scripts/complete-reference.ts <new-output-directory>')
+if (!argument || extra.length)
+  throw new Error('Usage: vpx scripts/complete-reference.ts <new-output-directory>')
 const output = path.resolve(argument)
 mkdirSync(output)
 const database = path.join(output, 'wotlk.sqlite')
@@ -35,7 +43,14 @@ try {
   if (!container) throw new Error('World reproduction did not identify its container')
   script('offsets', 'build-reference', database)
   run('codex', 'node', ['scripts/import-codex.ts', database, path.join(inputs, 'codex')])
-  script('client data', 'import-client-data', database, client, manifest, path.join(inputs, 'wowdbdefs.tar.gz'))
+  script(
+    'client data',
+    'import-client-data',
+    database,
+    client,
+    manifest,
+    path.join(inputs, 'wowdbdefs.tar.gz')
+  )
   script('interface', 'import-interface', database, client, manifest)
   script('world', 'export-world', container, database)
   script('native', 'import-native', database, client, manifest, 'data/native-widget-decisions.json')
@@ -48,20 +63,31 @@ try {
   script('provenance and notices', 'reference-provenance', database, path.join(output, 'NOTICE.md'))
   const compressed = path.join(output, 'wotlk.sqlite.br')
   const compressionStart = Date.now()
-  await pipeline(createReadStream(database), createBrotliCompress({ params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }), createWriteStream(compressed, { flags: 'wx' }))
+  await pipeline(
+    createReadStream(database),
+    createBrotliCompress({ params: { [constants.BROTLI_PARAM_QUALITY]: 5 } }),
+    createWriteStream(compressed, { flags: 'wx' })
+  )
   timings.compression = (Date.now() - compressionStart) / 1000
   const hash = createHash('sha256')
   for await (const chunk of createReadStream(compressed)) hash.update(chunk)
   const summary = {
     build_seconds: (Date.now() - started) / 1000,
     timings_seconds: timings,
+    brotli_quality: 5,
     uncompressed_bytes: statSync(database).size,
     compressed_bytes: statSync(compressed).size,
     compressed_sha256: hash.digest('hex'),
     compressed_250_mb_gate_passed: statSync(compressed).size <= 250_000_000
   }
-  writeFileSync(path.join(output, 'build-report.json'), `${JSON.stringify(summary, undefined, 2)}\n`)
-  if (!summary.compressed_250_mb_gate_passed) console.error('Compressed asset exceeds 250 MB; an explicit scope decision is required before publication.')
+  writeFileSync(
+    path.join(output, 'build-report.json'),
+    `${JSON.stringify(summary, undefined, 2)}\n`
+  )
+  if (!summary.compressed_250_mb_gate_passed)
+    console.error(
+      'Compressed asset exceeds 250 MB; an explicit scope decision is required before publication.'
+    )
 } finally {
   if (container) {
     execFileSync('docker', ['rm', '-f', container], { stdio: 'inherit' })

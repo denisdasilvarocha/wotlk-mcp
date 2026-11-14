@@ -62,17 +62,17 @@ function fixture(): string {
     INSERT INTO source VALUES('fixture','one','abc','test','test');
     CREATE TABLE record(id TEXT,kind TEXT,name TEXT,source_table TEXT,source_row INTEGER,search_text TEXT,hint TEXT);
     CREATE TABLE link(source_id TEXT,relation TEXT,destination_id TEXT,notes TEXT);
-    CREATE TABLE entity(name TEXT); CREATE TABLE offsets_entry(path TEXT,va TEXT);
+    CREATE TABLE entity(ID INTEGER,name TEXT); CREATE TABLE offsets_entry(path TEXT,va TEXT);
     CREATE TABLE lua_native_registration(record_id TEXT,va TEXT);
     CREATE TABLE ui_line(path TEXT,line INTEGER,text TEXT);
     CREATE VIRTUAL TABLE record_fts USING fts5(id UNINDEXED,name,text,tokenize='trigram');
     CREATE VIRTUAL TABLE ui_line_fts USING fts5(path UNINDEXED,line UNINDEXED,text,tokenize='trigram');`)
-  const row = db.prepare('INSERT INTO entity VALUES (?)')
+  const row = db.prepare('INSERT INTO entity VALUES (?, ?)')
   const record = db.prepare('INSERT INTO record VALUES (?,?,?,?,?,?,?)')
   const index = db.prepare('INSERT INTO record_fts VALUES (?,?,?)')
   for (const kind of kinds) {
     const id = `${kind}:1`
-    const result = row.run(kind)
+    const result = row.run(kinds.indexOf(kind) + 1, kind)
     record.run(id, kind, kind, 'entity', result.lastInsertRowid, '', '')
     index.run(id, kind, '')
   }
@@ -163,7 +163,7 @@ test('compares previous versions, shrink, drift and explicit override', () => {
   expect(gate(candidate, previous, '--allow-shrink', '--prepare').status).toBe(0)
   expect(JSON.parse(gate(candidate, previous, '--allow-shrink').stdout).version).toBe('2.0.0')
   db = new DatabaseSync(previous)
-  db.exec('DROP TABLE removed_table; INSERT INTO entity SELECT name FROM entity')
+  db.exec('DROP TABLE removed_table; INSERT INTO entity SELECT ID + 100, name FROM entity')
   db.close()
   expect(gate(candidate, previous, '--prepare').status).not.toBe(0)
   expect(gate(candidate, previous, '--allow-shrink', '--prepare').status).toBe(0)
@@ -197,6 +197,24 @@ test('changed IDs for the same source Record require a major version', () => {
   db.close()
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
   expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('2.0.0')
+})
+test('duplicate names and reordered physical rows do not change stable source identity', () => {
+  const candidate = fixture()
+  const db = new DatabaseSync(candidate)
+  db.exec(
+    "INSERT INTO entity VALUES (100,'duplicate'); UPDATE entity SET name='duplicate' WHERE ID=1; UPDATE record SET name='duplicate' WHERE id='spell:1'; UPDATE record_fts SET name='duplicate' WHERE id='spell:1'; INSERT INTO record VALUES ('spell:100','spell','duplicate','entity',26,'',''); INSERT INTO record_fts VALUES ('spell:100','duplicate','')"
+  )
+  db.close()
+  const previous = `${candidate}.previous`
+  seal(candidate)
+  copyFileSync(candidate, previous)
+  const changed = new DatabaseSync(candidate)
+  changed.exec(
+    "UPDATE meta SET value='{\"fixture\":\"two\"}' WHERE key='input_pins'; UPDATE entity SET rowid=200 WHERE ID=1; UPDATE entity SET rowid=1 WHERE ID=100; UPDATE entity SET rowid=26 WHERE ID=1; UPDATE record SET source_row=CASE source_row WHEN 1 THEN 26 WHEN 26 THEN 1 ELSE source_row END WHERE kind='spell'"
+  )
+  changed.close()
+  expect(gate(candidate, previous, '--prepare').status).toBe(0)
+  expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('1.0.1')
 })
 
 test('rejects invalid declared logical hashes', () => {

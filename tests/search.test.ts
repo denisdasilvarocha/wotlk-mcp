@@ -37,6 +37,7 @@ beforeAll(async () => {
     ['item:10', 'item', 'dragons', '', ''],
     ['item:11', 'item', 'Quote "AND" -star*', '', '']
   ]
+  rows.push(['item:12', 'item', 'Hidden description', `${'padding '.repeat(30)}needle here`, ''])
   for (const [id, kind, name, description, hint] of rows) {
     insert.run(id, kind, name, 'world_example', 1, description, hint)
     fts.run(id, name, description)
@@ -46,6 +47,7 @@ beforeAll(async () => {
   )
   db.prepare('INSERT INTO ui_file VALUES (?)').run('FrameXML/Test.lua')
   insert.run('file:FrameXML/Test.lua', 'file', 'FrameXML/Test.lua', 'ui_file', 1, '', '')
+  fts.run('file:FrameXML/Test.lua', 'FrameXML/Test.lua', '')
   const line = db.prepare('INSERT INTO ui_line VALUES (?, ?, ?)')
   const lineFts = db.prepare('INSERT INTO ui_line_fts VALUES (?, ?, ?)')
   for (let i = 1; i <= 205; i++) {
@@ -56,6 +58,7 @@ beforeAll(async () => {
   }
   db.prepare('INSERT INTO ui_file VALUES (?)').run('GlueXML/Other.xml')
   insert.run('file:GlueXML/Other.xml', 'file', 'GlueXML/Other.xml', 'ui_file', 2, '', '')
+  fts.run('file:GlueXML/Other.xml', 'GlueXML/Other.xml', '')
   line.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   db.close()
@@ -140,6 +143,21 @@ test('punctuation, short queries and fuzzy fallback stay literal', async () => {
     ].map((args) => search(args))
   )
   for (const result of invalid) expect(result.isError).toBe(true)
+})
+
+test('file names and exact IDs are searchable only with the file filter', async () => {
+  expect(await text({ query: 'file:FrameXML/Test.lua', kind: ['file'] })).toContain(
+    'file:FrameXML/Test.lua'
+  )
+  expect(await text({ query: 'Test.lua', kind: ['file'] })).toContain('file:FrameXML/Test.lua')
+  expect(await text({ query: 'Test.lua' })).not.toContain('file:FrameXML/Test.lua')
+  expect(await text({ query: 'file:FrameXML/Test.lua', kind: ['spell'] })).not.toContain(
+    'file:FrameXML/Test.lua'
+  )
+})
+
+test('description snippets include a match beyond the prefix', async () => {
+  expect(await text({ query: 'needle', kind: ['item'] })).toContain('needle here')
 })
 
 test('explicit source lines are literal, paginated, and isolated from ordinary search', async () => {

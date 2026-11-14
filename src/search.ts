@@ -29,7 +29,8 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   const files = input.kind?.includes('file') ?? false
   if (files && characters(query).length < 3) throw new Error('source search needs ≥ 3 characters')
   const params: Record<string, SQLInputValue> = { query, prefix: `${literalLike(query)}%` }
-  let kindFilter = "AND r.kind <> 'file'"
+  let kindFilter = ''
+  if (!files) kindFilter = "AND r.kind <> 'file'"
   if (input.kind)
     kindFilter += ` AND r.kind IN (${
       input.kind
@@ -103,7 +104,7 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
   ).all(params)
   const lines = rows.map((row) => {
     const id = String(row.id)
-    if (row.kind === 'file')
+    if (row.kind === 'file' && Number(row.line) > 0)
       return `${id}:${String(row.line)} — ${String(row.search_text).replace(/\s+/g, ' ').trim().slice(0, 160)}`
     const name = String(row.name)
     let detailValue = row.hint
@@ -111,7 +112,16 @@ export function searchRecords(db: DatabaseSync, input: SearchInput): string {
     const detail = String(detailValue).replace(/\s+/g, ' ').trim()
     let line = id
     if (id.slice(id.indexOf(':') + 1) !== name) line += ` ${name}`
-    if (detail) line += ` — ${detail.slice(0, 160)}`
+    if (detail) {
+      let position = 0
+      if (row.tier === 4)
+        position =
+          terms
+            .map((term) => detail.toLowerCase().indexOf(term.toLowerCase()))
+            .find((index) => index >= 0) ?? 0
+      const start = Math.max(0, position - 40)
+      line += ` — ${detail.slice(start, start + 160)}`
+    }
     return line
   })
   let start = 0

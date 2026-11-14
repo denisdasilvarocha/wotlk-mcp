@@ -214,23 +214,33 @@ try {
     )
     for (const kind of oldKinds) if (!kindSet.has(kind)) breaking = true
     for (const kind of kindSet) if (!oldKinds.has(kind)) addition = true
-    if (
-      before.get('record')?.has('id') &&
-      before.get('record')?.has('source_table') &&
-      before.get('record')?.has('source_row') &&
-      before.get('record')?.has('kind') &&
-      before.get('record')?.has('name')
-    ) {
+    if (before.has('record') && after.has('record')) {
       db.prepare('ATTACH DATABASE ? AS previous_gate').run(previous)
       try {
-        if (
-          db
-            .prepare(
-              'SELECT 1 FROM previous_gate.record p JOIN main.record c ON c.kind=p.kind AND c.name=p.name AND c.source_table=p.source_table AND c.source_row=p.source_row WHERE c.id<>p.id LIMIT 1'
-            )
-            .get()
-        )
-          breaking = true
+        const sources = rows(db, 'SELECT DISTINCT source_table FROM record')
+        for (const { source_table } of sources) {
+          const table = String(source_table)
+          const columns = after.get(table)
+          const oldColumns = before.get(table)
+          if (!columns || !oldColumns) continue
+          const key = ['ID', 'entry', 'path', 'command', 'name'].find(
+            (name) => columns.has(name) && oldColumns.has(name)
+          )
+          if (!key) continue
+          const keys = [key]
+          if (table === 'lua_method' && columns.has('declaringWidget')) keys.push('declaringWidget')
+          const equal = keys.map((name) => `s.${quote(name)} IS t.${quote(name)}`).join(' AND ')
+          if (
+            db
+              .prepare(`SELECT 1 FROM previous_gate.record p
+            JOIN previous_gate.${quote(table)} s ON s.rowid=p.source_row
+            JOIN main.${quote(table)} t ON ${equal}
+            JOIN main.record c ON c.source_row=t.rowid AND c.source_table=p.source_table AND c.kind=p.kind
+            WHERE p.source_table=? AND c.id<>p.id LIMIT 1`)
+              .get(table)
+          )
+            breaking = true
+        }
       } finally {
         db.exec('DETACH DATABASE previous_gate')
       }

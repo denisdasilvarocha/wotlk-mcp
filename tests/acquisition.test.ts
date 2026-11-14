@@ -47,7 +47,7 @@ const server = createServer((req, res) => {
     res.writeHead(Number(scenario)).end()
     return
   }
-  if (req.url === '/releases') {
+  if (req.url === '/releases' || req.url === '/page2') {
     let digest: string | undefined = `sha256:${createHash('sha256').update(data).digest('hex')}`
     if (scenario === 'missing') digest = undefined
     if (scenario === 'bad') digest = `sha256:${'0'.repeat(64)}`
@@ -58,6 +58,11 @@ const server = createServer((req, res) => {
       { tag_name: 'db-v2.0.0', prerelease: false, draft: false, assets: [asset] }
     ]
     let version = 'db-v1.2.0'
+    if (scenario === 'pagination' && req.url === '/releases') {
+      res.setHeader('link', `<${base}/page2>; rel="next"`)
+      res.end(JSON.stringify(releases))
+      return
+    }
     if (scenario === 'rollback') version = 'db-v1.1.0'
     if (scenario !== 'higher')
       releases.push(
@@ -154,6 +159,32 @@ test('acquires the newest compatible published reference and uses optional token
     expect(authorization).toBe('Bearer example-token')
   } finally {
     await client.close()
+  }
+})
+test('fresh acquisition follows release pages and persists once-per-session major guidance', async () => {
+  const cache = mkdtempSync(path.join(dir, 'paginated-'))
+  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  scenario = 'pagination'
+  requests = []
+  const first = await launch(env)
+  try {
+    expect(JSON.stringify(await call(first))).toContain(
+      'note: newer reference data needs wotlk-mcp@2'
+    )
+    expect(JSON.stringify(await call(first))).not.toContain('note: newer reference data')
+    expect(requests).toEqual(['/releases', '/page2', '/asset'])
+  } finally {
+    await first.close()
+  }
+  scenario = 'offline'
+  const second = await launch(env)
+  try {
+    expect(JSON.stringify(await call(second))).toContain(
+      'note: newer reference data needs wotlk-mcp@2'
+    )
+    expect(JSON.stringify(await call(second))).not.toContain('note: newer reference data')
+  } finally {
+    await second.close()
   }
 })
 

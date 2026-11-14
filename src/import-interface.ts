@@ -109,6 +109,7 @@ export function importInterface(db: DatabaseSync, directory: string, manifestHas
       '',
       ''
     )
+    recordFts.run(`file:${relativePath}`, relativePath, '')
     const lines = text.split(/\r\n|\n|\r/)
     if (lines.at(-1) === '') lines.pop()
     let blockComment = false
