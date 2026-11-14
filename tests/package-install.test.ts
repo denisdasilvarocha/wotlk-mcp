@@ -71,6 +71,6 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     expect(result.isError).not.toBe(true)
   } finally {
     await client.close()
-    rmSync(directory, { recursive: true, force: true })
+    rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
   }
 }, 180_000)

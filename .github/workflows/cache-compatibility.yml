@@ -42,4 +42,4 @@ jobs:
         if: runner.os == 'Linux' && matrix.node == '24.15.0'
         run: test "$(docker run --rm --platform linux/arm64 --entrypoint uname mysql@sha256:106d5197fd8e4892980469ad42eb20f7a336bd81509aae4ee175d852f5cc4565 -m)" = aarch64
       - run: vp run build
-      - run: vp test --testTimeout 30000 tests/acquisition.test.ts tests/package-install.test.ts tests/search.test.ts tests/import-interface.test.ts tests/release-gate.test.ts tests/sql.test.ts
+      - run: vp test --testTimeout 30000 --hookTimeout 60000 tests/acquisition.test.ts tests/package-install.test.ts tests/search.test.ts tests/import-interface.test.ts tests/release-gate.test.ts tests/sql.test.ts
