@@ -299,10 +299,10 @@ async function exportWorld(
       const select = db.prepare(
         `SELECT ${columns.map(({ name }) => quoteSqlite(name)).join(',')} FROM ${quoteSqlite(destination)} ORDER BY rowid`
       )
+      let sqliteCount = 0n
 
       select.setReadBigInts(true)
 
-      let sqliteCount = 0n
       const sqliteHash = createHash('sha256')
 
       for (const row of select.iterate()) {

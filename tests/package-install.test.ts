@@ -40,6 +40,7 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     initReference(database)
 
     const archive = packPackage(directory)
+    let command = 'npx'
     const files = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' })
 
     expect(files).not.toMatch(/\.sqlite(?:\.br)?$/m)
@@ -54,7 +55,6 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     )
     run('vp', ['install'], directory)
 
-    let command = 'npx'
     const installed = JSON.parse(
       readFileSync(path.join(directory, 'node_modules/wotlk-mcp/package.json'), 'utf8')
     )
