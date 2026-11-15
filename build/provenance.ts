@@ -4,7 +4,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Sources } from './sources.ts'
-import { canonicalTableHash } from './table-hash.ts'
+import { canonicalTableHash, canonicalTables } from './table-hash.ts'
 
 export function writeProvenance(database: string, notice: string, inputs: Sources): void {
   if (path.resolve(database) === path.resolve(notice))
@@ -120,14 +120,7 @@ export function writeProvenance(database: string, notice: string, inputs: Source
 
     metadata.run('codex.node_image', inputs.codexNodeImage)
 
-    const tables = db
-      .prepare(
-        "SELECT name FROM pragma_table_list WHERE schema = 'main' AND type = 'table' AND name NOT LIKE 'sqlite_%' AND name <> 'meta' ORDER BY name COLLATE BINARY"
-      )
-      .all()
-
-    for (const table of tables) {
-      const name = String(table.name)
+    for (const name of canonicalTables(db)) {
       const { hash, count } = canonicalTableHash(db, name)
 
       metadata.run(`canonical_hash.${name}`, hash)

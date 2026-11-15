@@ -4,11 +4,10 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { schema } from '../src/schema.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-search-'))
 const dbPath = path.join(dir, 'reference.sqlite')
@@ -72,13 +71,7 @@ beforeAll(async () => {
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   db.close()
   unpackPackage(dir)
-  await client.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(dir, 'package/dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: dbPath }
-    })
-  )
+  await client.connect(packagedServer(dir, dbPath))
 })
 
 afterAll(async () => {

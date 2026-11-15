@@ -40,20 +40,18 @@ if (registry.status === 404)
 
 if (!registry.ok) throw new Error(`npm registry lookup failed: ${registry.status}`)
 
-if (registry.ok) {
-  const metadata = await registry.json()
+const metadata = await registry.json()
 
-  if (!metadata.versions || typeof metadata.versions !== 'object')
-    throw new Error('invalid npm registry metadata')
+if (!metadata.versions || typeof metadata.versions !== 'object')
+  throw new Error('invalid npm registry metadata')
 
-  for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
-    const parsed = semver.exec(publishedVersion)
+for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
+  const parsed = semver.exec(publishedVersion)
 
-    if (!parsed) continue
-    if (publishedVersion === pkg.version) throw new Error('package version already published')
-    if (parsed[1] === version[1] && published.wotlkSchemaMajor !== pkg.wotlkSchemaMajor)
-      throw new Error('schema major changed without a package-major change')
-  }
+  if (!parsed) continue
+  if (publishedVersion === pkg.version) throw new Error('package version already published')
+  if (parsed[1] === version[1] && published.wotlkSchemaMajor !== pkg.wotlkSchemaMajor)
+    throw new Error('schema major changed without a package-major change')
 }
 
 async function checkReleasePage(page) {

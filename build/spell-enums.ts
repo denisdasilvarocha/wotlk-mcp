@@ -5,10 +5,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { z } from 'zod'
 
 import { parseEnum } from './enum-parser.ts'
-
-function quote(value: string): string {
-  return `"${value.replaceAll('"', '""')}"`
-}
+import { quoteIdentifier } from './table-hash.ts'
 
 export function importSpellEnums(database: string, sourceDirectory: string): void {
   const headers = [
@@ -60,7 +57,7 @@ export function importSpellEnums(database: string, sourceDirectory: string): voi
 
     function columns(table: string): string[] {
       return db
-        .prepare(`PRAGMA table_info(${quote(table)})`)
+        .prepare(`PRAGMA table_info(${quoteIdentifier(table)})`)
         .all()
         .map((row) => String(row.name))
     }
@@ -152,7 +149,7 @@ export function importSpellEnums(database: string, sourceDirectory: string): voi
 
       const rows = db
         .prepare(
-          `SELECT ${quote(targetField)} AS id, ${quote(nameColumn)} AS name FROM ${quote(target)}`
+          `SELECT ${quoteIdentifier(targetField)} AS id, ${quoteIdentifier(nameColumn)} AS name FROM ${quoteIdentifier(target)}`
         )
         .all()
 

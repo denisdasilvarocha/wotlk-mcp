@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
-import { addLink } from './links.ts'
+import { addLinkRows } from './links.ts'
 
 export function buildClientFactionSpawnLinks(file: string): void {
   if (!existsSync(file)) throw new Error(`Reference database not found: ${file}`)
@@ -16,13 +16,8 @@ export function buildClientFactionSpawnLinks(file: string): void {
         "DELETE FROM link WHERE relation IN ('contains', 'grants', 'belongs to', 'faction', 'spawns in')"
       )
 
-      function addRows(
-        query: string,
-        relation: string,
-        note?: (row: Record<string, unknown>) => string
-      ): void {
-        for (const row of db.prepare(query).iterate())
-          addLink(db, String(row.source), relation, String(row.destination), note?.(row) ?? '')
+      function addRows(query: string, relation: string): void {
+        addLinkRows(db, query, relation)
       }
 
       function arrays(
@@ -35,12 +30,11 @@ export function buildClientFactionSpawnLinks(file: string): void {
       ): void {
         for (let i = 1; i <= count; i++)
           addRows(
-            `SELECT '${from}:' || t.ID AS source, '${to}:' || t.${prefix}_${i} AS destination
-          FROM ${table} t JOIN record s ON s.id = '${from}:' || t.ID
+            `SELECT '${from}:' || t.ID AS source, '${to}:' || t.${prefix}_${i} AS destination,
+          '${prefix}_${i}' AS note FROM ${table} t JOIN record s ON s.id = '${from}:' || t.ID
           JOIN record d ON d.id = '${to}:' || t.${prefix}_${i}
           WHERE t.${prefix}_${i} > 0`,
-            relation,
-            () => `${prefix}_${i}`
+            relation
           )
       }
 
@@ -48,19 +42,17 @@ export function buildClientFactionSpawnLinks(file: string): void {
       arrays('dbc_Talent', 'SpellRank', 9, 'talent', 'spell', 'grants')
       addRows(
         `SELECT 'spell:' || a.Spell AS source, 'skillline:' || a.SkillLine AS destination,
-      a.ID AS evidence FROM dbc_SkillLineAbility a
+      'SkillLineAbility ' || COALESCE(a.ID, 'null') AS note FROM dbc_SkillLineAbility a
       JOIN record s ON s.id = 'spell:' || a.Spell
       JOIN record d ON d.id = 'skillline:' || a.SkillLine`,
-        'belongs to',
-        (r) => `SkillLineAbility ${String(r.evidence)}`
+        'belongs to'
       )
       addRows(
         `SELECT 'creature:' || c.entry AS source, 'faction:' || f.Faction AS destination,
-      f.ID AS evidence FROM world_creature_template c JOIN dbc_FactionTemplate f ON f.ID = c.faction
+      'FactionTemplate ' || COALESCE(f.ID, 'null') AS note FROM world_creature_template c JOIN dbc_FactionTemplate f ON f.ID = c.faction
       JOIN record s ON s.id = 'creature:' || c.entry
       JOIN record d ON d.id = 'faction:' || f.Faction`,
-        'faction',
-        (r) => `FactionTemplate ${String(r.evidence)}`
+        'faction'
       )
 
       for (const kind of ['creature', 'gameobject']) {
@@ -72,12 +64,11 @@ export function buildClientFactionSpawnLinks(file: string): void {
 
         addRows(
           `SELECT '${kind}:' || spawn.id AS source, 'map:' || spawn.map AS destination,
-        COUNT(*) AS count FROM (SELECT guid, id, map FROM world_${kind}${variants}) spawn
+        COUNT(*) || ' stored spawn rows' AS note FROM (SELECT guid, id, map FROM world_${kind}${variants}) spawn
         JOIN record s ON s.id = '${kind}:' || spawn.id
         JOIN record d ON d.id = 'map:' || spawn.map
         GROUP BY spawn.id, spawn.map`,
-          'spawns in',
-          (r) => `${String(r.count)} stored spawn rows`
+          'spawns in'
         )
       }
 

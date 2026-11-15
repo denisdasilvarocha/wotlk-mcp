@@ -5,11 +5,10 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 function runner(dir: string): string {
   const file = path.join(dir, 'run-world.ts')
@@ -330,17 +329,7 @@ esac
 
     const client = new Client({ name: 'world-test', version: '1' })
 
-    await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [path.join(dir, 'package/dist/index.mjs')],
-        env: Object.fromEntries(
-          Object.entries({ ...process.env, WOTLK_MCP_DB: database }).filter(
-            (entry): entry is [string, string] => entry[1] !== undefined
-          )
-        )
-      })
-    )
+    await client.connect(packagedServer(dir, database))
 
     try {
       const response = await client.callTool({

@@ -3,7 +3,7 @@ import { createReadStream, readFileSync, statSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { createBrotliDecompress } from 'node:zlib'
 
-import { canonicalTableHash } from '../build/table-hash.ts'
+import { canonicalTableHash, canonicalTables, quoteIdentifier } from '../build/table-hash.ts'
 import { kinds, relations } from '../src/schema.ts'
 
 let usedVersions: unknown = []
@@ -34,13 +34,6 @@ if (usedVersionsFile !== undefined)
 
 if (!Array.isArray(usedVersions)) throw new Error('Invalid used versions')
 const db = new DatabaseSync(database)
-
-function tables(connection: DatabaseSync): string[] {
-  return rows(
-    connection,
-    "SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%' AND name <> 'meta' ORDER BY name COLLATE BINARY"
-  ).map((row) => String(row.name))
-}
 
 function rows(
   connection: DatabaseSync,
@@ -85,7 +78,7 @@ function counts(connection: DatabaseSync): Record<string, number> {
   const result: Record<string, number> = {}
 
   for (const name of schema(connection).keys())
-    result[`table:${name}`] = scalar(connection, `SELECT count(*) FROM ${quote(name)}`)
+    result[`table:${name}`] = scalar(connection, `SELECT count(*) FROM ${quoteIdentifier(name)}`)
 
   for (const row of rows(connection, 'SELECT kind, count(*) AS n FROM record GROUP BY kind'))
     result[`kind:${String(row.kind)}`] = Number(row.n)
@@ -104,7 +97,7 @@ function schema(connection: DatabaseSync): Map<string, Map<string, string>> {
   )
 
   for (const { name } of names) {
-    const columns = rows(connection, `PRAGMA table_xinfo(${quote(String(name))})`)
+    const columns = rows(connection, `PRAGMA table_xinfo(${quoteIdentifier(String(name))})`)
 
     result.set(
       String(name),
@@ -117,10 +110,6 @@ function schema(connection: DatabaseSync): Map<string, Map<string, string>> {
   }
 
   return result
-}
-
-function quote(s: string): string {
-  return `"${s.replaceAll('"', '""')}"`
 }
 
 function scalar(connection: DatabaseSync, sql: string): number {
@@ -181,7 +170,7 @@ try {
     'Missing Link endpoint'
   )
 
-  const sourceTables = new Set(tables(db))
+  const sourceTables = new Set(canonicalTables(db))
 
   for (const row of rows(db, 'SELECT DISTINCT source_table FROM record')) {
     const name = String(row.source_table)
@@ -191,7 +180,7 @@ try {
     if (
       db
         .prepare(
-          `SELECT r.id FROM record r LEFT JOIN ${quote(name)} s ON s.rowid=r.source_row WHERE r.source_table=? AND s.rowid IS NULL LIMIT 1`
+          `SELECT r.id FROM record r LEFT JOIN ${quoteIdentifier(name)} s ON s.rowid=r.source_row WHERE r.source_table=? AND s.rowid IS NULL LIMIT 1`
         )
         .get(name)
     )
@@ -307,13 +296,15 @@ try {
 
           if (table === 'lua_method' && columns.has('declaringWidget')) keys.push('declaringWidget')
 
-          const equal = keys.map((name) => `s.${quote(name)} IS t.${quote(name)}`).join(' AND ')
+          const equal = keys
+            .map((name) => `s.${quoteIdentifier(name)} IS t.${quoteIdentifier(name)}`)
+            .join(' AND ')
 
           if (
             db
               .prepare(`SELECT 1 FROM previous_gate.record p
-            JOIN previous_gate.${quote(table)} s ON s.rowid=p.source_row
-            JOIN main.${quote(table)} t ON ${equal}
+            JOIN previous_gate.${quoteIdentifier(table)} s ON s.rowid=p.source_row
+            JOIN main.${quoteIdentifier(table)} t ON ${equal}
             JOIN main.record c ON c.source_row=t.rowid AND c.source_table=p.source_table AND c.kind=p.kind
             WHERE p.source_table=? AND c.id<>p.id LIMIT 1`)
               .get(table)
@@ -345,8 +336,8 @@ try {
         if ((currentCounts[key] ?? 0) * 100 < count * 95) fail(`Excessive shrink: ${key}`)
 
     if (currentPins === pins(old)) {
-      const beforeTables = tables(old),
-        afterTables = tables(db)
+      const beforeTables = canonicalTables(old),
+        afterTables = canonicalTables(db)
 
       if (JSON.stringify(beforeTables) !== JSON.stringify(afterTables))
         fail('Unchanged input pins with logical drift')

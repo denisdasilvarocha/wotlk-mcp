@@ -4,12 +4,11 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
 import { importSpellEnums } from '../build/spell-enums.ts'
-import { unpackPackage } from './package.js'
+import { packagedServer, unpackPackage } from './package.js'
 
 test('spell mappings validate fields and materialize named references without changing raw data', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'spell-enums-'))
@@ -127,13 +126,7 @@ test('spell mappings validate fields and materialize named references without ch
 
     const client = new Client({ name: 'test-spell', version: '1' })
 
-    await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [path.join(dir, 'package/dist/index.mjs')],
-        env: { ...process.env, WOTLK_MCP_DB: database }
-      })
-    )
+    await client.connect(packagedServer(dir, database))
 
     try {
       const get = JSON.stringify(

@@ -12,8 +12,7 @@ export function importWorldEnums(database: string, sourceDirectory: string): voi
     'src/server/shared/SharedDefines.h',
     'src/server/game/Entities/Item/ItemTemplate.h',
     'src/server/game/Entities/Unit/UnitDefines.h',
-    'src/server/game/Quests/QuestDef.h',
-    'src/server/game/Spells/Auras/SpellAuraDefines.h'
+    'src/server/game/Quests/QuestDef.h'
   ]
   const headers = paths.map((name) => readFileSync(path.join(sourceDirectory, name), 'utf8'))
   const schema = z
@@ -118,8 +117,6 @@ export function importWorldEnums(database: string, sourceDirectory: string): voi
     }
 
     const names = new Set(mappings.map((mapping) => mapping.name))
-
-    names.add('AuraType')
 
     const insertValue = db.prepare(
       'INSERT INTO enum_value (enum_name, value, name) VALUES (?, ?, ?)'

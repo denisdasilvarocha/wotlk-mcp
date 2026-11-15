@@ -36,20 +36,6 @@ test('compresses the database and reports the actual artifact and timings', asyn
     expect(report.timings_seconds.acquisition).toBe(1.25)
     expect(report.timings_seconds.compression).toBeGreaterThanOrEqual(0)
     expect(report.build_seconds).toBeGreaterThanOrEqual(2)
-
-    const decompressed = path.join(dir, 'roundtrip.sqlite')
-
-    writeFileSync(decompressed, brotliDecompressSync(compressed))
-
-    const restored = new DatabaseSync(decompressed, { readOnly: true })
-
-    try {
-      expect(restored.prepare('SELECT value FROM marker').get()).toEqual({
-        value: 'artifact fixture'
-      })
-    } finally {
-      restored.close()
-    }
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

@@ -4,12 +4,11 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, expect, test } from 'vite-plus/test'
 
 import { buildLootLinks } from '../build/loot-links.ts'
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-loot-'))
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
@@ -99,13 +98,7 @@ test('loot paths survive artifact and packed related/sql surfaces', async () => 
 
   const client = new Client({ name: 'loot-test', version: '1' })
 
-  await client.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(dir, 'package/dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: file }
-    })
-  )
+  await client.connect(packagedServer(dir, file))
 
   try {
     expect(

@@ -2,22 +2,16 @@ import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
   fmt: {
-    ignorePatterns: [],
     jsdoc: true,
-    objectWrap: 'preserve',
-    printWidth: 100,
     proseWrap: 'never',
     semi: false,
     singleAttributePerLine: true,
     singleQuote: true,
     sortImports: true,
     sortPackageJson: { sortScripts: true },
-    tabWidth: 2,
-    trailingComma: 'none',
-    useTabs: false
+    trailingComma: 'none'
   },
   lint: {
-    ignorePatterns: [],
     categories: {
       correctness: 'error',
       perf: 'error',
@@ -77,14 +71,7 @@ export default defineConfig({
     }
   },
   pack: {
-    deps: {
-      // tsdown <0.23 compatibility: resolve external dependency subpaths.
-      // Remove to preserve subpath imports as written (the new default).
-      // https://tsdown.dev/options/dependencies#deps-resolvedepsubpath
-      resolveDepSubpath: true
-    },
-    entry: ['src/index.ts', 'src/sql-worker.ts'],
-    format: ['esm']
+    entry: ['src/index.ts', 'src/sql-worker.ts']
   },
   staged: { '*': 'vp check --fix' }
 })

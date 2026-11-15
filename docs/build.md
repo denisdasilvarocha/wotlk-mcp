@@ -2,16 +2,9 @@
 
 Build the complete local reference and stdio server from the repository root. Building does not authorize publication; see [release operations](releases.md).
 
-## Prerequisites
-
-Install Node.js 24.15.0 or newer, [Vite+](https://viteplus.dev/guide/) (`vp` and `vpx`), Git, Python 3, `tar`, and the GitHub CLI (`gh`), authenticated with release-read access to the private `denisdasilvarocha/wotlk-mcp` client-inputs release. Docker with Buildx must be able to run linux/amd64 images, using emulation where necessary. Allow disk space for sources, disposable MySQL databases and output.
-
 ## Build and outputs
 
-```sh
-vp install
-vp run build
-```
+Install the prerequisites and run the commands in [Build and run locally](../README.md#build-and-run-locally). Docker must be able to run linux/amd64 images, using emulation where necessary.
 
 The command creates a fresh `output/`, acquires inputs, constructs the reference and packs the server and SQL worker. It prints the database path and a shell-quoted command for launching the server. Outputs include `wotlk.sqlite`, `wotlk.sqlite.br`, `fidelity.json`, `NOTICE.md` and `build-report.json`, along with acquired inputs and evidence. Handle client-derived inputs according to their mixed rights.
 

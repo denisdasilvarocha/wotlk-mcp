@@ -30,3 +30,8 @@ export function addLink(
     JSON.stringify(notes)
   )
 }
+
+export function addLinkRows(db: DatabaseSync, query: string, relation: string): void {
+  for (const row of db.prepare(query).iterate())
+    addLink(db, String(row.source), relation, String(row.destination), String(row.note))
+}

@@ -4,12 +4,11 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
 import { buildWorldLinks } from '../build/world-links.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 test('world keys navigate both ways while SQL retains source evidence', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-links-'))
@@ -45,13 +44,7 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
     db.close()
     buildWorldLinks(database)
     unpackPackage(dir)
-    await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [path.join(dir, 'package/dist/index.mjs')],
-        env: { ...process.env, WOTLK_MCP_DB: database }
-      })
-    )
+    await client.connect(packagedServer(dir, database))
 
     async function text(name: string, args: Record<string, unknown>): Promise<string> {
       return JSON.stringify(await client.callTool({ name, arguments: args }))

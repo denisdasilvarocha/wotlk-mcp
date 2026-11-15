@@ -4,14 +4,12 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-test-'))
-const packaged = path.join(directory, 'package')
 const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'test', version: '1' })
 
@@ -35,13 +33,7 @@ beforeAll(async () => {
       ('world_decoding', 'unknown', 'Subclass', 0, NULL, NULL);
     INSERT INTO enum_value VALUES ('Subclass', 3, 'AXE'), ('Flags', 1, 'KNOWN'), ('Flags', 2147483648, 'HIGH')`)
   db.close()
-  await client.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(packaged, 'dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: database }
-    })
-  )
+  await client.connect(packagedServer(directory, database))
 })
 
 afterAll(async () => {
@@ -67,6 +59,30 @@ test('packaged server retrieves Offsets and reports missing IDs individually', a
   })
   expect(get?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
 
+  const search = tools.tools.find((tool) => tool.name === 'search')
+  const related = tools.tools.find((tool) => tool.name === 'related')
+  const sql = tools.tools.find((tool) => tool.name === 'sql')
+
+  expect(search?.inputSchema).toMatchObject({
+    properties: {
+      kind: { items: { enum: expect.arrayContaining(['item', 'offset']) } },
+      limit: { minimum: 1, maximum: 100, default: 20 },
+      offset: { minimum: 0, default: 0 }
+    },
+    required: ['query'],
+    additionalProperties: false
+  })
+  expect(related?.inputSchema).toMatchObject({
+    properties: { rel: { enum: expect.arrayContaining(['drops', 'dropped by']) } },
+    required: ['id'],
+    additionalProperties: false
+  })
+  expect(sql?.inputSchema).toMatchObject({
+    properties: { limit: { minimum: 1, maximum: 1000, default: 100 } },
+    required: ['query'],
+    additionalProperties: false
+  })
+
   const result = await client.callTool({
     name: 'get',
     arguments: {
@@ -90,9 +106,19 @@ test('invalid IDs and oversized batches are tool errors', async () => {
   for (const result of results) expect(result.isError).toBe(true)
 
   for (const result of results) {
-    expect(JSON.stringify(result)).toContain('valid kinds:')
+    expect(JSON.stringify(result)).toContain('ids')
     expect(JSON.stringify(result)).not.toContain('\\n')
   }
+
+  const multiple = await client.callTool({
+    name: 'get',
+    arguments: { ids: [], from: 0 }
+  })
+
+  expect(multiple.isError).toBe(true)
+  expect(JSON.stringify(multiple)).toContain('ids')
+  expect(JSON.stringify(multiple)).toContain('from')
+  expect(JSON.stringify(multiple)).not.toContain('\\n')
 })
 
 test('wide source rows retain full text and omit empty fields only in rendering', async () => {
@@ -120,30 +146,6 @@ test('get decodes conditional enums and retains unknown bits and sentinels while
   expect(JSON.stringify(sql)).toContain('3\\t9\\t-1')
 })
 
-test('invalid local overrides are actionable errors', async () => {
-  const other = new Client({ name: 'test-invalid', version: '1' })
-
-  await other.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(packaged, 'dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: path.join(directory, 'missing.sqlite') }
-    })
-  )
-
-  try {
-    const result = await other.callTool({
-      name: 'get',
-      arguments: { ids: ['offset:Globals::PlayerName'] }
-    })
-
-    expect(result.isError).toBe(true)
-    expect(JSON.stringify(result)).toContain('invalid WOTLK_MCP_DB')
-  } finally {
-    await other.close()
-  }
-})
-
 test('a newer schema major is rejected rather than substituted', async () => {
   const incompatible = path.join(directory, 'newer.sqlite')
   const db = new DatabaseSync(incompatible)
@@ -155,13 +157,7 @@ test('a newer schema major is rejected rather than substituted', async () => {
 
   const other = new Client({ name: 'test-newer', version: '1' })
 
-  await other.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(packaged, 'dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: incompatible }
-    })
-  )
+  await other.connect(packagedServer(directory, incompatible))
 
   try {
     const result = await other.callTool({

@@ -6,12 +6,11 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { importClientData } from '../build/client.js'
 import { initReference } from '../build/offsets.js'
-import { unpackPackage } from './package.js'
+import { packagedServer, unpackPackage } from './package.js'
 
 function digest(data: Buffer | string): string {
   return createHash('sha256').update(data).digest('hex')
@@ -140,13 +139,7 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
     })
     result.close()
     unpackPackage(dir)
-    await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [path.join(dir, 'package', 'dist/index.mjs')],
-        env: { ...process.env, WOTLK_MCP_DB: db }
-      })
-    )
+    await client.connect(packagedServer(dir, db))
 
     const output = await client.callTool({
       name: 'get',

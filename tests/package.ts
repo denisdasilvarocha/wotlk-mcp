@@ -2,6 +2,16 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { readdirSync, symlinkSync } from 'node:fs'
 import path from 'node:path'
 
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+
+export function packagedServer(directory: string, database: string): StdioClientTransport {
+  return new StdioClientTransport({
+    command: process.execPath,
+    args: [path.join(directory, 'package/dist/index.mjs')],
+    env: { ...process.env, WOTLK_MCP_DB: database }
+  })
+}
+
 export function unpackPackage(directory: string): void {
   const archive = packPackage(directory)
 

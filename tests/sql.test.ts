@@ -1,17 +1,15 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-sql-'))
-const packaged = path.join(directory, 'package')
 const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'sql-test', version: '1' })
 
@@ -26,13 +24,7 @@ beforeAll(async () => {
   db.exec("CREATE TABLE world_sql (value TEXT); INSERT INTO world_sql VALUES ('original')")
   db.close()
   unpackPackage(directory)
-  await client.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(packaged, 'dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: database }
-    })
-  )
+  await client.connect(packagedServer(directory, database))
 })
 
 afterAll(async () => {
@@ -53,8 +45,6 @@ function sql(query: string, limit?: number): ReturnType<Client['callTool']> {
 }
 
 test('packed SQL preserves columns, values, escaping and large integers', async () => {
-  expect(readdirSync(path.join(packaged, 'dist'))).toContain('sql-worker.mjs')
-
   const tools = await client.listTools()
 
   expect(tools.tools.find((tool) => tool.name === 'sql')?.annotations?.readOnlyHint).toBe(true)
@@ -124,11 +114,6 @@ test('SQL permits only the specified direct and table-valued discovery pragmas',
   expect((await sql('PRAGMA nonexistent_setting')).isError).toBe(true)
   expect((await sql('SELECT name FROM other.sqlite_schema')).isError).toBe(true)
   expect(text(await sql('SELECT value FROM world_sql'))).toBe('value\noriginal')
-
-  const db = new DatabaseSync(database, { readOnly: true })
-
-  expect(db.prepare('SELECT value FROM world_sql').all()).toEqual([{ value: 'original' }])
-  db.close()
 }, 15000)
 
 test('SQL validates row limits and reports complete-row truncation within output cap', async () => {

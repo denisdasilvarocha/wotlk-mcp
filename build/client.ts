@@ -4,13 +4,10 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { SourceArchive } from './sources.ts'
+import { quoteIdentifier } from './table-hash.ts'
 
 function hash(data: Buffer | string): string {
   return createHash('sha256').update(data).digest('hex')
-}
-
-function quote(s: string): string {
-  return `"${s.replaceAll('"', '""')}"`
 }
 
 function matchesBuild(text: string): boolean {
@@ -212,12 +209,12 @@ export function importClientData(
 
             if (f.type.includes('string')) type = 'TEXT'
 
-            return `${quote(f.name)} ${type}`
+            return `${quoteIdentifier(f.name)} ${type}`
           })
           .join(', ')
         const table = `dbc_${name}`
 
-        db.exec(`CREATE TABLE ${quote(table)} (${definitionsSql})`)
+        db.exec(`CREATE TABLE ${quoteIdentifier(table)} (${definitionsSql})`)
         imported.add(name)
 
         for (const f of fields)
@@ -228,7 +225,7 @@ export function importClientData(
           }
 
         const insert = db.prepare(
-          `INSERT INTO ${quote(table)} VALUES (${expanded.map(() => '?').join(',')})`
+          `INSERT INTO ${quoteIdentifier(table)} VALUES (${expanded.map(() => '?').join(',')})`
         )
         const logicalHash = createHash('sha256')
           .update(JSON.stringify(expanded.map((field) => [field.name, field.type])))

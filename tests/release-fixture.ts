@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite'
 
-import { canonicalTableHash } from '../build/table-hash.ts'
+import { canonicalTableHash, canonicalTables } from '../build/table-hash.ts'
 import { kinds, relations } from '../src/schema.ts'
 
 export function createReleaseFixture(database: string): void {
@@ -51,15 +51,9 @@ export function sealReleaseFixture(database: string): void {
 
   db.exec("DELETE FROM meta WHERE key LIKE 'canonical_hash.%' OR key LIKE 'canonical_count.%'")
 
-  const names = db
-    .prepare(
-      "SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%' AND name<>'meta'"
-    )
-    .all()
   const insert = db.prepare('INSERT INTO meta VALUES (?,?)')
 
-  for (const row of names) {
-    const name = String(row.name)
+  for (const name of canonicalTables(db)) {
     const { hash, count } = canonicalTableHash(db, name)
 
     insert.run(`canonical_hash.${name}`, hash)

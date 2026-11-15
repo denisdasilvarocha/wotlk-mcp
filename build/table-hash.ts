@@ -1,8 +1,17 @@
 import { createHash } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 
-function quote(value: string): string {
+export function quoteIdentifier(value: string): string {
   return `"${value.replaceAll('"', '""')}"`
+}
+
+export function canonicalTables(db: DatabaseSync): string[] {
+  return db
+    .prepare(
+      "SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%' AND name <> 'meta' ORDER BY name COLLATE BINARY"
+    )
+    .all()
+    .map((row) => String(row.name))
 }
 
 export function canonicalTableHash(
@@ -10,15 +19,18 @@ export function canonicalTableHash(
   name: string
 ): { hash: string; count: string } {
   const columns = db
-    .prepare(`PRAGMA table_xinfo(${quote(name)})`)
+    .prepare(`PRAGMA table_xinfo(${quoteIdentifier(name)})`)
     .all()
     .filter((column) => Number(column.hidden) === 0)
     .map((column) => String(column.name))
   const order = columns
-    .map((column) => `typeof(${quote(column)}) COLLATE BINARY, ${quote(column)} COLLATE BINARY`)
+    .map(
+      (column) =>
+        `typeof(${quoteIdentifier(column)}) COLLATE BINARY, ${quoteIdentifier(column)} COLLATE BINARY`
+    )
     .join(', ')
   const statement = db.prepare(
-    `SELECT ${columns.map(quote).join(', ')} FROM ${quote(name)} ORDER BY ${order}`
+    `SELECT ${columns.map(quoteIdentifier).join(', ')} FROM ${quoteIdentifier(name)} ORDER BY ${order}`
   )
 
   statement.setReadBigInts(true)

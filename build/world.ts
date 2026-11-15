@@ -8,6 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { promisify } from 'node:util'
 
 import type { SourceArchive } from './sources.ts'
+import { quoteIdentifier } from './table-hash.ts'
 
 const mysqlImage = 'mysql@sha256:106d5197fd8e4892980469ad42eb20f7a336bd81509aae4ee175d852f5cc4565'
 const run = promisify(execFile)
@@ -271,7 +272,7 @@ async function exportWorld(
       })
 
       db.exec(
-        `CREATE TABLE ${quoteSqlite(destination)} (${columns
+        `CREATE TABLE ${quoteIdentifier(destination)} (${columns
           .map(({ name, kind }) => {
             let type = 'TEXT'
 
@@ -279,14 +280,14 @@ async function exportWorld(
             else if (kind === 'real') type = 'REAL'
             else if (kind === 'blob') type = 'BLOB'
 
-            return `${quoteSqlite(name)} ${type}`
+            return `${quoteIdentifier(name)} ${type}`
           })
           .join(', ')})`
       )
 
       let exportCount = 0n
       const insert = db.prepare(
-        `INSERT INTO ${quoteSqlite(destination)} (${columns.map(({ name }) => quoteSqlite(name)).join(',')}) VALUES (${columns.map(() => '?').join(',')})`
+        `INSERT INTO ${quoteIdentifier(destination)} (${columns.map(({ name }) => quoteIdentifier(name)).join(',')}) VALUES (${columns.map(() => '?').join(',')})`
       )
       const exportHash = createHash('sha256')
 
@@ -297,7 +298,7 @@ async function exportWorld(
       })
 
       const select = db.prepare(
-        `SELECT ${columns.map(({ name }) => quoteSqlite(name)).join(',')} FROM ${quoteSqlite(destination)} ORDER BY rowid`
+        `SELECT ${columns.map(({ name }) => quoteIdentifier(name)).join(',')} FROM ${quoteIdentifier(destination)} ORDER BY rowid`
       )
       let sqliteCount = 0n
 
@@ -416,10 +417,6 @@ async function runDocker(
 
 function quoteMy(name: string): string {
   return `\`${name.replaceAll('`', '``')}\``
-}
-
-function quoteSqlite(name: string): string {
-  return `"${name.replaceAll('"', '""')}"`
 }
 
 export async function importWorld(

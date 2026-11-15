@@ -20,7 +20,6 @@ function fixtureSources(directory: string): Sources {
   return {
     client: '',
     clientManifestHash: digest(readFileSync('data/client-inputs/manifest.json')),
-    clientBundle: '',
     wowdbdefs: archive,
     azerothcore: archive,
     worldImporterImage: '',

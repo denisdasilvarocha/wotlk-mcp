@@ -4,16 +4,30 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { addLink } from '../build/links.ts'
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-related-'))
 const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'related-test', version: '1' })
+const pairs = [
+  ['drops', 'dropped by'],
+  ['starts', 'started by'],
+  ['ends', 'ended by'],
+  ['rewards', 'rewarded by'],
+  ['sells', 'sold by'],
+  ['teaches', 'taught by'],
+  ['casts', 'cast by'],
+  ['contains', 'contained in'],
+  ['grants', 'granted by'],
+  ['belongs to', 'includes'],
+  ['faction', 'faction of'],
+  ['spawns in', 'spawns'],
+  ['implemented by', 'implements']
+]
 
 beforeAll(async () => {
   initReference(database)
@@ -35,24 +49,9 @@ beforeAll(async () => {
   addLink(db, 'creature:1', 'starts', 'quest:1')
   addLink(db, 'quest:1', 'rewards', 'item:2', 'choice')
 
-  const forwards = [
-    'drops',
-    'starts',
-    'ends',
-    'rewards',
-    'sells',
-    'teaches',
-    'casts',
-    'contains',
-    'grants',
-    'belongs to',
-    'faction',
-    'spawns in',
-    'implemented by'
-  ]
   const insert = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
 
-  for (const [index, relation] of forwards.entries()) {
+  for (const [index, [relation]] of pairs.entries()) {
     const destination = `item:destination${index}`
     const source = `item:source${index}`
 
@@ -62,13 +61,7 @@ beforeAll(async () => {
   }
 
   db.close()
-  await client.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: [path.join(directory, 'package/dist/index.mjs')],
-      env: { ...process.env, WOTLK_MCP_DB: database }
-    })
-  )
+  await client.connect(packagedServer(directory, database))
 })
 
 afterAll(async () => {
@@ -85,34 +78,7 @@ test('related is discoverable with all forward and inverse names', async () => {
 
   expect(tool?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
   expect(tool?.inputSchema.properties?.rel).toMatchObject({
-    enum: [
-      'drops',
-      'dropped by',
-      'starts',
-      'started by',
-      'ends',
-      'ended by',
-      'rewards',
-      'rewarded by',
-      'sells',
-      'sold by',
-      'teaches',
-      'taught by',
-      'casts',
-      'cast by',
-      'contains',
-      'contained in',
-      'grants',
-      'granted by',
-      'belongs to',
-      'includes',
-      'faction',
-      'faction of',
-      'spawns in',
-      'spawns',
-      'implemented by',
-      'implements'
-    ]
+    enum: pairs.flat()
   })
 })
 
@@ -169,22 +135,6 @@ test('rejects malformed IDs, relation names, bounds and unknown properties', asy
 })
 
 test('every relation and inverse filters the correct endpoint', async () => {
-  const pairs = [
-    ['drops', 'dropped by'],
-    ['starts', 'started by'],
-    ['ends', 'ended by'],
-    ['rewards', 'rewarded by'],
-    ['sells', 'sold by'],
-    ['teaches', 'taught by'],
-    ['casts', 'cast by'],
-    ['contains', 'contained in'],
-    ['grants', 'granted by'],
-    ['belongs to', 'includes'],
-    ['faction', 'faction of'],
-    ['spawns in', 'spawns'],
-    ['implemented by', 'implements']
-  ]
-
   await Promise.all(
     pairs.map(async ([forward, inverse], index) => {
       expect((await related({ id: `item:source${index}`, rel: forward })).content).toEqual([

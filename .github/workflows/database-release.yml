@@ -40,7 +40,6 @@ jobs:
       - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
           node-version: '24.15.0'
-          cache: false
       - name: Require provisioned owner authorization
         env:
           DATABASE_RELEASE_AUTHORIZATION: ${{ secrets.DATABASE_RELEASE_AUTHORIZATION }}
@@ -102,7 +101,6 @@ jobs:
       - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
           node-manager: false
-          cache: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: packed-tool

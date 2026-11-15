@@ -13,7 +13,7 @@ const clientRelease = 'client-inputs-12340-engb-1'
 const clientRepository = 'denisdasilvarocha/wotlk-mcp'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const codexFiles = [
+export const codexNames = [
   'api-functions',
   'events',
   'widgets',
@@ -22,7 +22,28 @@ const codexFiles = [
   'combat-log-events',
   'secure-templates',
   'book-chapters'
-].map((name) => `src/data/${name}.ts`)
+]
+
+export function hashCodex(
+  directory: string,
+  expected?: Record<string, string>
+): Pick<CodexSource, 'files' | 'sha256'> {
+  const aggregate = createHash('sha256')
+  const files: Record<string, string> = {}
+
+  for (const name of codexNames) {
+    const file = `src/data/${name}.ts`
+    const bytes = readFileSync(path.join(directory, file))
+    const digest = createHash('sha256').update(bytes).digest('hex')
+
+    if (expected && digest !== expected[file]) throw new Error(`Codex SHA-256 mismatch: ${file}`)
+
+    files[file] = digest
+    aggregate.update(file).update('\0').update(bytes)
+  }
+
+  return { files, sha256: aggregate.digest('hex') }
+}
 
 export interface CodexSource {
   directory: string
@@ -41,7 +62,6 @@ export interface SourceArchive {
 export interface Sources {
   client: string
   clientManifestHash: string
-  clientBundle: string
   wowdbdefs: SourceArchive
   azerothcore: SourceArchive
   worldImporterImage: string
@@ -262,15 +282,7 @@ export async function acquireSources(directory: string): Promise<Sources> {
     if (run('git', ['-C', codexDirectory, 'rev-parse', 'HEAD']) !== codexRevision)
       throw new Error(`Codex revision mismatch: expected ${codexRevision}`)
 
-    const aggregate = createHash('sha256')
-    const files: Record<string, string> = {}
-
-    for (const file of codexFiles) {
-      const bytes = readFileSync(path.join(codexDirectory, file))
-
-      files[file] = createHash('sha256').update(bytes).digest('hex')
-      aggregate.update(file).update('\0').update(bytes)
-    }
+    const { files, sha256 } = hashCodex(codexDirectory)
 
     console.log(
       `WoWDBDefs ${wowRevision}; AzerothCore ${worldCommit} (${worldImporterImage}); Codex ${codexRevision} (${codexNodeImage})`
@@ -279,7 +291,6 @@ export async function acquireSources(directory: string): Promise<Sources> {
     return {
       client,
       clientManifestHash,
-      clientBundle: bundle,
       wowdbdefs,
       azerothcore,
       worldImporterImage,
@@ -287,7 +298,7 @@ export async function acquireSources(directory: string): Promise<Sources> {
         directory: codexDirectory,
         revision: codexRevision,
         files,
-        sha256: aggregate.digest('hex')
+        sha256
       },
       codexNodeImage
     }

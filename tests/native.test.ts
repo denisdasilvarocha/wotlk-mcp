@@ -5,12 +5,11 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { importNative } from '../build/native.ts'
 import { initReference } from '../build/offsets.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
 
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex')
@@ -230,13 +229,7 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     ).toEqual([{ destination_id: 'offset:fixture-a' }, { destination_id: 'offset:fixture-b' }])
     result.close()
     unpackPackage(dir)
-    await client.connect(
-      new StdioClientTransport({
-        command: process.execPath,
-        args: [path.join(dir, 'package/dist/index.mjs')],
-        env: { ...process.env, WOTLK_MCP_DB: database }
-      })
-    )
+    await client.connect(packagedServer(dir, database))
 
     const output = JSON.stringify(
       await client.callTool({ name: 'get', arguments: { ids: ['fn:Foo'] } })

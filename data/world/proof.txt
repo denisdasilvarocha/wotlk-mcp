@@ -1,9 +1,8 @@
 Observed on 2026-11-14 with `sh world/reproduce.sh` and the hash-verified source archive. The command exited 0 after comparing both manifests; it did not publish data.
 
-AzerothCore commit: 2948c203faa0d23c4772441119ebe98e5b7cad95
-Source archive SHA-256: 748a228d62fb2bf7203a193a4b622e3299fb78a3537ae1a150eda9091c1cf7f9
+Source commit, source archive SHA-256 and MySQL image: see `export-proof.json`.
 Build-only patch SHA-256: f6b3c5c896d67271b53fc5c98896d12d2f188ead9e66007da6d2ed067a5d2eb9
-MySQL: mysql@sha256:106d5197fd8e4892980469ad42eb20f7a336bd81509aae4ee175d852f5cc4565, linux/amd64, version 8.4.3
+MySQL: linux/amd64, version 8.4.3
 Build: linux/arm64, Ubuntu package snapshot 20261114T000000Z
 Server settings: utf8mb4, utf8mb4_general_ci, +00:00, ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
 Updater: modules none; auth applied 8, character 7, world 618 queries
@@ -16,9 +15,8 @@ Ticket 35 actual export: the live reproduced container above was exported to
 the shared reference with `vpx scripts/export-world.ts` on 2026-11-14. The
 command exited 0 after independently scanning source and export rows and
 comparing their typed logical hashes and counts to the stored SQLite rows.
-`export-proof.json` records all 282 table hashes and counts: 1,144,745 rows in
-total. The resulting SQLite file was 126,234,624 bytes, SHA-256
-`e2e9ed965c2bd6dadcbab7aeb015544abe26569047faa4a2d8447b1b49b2f0bd`.
+`export-proof.json` records all 282 table hashes and counts, the row total and
+the resulting SQLite file's size and SHA-256.
 It also contained the Offsets reference built immediately before import.
 This file hash is an observation, not a byte-for-byte reproducibility promise.
 

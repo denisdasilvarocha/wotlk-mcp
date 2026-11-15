@@ -1,11 +1,10 @@
 import { execFile } from 'node:child_process'
-import { createHash, randomBytes } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { randomBytes } from 'node:crypto'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { promisify } from 'node:util'
 
-import type { CodexSource } from './sources.ts'
+import { codexNames, hashCodex, type CodexSource } from './sources.ts'
 
 const fields: Record<string, string[]> = {
   fn: [
@@ -66,17 +65,6 @@ const fields: Record<string, string[]> = {
   template: ['name', 'description', 'attributes', 'examples']
 }
 
-const names = [
-  'api-functions',
-  'events',
-  'widgets',
-  'cvars',
-  'data-types',
-  'combat-log-events',
-  'secure-templates',
-  'book-chapters'
-]
-
 type Row = Record<string, any>
 
 export interface CodexData {
@@ -92,19 +80,8 @@ export interface CodexData {
 }
 
 export async function readCodex(source: CodexSource, nodeImage: string): Promise<CodexData> {
-  const aggregate = createHash('sha256')
-
-  for (const name of names) {
-    const file = `src/data/${name}.ts`
-    const bytes = readFileSync(path.join(source.directory, file))
-    const digest = createHash('sha256').update(bytes).digest('hex')
-
-    if (digest !== source.files[file]) throw new Error(`Codex SHA-256 mismatch: ${file}`)
-
-    aggregate.update(file).update('\0').update(bytes)
-  }
-
-  if (aggregate.digest('hex') !== source.sha256) throw new Error('Codex aggregate SHA-256 mismatch')
+  if (hashCodex(source.directory, source.files).sha256 !== source.sha256)
+    throw new Error('Codex aggregate SHA-256 mismatch')
 
   const container = `wotlk-codex-${randomBytes(12).toString('hex')}`
   const controller = new AbortController()
@@ -130,7 +107,7 @@ export async function readCodex(source: CodexSource, nodeImage: string): Promise
   try {
     const script = `
 const [api, events, widgets, cvars, types, combat, templates, chapters] =
-  await Promise.all(${JSON.stringify(names)}.map(name => import('/input/src/data/' + name + '.ts')));
+  await Promise.all(${JSON.stringify(codexNames)}.map(name => import('/input/src/data/' + name + '.ts')));
 console.log(JSON.stringify({
   API_FUNCTIONS: api.API_FUNCTIONS, EVENTS: events.EVENTS, WIDGETS: widgets.WIDGETS,
   CVARS: cvars.CVARS, DATA_TYPES: types.DATA_TYPES,

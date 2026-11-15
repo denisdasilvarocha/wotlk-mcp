@@ -16,48 +16,45 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test } from 'vite-plus/test'
 
 import { importCodex, readCodex } from '../build/codex.ts'
 import { initReference } from '../build/offsets.ts'
 import type { CodexSource } from '../build/sources.ts'
-import { unpackPackage } from './package.ts'
+import { packagedServer, unpackPackage } from './package.ts'
+
+function writeFixture(dir: string): CodexSource {
+  const files: Record<string, string> = {}
+  const aggregate = createHash('sha256')
+
+  mkdirSync(path.join(dir, 'src/data'), { recursive: true })
+
+  for (const name of [
+    'api-functions',
+    'events',
+    'widgets',
+    'cvars',
+    'data-types',
+    'combat-log-events',
+    'secure-templates',
+    'book-chapters'
+  ]) {
+    const file = `src/data/${name}.ts`
+    const bytes = `export const fixture = ${JSON.stringify(name)}`
+
+    writeFileSync(path.join(dir, file), bytes)
+    files[file] = createHash('sha256').update(bytes).digest('hex')
+    aggregate.update(file).update('\0').update(bytes)
+  }
+
+  return { directory: dir, revision: 'fixture', files, sha256: aggregate.digest('hex') }
+}
 
 test('Codex importer preserves source details and rejects altered inputs', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'codex-'))
 
   try {
-    const files: Record<string, string> = {
-      'api-functions': `export const API_FUNCTIONS = [{name:'Foo',description:'Does foo',category:'Demo',parameters:[{name:'x'}],returns:[{name:'y'}],memoryAddress:'0x1234'}]`,
-      events: `export const EVENTS = [{name:'EVENT',description:'Event',category:'Demo',parameters:[]}]`,
-      widgets: `export const WIDGETS = [{name:'Region',description:'Widget',methods:[{name:'Region:SetPoint(point)',signature:'Region:SetPoint(point)',description:'Anchors',parameters:[{name:'point'}],returns:[]}],inheritedMethods:[],scriptHandlers:[{name:'OnShow'}]}]`,
-      cvars: `export const CVARS = [{name:'testCVar',defaultValue:'1',description:'',category:'General'}]`,
-      'data-types': `export const DATA_TYPES = [{name:'anchorPoint',description:'Anchors',values:[{name:'CENTER'}]}]`,
-      'combat-log-events': `export const COMBAT_LOG_PREFIXES = [{name:'SPELL',arguments:[{name:'spellId'}]}]; export const COMBAT_LOG_SUB_EVENTS = [{name:'SPELL_DAMAGE',description:'Damage',prefixes:['SPELL'],arguments:[{name:'amount'}]}]`,
-      'secure-templates': `export const SECURE_TEMPLATES = [{name:'SecureActionButtonTemplate',description:'Secure',attributes:[{name:'type'}],examples:[]}]`,
-      'book-chapters': `export const CHAPTER_PAGES = {1:45}`
-    }
-    const hashes: Record<string, string> = {}
-
-    mkdirSync(path.join(dir, 'src/data'), { recursive: true })
-
-    const aggregate = createHash('sha256')
-
-    for (const [name, text] of Object.entries(files)) {
-      const file = `src/data/${name}.ts`
-
-      writeFileSync(path.join(dir, file), text)
-      hashes[file] = createHash('sha256').update(text).digest('hex')
-      aggregate.update(file).update('\0').update(text)
-    }
-
-    const source: CodexSource = {
-      directory: dir,
-      revision: 'fixture',
-      files: hashes,
-      sha256: aggregate.digest('hex')
-    }
+    const source = writeFixture(dir)
     const dbPath = path.join(dir, 'reference.sqlite')
 
     initReference(dbPath)
@@ -162,7 +159,7 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
       })
       expect(db.prepare('SELECT count(*) AS n FROM link').get()).toMatchObject({ n: 0 })
       expect(db.prepare("SELECT sha256 FROM source WHERE name = 'codex'").get()).toMatchObject({
-        sha256: '131eb142c99b0584a6d8571f40ffe9034403a1290410e5087eb1c10b9fc41301'
+        sha256: source.sha256
       })
     } finally {
       db.close()
@@ -173,13 +170,7 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
     const client = new Client({ name: 'codex-test', version: '1' })
 
     try {
-      await client.connect(
-        new StdioClientTransport({
-          command: process.execPath,
-          args: [path.join(dir, 'package/dist/index.mjs')],
-          env: { ...process.env, WOTLK_MCP_DB: dbPath }
-        })
-      )
+      await client.connect(packagedServer(dir, dbPath))
 
       const result = await client.callTool({
         name: 'get',
@@ -203,39 +194,11 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
 test('Codex cancellation removes the container before exit even if Docker ignores SIGTERM', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'codex-cancel-'))
   const bin = path.join(dir, 'bin')
-  const files: Record<string, string> = {}
   const started = path.join(dir, 'started')
   const cleaned = path.join(dir, 'cleaned')
 
   mkdirSync(bin)
-  mkdirSync(path.join(dir, 'src/data'), { recursive: true })
-
-  const aggregate = createHash('sha256')
-
-  for (const name of [
-    'api-functions',
-    'events',
-    'widgets',
-    'cvars',
-    'data-types',
-    'combat-log-events',
-    'secure-templates',
-    'book-chapters'
-  ]) {
-    const file = `src/data/${name}.ts`
-    const bytes = `export const fixture = ${JSON.stringify(name)}`
-
-    writeFileSync(path.join(dir, file), bytes)
-    files[file] = createHash('sha256').update(bytes).digest('hex')
-    aggregate.update(file).update('\0').update(bytes)
-  }
-
-  const source: CodexSource = {
-    directory: dir,
-    revision: 'fixture',
-    files,
-    sha256: aggregate.digest('hex')
-  }
+  const source = writeFixture(dir)
 
   writeFileSync(
     path.join(bin, 'docker'),

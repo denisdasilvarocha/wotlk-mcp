@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
-import { addLink } from './links.ts'
+import { addLinkRows } from './links.ts'
 
 export function buildWorldLinks(file: string): void {
   if (!existsSync(file)) throw new Error(`Database does not exist: ${file}`)
@@ -12,8 +12,7 @@ export function buildWorldLinks(file: string): void {
 
   try {
     function addRows(query: string, relation: string): void {
-      for (const row of db.prepare(query).iterate())
-        addLink(db, String(row.source), relation, String(row.destination), String(row.note))
+      addLinkRows(db, query, relation)
     }
 
     for (const kind of ['creature', 'gameobject'])
