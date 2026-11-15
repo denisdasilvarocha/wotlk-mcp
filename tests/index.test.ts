@@ -96,6 +96,21 @@ test('packaged server retrieves Offsets and reports missing IDs individually', a
   expect(result.isError).not.toBe(true)
 })
 
+test('server explains itself within client description limits', async () => {
+  const instructions = client.getInstructions() ?? ''
+  const { tools } = await client.listTools()
+
+  expect(instructions).not.toBe('')
+  expect(client.getServerVersion()).toMatchObject({ title: 'WotLK 3.3.5a Reference' })
+  // Claude Code truncates tool descriptions and server instructions beyond 2,048 characters.
+  expect(
+    Math.max(instructions.length, ...tools.map((tool) => tool.description?.length ?? 0))
+  ).toBeLessThanOrEqual(2048)
+
+  for (const property of tools.flatMap((tool) => Object.values(tool.inputSchema.properties ?? {})))
+    expect(property).toHaveProperty('description')
+})
+
 test('invalid IDs and oversized batches are tool errors', async () => {
   const results = await Promise.all(
     [['bogus:x'], [], Array(21).fill('offset:x')].map((ids) =>

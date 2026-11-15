@@ -25,7 +25,7 @@ This registers a local process, not an HTTP service. Other MCP clients can launc
 
 ## Use the reference
 
-Ask your client to search for a name, then retrieve the resulting ID. The server exposes exactly four tools:
+Use the reference for Target Build Game Data, the Lua API, Interface source and Offsets, not other game versions. The server publishes this scope and a tool workflow as MCP instructions; each tool and parameter also describes when and how to use it. Start with `search` to find IDs, use `get` for full Records, follow Links with `related`, and use `sql` for counts, filters and joins. The server exposes exactly four tools:
 
 | Tool | Purpose |
 | --- | --- |
@@ -33,6 +33,8 @@ Ask your client to search for a name, then retrieve the resulting ID. The server
 | `get` | Fetch up to 20 IDs with full Record details. Empty fields are omitted; for `file:` IDs, `from` and `to` select one-based inclusive line windows of up to 200 lines, with continuation for longer files. |
 | `related` | Browse one-hop Links in either direction, optionally filtered by relation, with pagination. |
 | `sql` | Query raw source tables or discover the schema using one read-only statement. |
+
+Interface source search hits include a line number, such as `file:FrameXML/ChatFrame.lua:2484`. To open one, call `get` with `ids: ["file:FrameXML/ChatFrame.lua"]` and `from: 2484`; do not include the line number in the ID.
 
 IDs are kind-qualified, for example `spell:53`, `offset:Globals::PlayerName`, or `file:FrameXML/ChatFrame.lua`. Kinds are `spell`, `talent`, `itemset`, `skillline`, `map`, `area`, `faction`, `class`, `race`, `achievement`, `creature`, `item`, `quest`, `gameobject`, `fn`, `event`, `widget`, `method`, `cvar`, `type`, `cle`, `template`, `slash`, `offset`, and `file`. A kind belongs to one source; Client Data and World Data overrides are not merged. Records preserve source provenance; `source` also lists pins, hashes and licences.
 
