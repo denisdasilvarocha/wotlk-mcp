@@ -23,9 +23,11 @@
   },
   "scripts": {
     "build": "vpx build/main.ts",
+    "check": "vp check",
     "dev": "vp pack --watch",
     "prepare": "vp config",
-    "prepublishOnly": "vp pack"
+    "prepublishOnly": "vp pack",
+    "test": "vp test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
