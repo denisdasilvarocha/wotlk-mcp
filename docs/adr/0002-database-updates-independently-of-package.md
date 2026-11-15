@@ -1,3 +1,0 @@
-# The reference database updates independently of the npm package
-
-On first run the server downloads the reference database from this repo's GitHub Releases into an OS cache directory. Later it fetches newer databases on its own, without a package release, so data fixes reach users without an `npm publish`. Each database records a schema version, and a package accepts only databases with its own schema major version, otherwise keeping the last compatible copy. A first run while offline fails with a clear error. We rejected pinning one database to each package version (simpler and fully reproducible, but data fixes would need a release) and bundling a baseline in the npm tarball (works offline, but makes the package large).
