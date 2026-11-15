@@ -7,6 +7,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import * as z from 'zod'
 
+import pkg from '../package.json' with { type: 'json' }
 import { getReferencePath, takeUpdateWarning } from './acquire.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated } from './related.js'
@@ -49,7 +50,7 @@ const sqlInput = z.strictObject({
   limit: z.number().int().min(1).max(1000).default(100)
 })
 
-const server = new Server({ name: 'wotlk', version: '1.0.0' }, { capabilities: { tools: {} } })
+const server = new Server({ name: 'wotlk', version: pkg.version }, { capabilities: { tools: {} } })
 
 server.setRequestHandler(ListToolsRequestSchema, () => ({
   tools: [
@@ -73,7 +74,7 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
     {
       name: 'get',
       description:
-        'Retrieve complete Records by ID, or numbered file windows. Empty values are omitted.',
+        'Retrieve complete Records by ID, or numbered file windows of up to 200 lines. Empty values are omitted.',
       inputSchema: {
         type: 'object',
         properties: {

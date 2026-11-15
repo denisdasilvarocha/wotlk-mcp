@@ -46,6 +46,9 @@ function renderEnumValue(
     const names: string[] = []
     let remaining = BigInt(value)
 
+    // DBC flag columns are signed int32; bit 31 makes them negative.
+    if (remaining < 0n) remaining = BigInt.asUintN(32, remaining)
+
     if (remaining > 0n) {
       for (const entry of entries) {
         const bit = BigInt(Number(entry.value))
@@ -135,7 +138,8 @@ export function getRecords(db: DatabaseSync, ids: string[], from = 1, to = from 
         .get(Number(record.source_row))
 
       if (!row) throw new Error(`missing source row for ${id}; rebuild the reference database`)
-      if (id.startsWith('file:')) return renderFileWindow(db, id, row, from, to)
+      if (id.startsWith('file:'))
+        return renderFileWindow(db, id, row, from, Math.min(to, from + 199))
 
       const fields = mappings.all(table)
       const lines = [id]

@@ -207,6 +207,11 @@ test('explicit source lines are literal, paginated, and isolated from ordinary s
 
   expect(JSON.stringify(next.content)).toContain('205: source line 205')
   expect(JSON.stringify(next.content)).toContain('end')
+
+  const capped = JSON.stringify((await get({ ids: ['file:FrameXML/Test.lua'], to: 205 })).content)
+
+  expect(capped).toContain('1–200 of 205; next from: 201')
+  expect(capped).not.toContain('201: source line 201')
   expect((await get({ ids: ['file:FrameXML/Test.lua'], from: 0 })).isError).toBe(true)
   expect((await get({ ids: ['file:FrameXML/Test.lua'], from: 3, to: 2 })).isError).toBe(true)
 })

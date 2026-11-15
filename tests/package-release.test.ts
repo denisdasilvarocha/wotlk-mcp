@@ -32,7 +32,8 @@ test('release guard permits only an aligned tag with a published, verified compa
   const server = createServer((request, response) => {
     if (request.url?.startsWith('/releases')) response.end(JSON.stringify(releases))
     else if (request.url === '/package') response.end(JSON.stringify({ versions }))
-    else if (request.url === '/asset') response.end(compressed)
+    else if (request.url === '/asset' && request.headers.accept === 'application/octet-stream')
+      response.end(compressed)
     else {
       response.statusCode = 404
       response.end()
@@ -64,7 +65,7 @@ test('release guard permits only an aligned tag with a published, verified compa
         tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: true,
         prerelease: false,
-        assets: [{ name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }]
+        assets: [{ name: 'wotlk.sqlite.br', digest, url: `${base}/asset` }]
       }
     ]
     await expect(command(tag)).rejects.toThrow('published')
@@ -73,9 +74,7 @@ test('release guard permits only an aligned tag with a published, verified compa
         tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: false,
         prerelease: false,
-        assets: [
-          { name: 'wotlk.sqlite.br', digest: 'sha256:bad', browser_download_url: `${base}/asset` }
-        ]
+        assets: [{ name: 'wotlk.sqlite.br', digest: 'sha256:bad', url: `${base}/asset` }]
       }
     ]
     await expect(command(tag)).rejects.toThrow('digest')
@@ -88,7 +87,7 @@ test('release guard permits only an aligned tag with a published, verified compa
           {
             name: 'wotlk.sqlite.br',
             digest: `sha256:${'0'.repeat(64)}`,
-            browser_download_url: `${base}/asset`
+            url: `${base}/asset`
           }
         ]
       }
@@ -99,7 +98,7 @@ test('release guard permits only an aligned tag with a published, verified compa
         tag_name: `db-v${wotlkSchemaMajor}.0.0`,
         draft: false,
         prerelease: false,
-        assets: [{ name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }]
+        assets: [{ name: 'wotlk.sqlite.br', digest, url: `${base}/asset` }]
       }
     ]
 

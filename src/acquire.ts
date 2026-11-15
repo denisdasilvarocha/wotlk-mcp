@@ -32,16 +32,14 @@ const releasesSchema = z.array(
     draft: z.boolean(),
     prerelease: z.boolean(),
     published_at: z.string().nullish(),
-    assets: z.array(
-      z.object({ name: z.string(), digest: z.string().nullish(), browser_download_url: z.string() })
-    )
+    assets: z.array(z.object({ name: z.string(), digest: z.string().nullish(), url: z.string() }))
   })
 )
 
 const cacheStateSchema = z.object({
   file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/),
   version: z.string().regex(/^db-v\d+\.\d+\.\d+$/),
-  lastCheck: z.number().nullable(),
+  lastCheck: z.number(),
   warningMajor: z.number().int().positive().optional()
 })
 
@@ -233,14 +231,14 @@ function processAlive(pid: number): boolean {
 }
 
 function cacheDirectory(): string {
-  if (process.platform === 'win32')
-    return path.join(
-      process.env.LOCALAPPDATA ?? path.join(homedir(), 'AppData', 'Local'),
-      'wotlk-mcp'
-    )
-  if (process.platform === 'darwin') return path.join(homedir(), 'Library', 'Caches', 'wotlk-mcp')
+  let root = process.env.XDG_CACHE_HOME ?? path.join(homedir(), '.cache')
 
-  return path.join(process.env.XDG_CACHE_HOME ?? path.join(homedir(), '.cache'), 'wotlk-mcp')
+  if (process.platform === 'win32')
+    root = process.env.LOCALAPPDATA ?? path.join(homedir(), 'AppData', 'Local')
+  if (process.platform === 'darwin') root = path.join(homedir(), 'Library', 'Caches')
+
+  // Per schema major, so side-by-side package majors never prune each other's copies.
+  return path.join(root, 'wotlk-mcp', `schema-${acceptedSchemaMajor}`)
 }
 
 async function update(directory: string, current: CacheState): Promise<void> {
@@ -258,7 +256,7 @@ async function update(directory: string, current: CacheState): Promise<void> {
       const latest = (await states(directory))[0]?.state ?? current
       const now = Date.now()
 
-      if (latest.lastCheck !== null && now - latest.lastCheck < 24 * 60 * 60 * 1000) return
+      if (now - latest.lastCheck < 24 * 60 * 60 * 1000) return
 
       const attempted = { ...current, lastCheck: now }
 
@@ -333,7 +331,10 @@ async function download(existing?: CacheState): Promise<string | undefined> {
   const statePartial = path.join(directory, `${process.pid}-${id}.json.partial`)
 
   try {
-    const assetResponse = await fetch(asset.browser_download_url, { headers })
+    // browser_download_url 404s for private repositories even with a token.
+    const assetResponse = await fetch(asset.url, {
+      headers: { ...headers, Accept: 'application/octet-stream' }
+    })
 
     if (!assetResponse.ok || !assetResponse.body)
       throw new Error(`database download returned HTTP ${assetResponse.status}`)

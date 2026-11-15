@@ -24,15 +24,16 @@ beforeAll(async () => {
   db.exec(`CREATE TABLE world_example (name TEXT, description TEXT, empty TEXT, zero INTEGER);
     INSERT INTO world_example VALUES ('Example', 'first line' || char(10) || 'second line', '', 0);
     INSERT INTO record VALUES ('item:123', 'item', 'Example', 'world_example', 1, '', '')`)
-  db.exec(`CREATE TABLE world_decoding (class INTEGER, subclass INTEGER, flags INTEGER, sentinel INTEGER, unknown INTEGER);
-    INSERT INTO world_decoding VALUES (2, 3, 9, -1, 99);
+  db.exec(`CREATE TABLE world_decoding (class INTEGER, subclass INTEGER, flags INTEGER, sentinel INTEGER, unknown INTEGER, signed INTEGER);
+    INSERT INTO world_decoding VALUES (2, 3, 9, -1, 99, -2147483647);
     INSERT INTO record VALUES ('item:124', 'item', 'Decoding', 'world_decoding', 1, '', '');
     INSERT INTO enum_field VALUES
       ('world_decoding', 'subclass', 'Subclass', 0, 'class', 2),
       ('world_decoding', 'flags', 'Flags', 1, NULL, NULL),
       ('world_decoding', 'sentinel', 'Flags', 1, NULL, NULL),
+      ('world_decoding', 'signed', 'Flags', 1, NULL, NULL),
       ('world_decoding', 'unknown', 'Subclass', 0, NULL, NULL);
-    INSERT INTO enum_value VALUES ('Subclass', 3, 'AXE'), ('Flags', 1, 'KNOWN')`)
+    INSERT INTO enum_value VALUES ('Subclass', 3, 'AXE'), ('Flags', 1, 'KNOWN'), ('Flags', 2147483648, 'HIGH')`)
   db.close()
   await client.connect(
     new StdioClientTransport({
@@ -108,6 +109,7 @@ test('get decodes conditional enums and retains unknown bits and sentinels while
   expect(JSON.stringify(get)).toContain('subclass: 3 (AXE)')
   expect(JSON.stringify(get)).toContain('flags: 9 (KNOWN, 8)')
   expect(JSON.stringify(get)).toContain('sentinel: -1')
+  expect(JSON.stringify(get)).toContain('signed: -2147483647 (KNOWN, HIGH)')
   expect(JSON.stringify(get)).toContain('unknown: 99')
 
   const sql = await client.callTool({

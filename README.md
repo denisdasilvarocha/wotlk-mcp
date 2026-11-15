@@ -30,7 +30,7 @@ Ask your client to search for a name, then retrieve the resulting ID. The server
 | Tool | Purpose |
 | --- | --- |
 | `search` | Find literal terms with ranked, paginated hits; `kind` is an optional array of kinds. Source lines are searched only when `file` is explicitly included. |
-| `get` | Fetch up to 20 IDs with full Record details. Empty fields are omitted; for `file:` IDs, `from` and `to` select one-based inclusive line windows, with continuation for longer files. |
+| `get` | Fetch up to 20 IDs with full Record details. Empty fields are omitted; for `file:` IDs, `from` and `to` select one-based inclusive line windows of up to 200 lines, with continuation for longer files. |
 | `related` | Browse one-hop Links in either direction, optionally filtered by relation, with pagination. |
 | `sql` | Query raw source tables or discover the schema using one read-only statement. |
 
@@ -44,7 +44,7 @@ This is reference data, not a live-client integration: it does not attach to the
 
 No database is bundled with the package. On first use, the server downloads a compatible published GitHub release, verifies the compressed SHA-256 digest and schema, and caches it. A tool call waits up to 20 seconds for the first download; if still pending, retry. Network access is needed for the first download unless you provide a local database.
 
-Cached starts and queries do not wait for update metadata. The server tries an update check in the background at most once per 24 hours, including failed attempts. It retains the selected snapshot for the session; a verified update or an older release used as a rollback takes effect on the next start. Offline starts use the cache, falling back to the previous usable copy when necessary. Package major 1 accepts database schema major 1. If a newer database needs a higher package major, the server writes a warning to stderr and appends it once to the first tool response after the warning becomes known; upgrade the package deliberately.
+Cached starts and queries do not wait for update metadata. The server tries an update check in the background at most once per 24 hours, including failed attempts. It retains the selected snapshot for the session; a verified update or an older release used as a rollback takes effect on the next start. Offline starts use the cache, falling back to the previous usable copy when necessary. Package major 1 accepts database schema major 1, and each schema major keeps its own cache. If a newer database needs a higher package major, the server writes a warning to stderr and appends it once to the first tool response after the warning becomes known; upgrade the package deliberately.
 
 | Environment variable | Purpose |
 | --- | --- |

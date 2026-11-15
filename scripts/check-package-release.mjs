@@ -87,7 +87,9 @@ async function checkReleasePage(page) {
   if (!asset || !/^sha256:[a-f0-9]{64}$/.test(asset.digest ?? ''))
     throw new Error('published database asset or digest missing')
 
-  const download = await fetch(asset.browser_download_url)
+  const download = await fetch(asset.url, {
+    headers: { ...headers, Accept: 'application/octet-stream' }
+  })
 
   if (!download.ok || !download.body)
     throw new Error(`database download failed: ${download.status}`)

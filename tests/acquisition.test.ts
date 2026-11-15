@@ -62,7 +62,7 @@ const server = createServer((req, res) => {
 
     if (scenario === 'bad') digest = `sha256:${'0'.repeat(64)}`
 
-    const asset = { name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }
+    const asset = { name: 'wotlk.sqlite.br', digest, url: `${base}/asset` }
 
     if (scenario === 'selection') {
       const releases = [
@@ -75,7 +75,7 @@ const server = createServer((req, res) => {
             {
               ...asset,
               digest: `sha256:${createHash('sha256').update(olderData).digest('hex')}`,
-              browser_download_url: `${base}/older`
+              url: `${base}/older`
             }
           ]
         },
@@ -88,7 +88,7 @@ const server = createServer((req, res) => {
             {
               ...asset,
               digest: `sha256:${createHash('sha256').update(newerData).digest('hex')}`,
-              browser_download_url: `${base}/newer`
+              url: `${base}/newer`
             }
           ]
         }
@@ -132,6 +132,12 @@ const server = createServer((req, res) => {
       }
     else res.end(body)
   } else {
+    // The GitHub asset API returns JSON metadata unless binary content is requested.
+    if (req.headers.accept !== 'application/octet-stream') {
+      res.writeHead(415).end()
+      return
+    }
+
     if (scenario === 'selection') {
       if (req.url === '/newer') res.end(newerData)
       else res.end(olderData)
@@ -233,16 +239,17 @@ async function marker(client: Client): Promise<string> {
 }
 
 function cacheDirectory(cache: string): string {
-  if (process.platform === 'darwin') return path.join(cache, 'Library', 'Caches', 'wotlk-mcp')
+  if (process.platform === 'darwin')
+    return path.join(cache, 'Library', 'Caches', 'wotlk-mcp', 'schema-1')
 
-  return path.join(cache, 'wotlk-mcp')
+  return path.join(cache, 'wotlk-mcp', 'schema-1')
 }
 
 function cacheStates(directory: string): {
   name: string
   file: string
   version: string
-  lastCheck: number | null
+  lastCheck: number
   warningMajor?: number
 }[] {
   return readdirSync(directory)
@@ -253,7 +260,7 @@ function cacheStates(directory: string): {
         .object({
           file: z.string(),
           version: z.string(),
-          lastCheck: z.number().nullable(),
+          lastCheck: z.number(),
           warningMajor: z.number().optional()
         })
         .parse(JSON.parse(readFileSync(path.join(directory, name), 'utf8')))
