@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { Client } from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { buildClientFactionSpawnLinks } from '../build/client-faction-spawn-links.ts'

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { Client } from '@modelcontextprotocol/client'
 import { afterAll, expect, test } from 'vite-plus/test'
 
 import { buildLootLinks } from '../build/loot-links.ts'
@@ -61,7 +61,7 @@ function text(result: Awaited<ReturnType<Client['callTool']>>): string {
 
   if (!Array.isArray(content) || content[0]?.type !== 'text') throw new Error('Expected text')
 
-  return String(content[0].text)
+  return content[0].text
 }
 
 test('loot paths survive artifact and packed related/sql surfaces', async () => {

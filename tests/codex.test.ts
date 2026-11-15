@@ -15,7 +15,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
 
 import { importCodex, readCodex } from '../build/codex.ts'

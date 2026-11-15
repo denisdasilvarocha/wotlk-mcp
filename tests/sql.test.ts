@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { Client } from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
@@ -37,7 +37,7 @@ function text(result: Awaited<ReturnType<typeof sql>>): string {
 
   if (!Array.isArray(content) || content[0]?.type !== 'text') throw new Error('Expected text')
 
-  return String(content[0].text)
+  return content[0].text
 }
 
 function sql(query: string, limit?: number): ReturnType<Client['callTool']> {

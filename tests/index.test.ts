@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { Client, ProtocolErrorCode } from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
@@ -119,6 +119,12 @@ test('invalid IDs and oversized batches are tool errors', async () => {
   expect(JSON.stringify(multiple)).toContain('ids')
   expect(JSON.stringify(multiple)).toContain('from')
   expect(JSON.stringify(multiple)).not.toContain('\\n')
+})
+
+test('unknown tools are protocol errors, not tool results', async () => {
+  await expect(client.callTool({ name: 'nope', arguments: {} })).rejects.toMatchObject({
+    code: ProtocolErrorCode.InvalidParams
+  })
 })
 
 test('wide source rows retain full text and omit empty fields only in rendering', async () => {

@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { Client } from '@modelcontextprotocol/client'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import * as z from 'zod'
 
 const kinds = [
@@ -246,7 +246,10 @@ async function main(): Promise<void> {
             'non-text result'
           )
 
-          const text = result.content.map((part) => part.text).join('\n')
+          const text = result.content
+            .filter((part) => part.type === 'text')
+            .map((part) => part.text)
+            .join('\n')
 
           for (const expected of item.contains)
             assert(

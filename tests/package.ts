@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { readdirSync, symlinkSync } from 'node:fs'
 import path from 'node:path'
 
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 
 export function packagedServer(directory: string, database: string): StdioClientTransport {
   return new StdioClientTransport({
