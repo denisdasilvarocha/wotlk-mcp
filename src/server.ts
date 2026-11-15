@@ -22,6 +22,7 @@ const searchInput = z.strictObject({
 })
 
 const idPattern = `^(${kinds.join('|')}):.+$`
+
 const getInput = z.strictObject({
   ids: z
     .array(z.string().regex(new RegExp(idPattern)))
@@ -30,7 +31,9 @@ const getInput = z.strictObject({
   from: z.number().int().min(1).optional(),
   to: z.number().int().min(1).optional()
 })
+
 const relationNames = relations.flat()
+
 const relatedInput = z.strictObject({
   id: z.string().regex(new RegExp(idPattern)),
   rel: z
@@ -40,11 +43,14 @@ const relatedInput = z.strictObject({
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().nonnegative().default(0)
 })
+
 const sqlInput = z.strictObject({
   query: z.string().min(1),
   limit: z.number().int().min(1).max(1000).default(100)
 })
+
 const server = new Server({ name: 'wotlk', version: '1.0.0' }, { capabilities: { tools: {} } })
+
 server.setRequestHandler(ListToolsRequestSchema, () => ({
   tools: [
     {
@@ -118,53 +124,70 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
     }
   ]
 }))
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const result = await (async (): Promise<CallToolResult> => {
     try {
       if (request.params.name === 'sql') {
         const parsed = sqlInput.safeParse(request.params.arguments)
+
         if (!parsed.success) throw new Error('sql requires a query and an integer limit of 1–1000')
+
         const path = await getReferencePath()
+
         return {
           content: [
             { type: 'text', text: await runSql(path, parsed.data.query, parsed.data.limit) }
           ]
         }
       }
+
       if (request.params.name === 'related') {
         const parsed = relatedInput.safeParse(request.params.arguments)
+
         if (!parsed.success)
           throw new Error(
             `related requires a valid ID, relation, limit 1–100 and nonnegative integer offset; valid kinds: ${kinds.join(', ')}; valid relations: ${relationNames.join(', ')}`
           )
+
         const db = openReference(await getReferencePath())
+
         try {
           return { content: [{ type: 'text', text: getRelated(db, parsed.data) }] }
         } finally {
           db.close()
         }
       }
+
       if (request.params.name === 'search') {
         const parsed = searchInput.safeParse(request.params.arguments)
+
         if (!parsed.success)
           throw new Error(
             `search requires a nonempty query, valid kinds (${kinds.join(', ')}), limit 1–100 and nonnegative integer offset`
           )
+
         const db = openReference(await getReferencePath())
+
         try {
           return { content: [{ type: 'text', text: searchRecords(db, parsed.data) }] }
         } finally {
           db.close()
         }
       }
+
       if (request.params.name !== 'get')
         throw new Error('unknown tool; use get, related, search or sql')
+
       const parsed = getInput.safeParse(request.params.arguments)
+
       if (!parsed.success)
         throw new Error(
           `get requires 1–20 valid IDs and positive integer from/to bounds; valid kinds: ${kinds.join(', ')}`
         )
+
       const db = openReference(await getReferencePath())
+
       try {
         return {
           content: [
@@ -185,7 +208,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   })()
   const warning = takeUpdateWarning()
+
   if (warning) result.content.push({ type: 'text', text: warning })
+
   return result
 })
+
 await server.connect(new StdioServerTransport())

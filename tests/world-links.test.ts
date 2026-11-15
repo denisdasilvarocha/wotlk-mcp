@@ -15,9 +15,12 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
   const dir = mkdtempSync(path.join(tmpdir(), 'world-links-'))
   const database = path.join(dir, 'reference.sqlite')
   const client = new Client({ name: 'world-links-test', version: '1' })
+
   try {
     initReference(database)
+
     const db = new DatabaseSync(database)
+
     db.exec(`
       CREATE TABLE world_creature_queststarter (id INTEGER, quest INTEGER);
       CREATE TABLE world_creature_questender (id INTEGER, quest INTEGER);
@@ -49,9 +52,11 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
         env: { ...process.env, WOTLK_MCP_DB: database }
       })
     )
+
     async function text(name: string, args: Record<string, unknown>): Promise<string> {
       return JSON.stringify(await client.callTool({ name, arguments: args }))
     }
+
     await Promise.all(
       [
         ['creature:1', 'starts', 'quest:3'],
@@ -77,15 +82,21 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
       )
     )
     expect(await text('related', { id: 'creature:1', rel: 'teaches' })).not.toContain('spell:6')
+
     const reward = await text('related', { id: 'quest:3', rel: 'rewards' })
+
     expect(reward).toContain('RewardItem1')
     expect(reward).toContain('RewardChoiceItemID6')
+
     const casts = await text('related', { id: 'item:4', rel: 'casts' })
+
     expect(casts).toContain('spellid_1')
     expect(casts).toContain('spellid_5')
+
     const vendors = await text('sql', {
       query: 'SELECT slot, maxcount, incrtime, ExtendedCost FROM world_npc_vendor ORDER BY slot'
     })
+
     expect(vendors).toContain('1\\t2\\t60\\t7')
     expect(vendors).toContain('2\\t0\\t0\\t0')
   } finally {

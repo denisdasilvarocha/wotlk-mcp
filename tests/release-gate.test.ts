@@ -23,20 +23,26 @@ afterAll(() => rmSync(directory, { recursive: true, force: true }))
 function fixture(): string {
   const dir = mkdtempSync(path.join(directory, 'candidate-'))
   const file = path.join(dir, 'candidate.sqlite')
+
   createReleaseFixture(file)
   sealReleaseFixture(file)
+
   return file
 }
+
 function gate(file: string, ...args: string[]): SpawnSyncReturns<string> {
   sealReleaseFixture(file)
   writeFileSync(`${file}.br`, brotliCompressSync(readFileSync(file)))
+
   return spawnSync('vpx', ['scripts/release-gate.ts', file, `${file}.br`, ...args], {
     encoding: 'utf8'
   })
 }
+
 test('first release checks a real complete artifact and emits version 1.0.0', () => {
   const file = fixture()
   const result = gate(file)
+
   expect(result.status).toBe(0)
   expect(JSON.parse(result.stdout).version).toBe('1.0.0')
 })
@@ -50,23 +56,34 @@ test.each([
 ])(
   'allocates a fresh %s version while preserving the published comparison baseline',
   (change, sql, hasPrevious, used, expected) => {
-    const candidate = fixture()
     const args = []
+    const candidate = fixture()
+
     if (hasPrevious) {
       const previous = `${candidate}.previous`
+
       copyFileSync(candidate, previous)
       args.push(previous)
     }
+
     const db = new DatabaseSync(candidate)
+
     db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
+
     if (sql) db.exec(sql)
     db.close()
+
     const versions = `${candidate}.versions.json`
+
     writeFileSync(versions, JSON.stringify(used))
     args.push(`--used-versions=${versions}`)
+
     const prepared = gate(candidate, ...args, '--prepare')
+
     expect(prepared.status).toBe(0)
+
     const checked = gate(candidate, ...args)
+
     expect(checked.status).toBe(0)
     expect(JSON.parse(checked.stdout)).toMatchObject({ version: expected, change })
   }
@@ -74,6 +91,7 @@ test.each([
 test.each([{}, ['invalid'], [1]])('rejects invalid used versions %j', (used) => {
   const candidate = fixture()
   const versions = `${candidate}.versions.json`
+
   writeFileSync(versions, JSON.stringify(used))
   expect(gate(candidate, `--used-versions=${versions}`, '--prepare').status).not.toBe(0)
 })
@@ -93,18 +111,24 @@ test.each([
 ])('rejects %s', (_name, sql) => {
   const file = fixture()
   const db = new DatabaseSync(file)
+
   db.enableDefensive?.(false)
   db.exec(sql)
   db.close()
+
   const result = gate(file)
+
   expect(result.status).not.toBe(0)
 })
 
 test('compares previous versions, shrink, drift and explicit override', () => {
   const candidate = fixture()
   const previous = `${candidate}.previous`
+
   copyFileSync(candidate, previous)
+
   let db = new DatabaseSync(candidate)
+
   db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
   db.close()
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
@@ -135,9 +159,12 @@ test('compares previous versions, shrink, drift and explicit override', () => {
 test('rejects an oversized or mismatched compressed asset', () => {
   const file = fixture()
   const asset = `${file}.br`
+
   writeFileSync(asset, Buffer.alloc(0))
   truncateSync(asset, 250_000_001)
+
   const result = spawnSync('vpx', ['scripts/release-gate.ts', file, asset], { encoding: 'utf8' })
+
   expect(result.status).not.toBe(0)
   expect(result.stderr).toContain('250 MB')
   writeFileSync(asset, brotliCompressSync(Buffer.from('wrong')))
@@ -147,8 +174,11 @@ test('rejects an oversized or mismatched compressed asset', () => {
 test('changed IDs for the same source Record require a major version', () => {
   const candidate = fixture()
   const previous = `${candidate}.previous`
+
   copyFileSync(candidate, previous)
+
   const db = new DatabaseSync(candidate)
+
   db.exec(
     "UPDATE meta SET value='{\"fixture\":\"two\"}' WHERE key='input_pins'; UPDATE record SET id='spell:renamed' WHERE id='spell:1'; UPDATE record_fts SET id='spell:renamed' WHERE id='spell:1'"
   )
@@ -159,14 +189,17 @@ test('changed IDs for the same source Record require a major version', () => {
 test('duplicate names and reordered physical rows do not change stable source identity', () => {
   const candidate = fixture()
   const db = new DatabaseSync(candidate)
+  const previous = `${candidate}.previous`
+
   db.exec(
     "INSERT INTO entity VALUES (100,'duplicate'); UPDATE entity SET name='duplicate' WHERE ID=1; UPDATE record SET name='duplicate' WHERE id='spell:1'; UPDATE record_fts SET name='duplicate' WHERE id='spell:1'; INSERT INTO record VALUES ('spell:100','spell','duplicate','entity',26,'',''); INSERT INTO record_fts VALUES ('spell:100','duplicate','')"
   )
   db.close()
-  const previous = `${candidate}.previous`
   sealReleaseFixture(candidate)
   copyFileSync(candidate, previous)
+
   const changed = new DatabaseSync(candidate)
+
   changed.exec(
     "UPDATE meta SET value='{\"fixture\":\"two\"}' WHERE key='input_pins'; UPDATE entity SET rowid=200 WHERE ID=1; UPDATE entity SET rowid=1 WHERE ID=100; UPDATE entity SET rowid=26 WHERE ID=1; UPDATE record SET source_row=CASE source_row WHEN 1 THEN 26 WHEN 26 THEN 1 ELSE source_row END WHERE kind='spell'"
   )
@@ -178,6 +211,7 @@ test('duplicate names and reordered physical rows do not change stable source id
 test('rejects invalid declared logical hashes', () => {
   const file = fixture()
   const db = new DatabaseSync(file)
+
   db.exec("UPDATE meta SET value='bad' WHERE key='canonical_hash.entity'")
   db.close()
   writeFileSync(`${file}.br`, brotliCompressSync(readFileSync(file)))
@@ -187,26 +221,35 @@ test('rejects invalid declared logical hashes', () => {
 test.each(['kind', 'relation'])('rejects %s shrink independently of table counts', (dimension) => {
   const candidate = fixture()
   let db = new DatabaseSync(candidate)
+
   if (dimension === 'relation')
     for (let i = 0; i < 10; i++)
       db.prepare("INSERT INTO link VALUES ('event:1','starts','item:1',?)").run(String(i))
+
   db.close()
   sealReleaseFixture(candidate)
+
   const previous = `${candidate}.previous`
+
   copyFileSync(candidate, previous)
   db = new DatabaseSync(previous)
+
   if (dimension === 'kind')
     db.exec(
       "INSERT INTO record SELECT 'spell:2',kind,name,source_table,source_row,search_text,hint FROM record WHERE id='spell:1'; INSERT INTO record_fts SELECT 'spell:2',name,text FROM record_fts WHERE id='spell:1'"
     )
   else db.exec("INSERT INTO link VALUES ('event:1','drops','item:1','')")
+
   db.close()
   db = new DatabaseSync(candidate)
   db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
   db.close()
-  const rejected = gate(candidate, previous, '--prepare')
-  expect(rejected.status).not.toBe(0)
+
   let expected = 'relation:drops'
+  const rejected = gate(candidate, previous, '--prepare')
+
+  expect(rejected.status).not.toBe(0)
+
   if (dimension === 'kind') expected = 'kind:spell'
   expect(rejected.stderr).toContain(expected)
   expect(gate(candidate, previous, '--prepare', '--allow-shrink').status).toBe(0)

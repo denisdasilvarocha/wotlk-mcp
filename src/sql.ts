@@ -10,9 +10,11 @@ export function runSql(path: string, query: string, limit: number): Promise<stri
       worker.kill('SIGKILL')
       reject(new Error('SQL query timed out after 5 seconds'))
     }, 5000)
+
     worker.send({ path, query, limit })
     worker.once('message', (result: { text?: string; error?: string }) => {
       clearTimeout(timer)
+
       if (result.error) reject(new Error(result.error))
       else resolve(result.text ?? '')
     })

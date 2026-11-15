@@ -21,7 +21,9 @@ function columns(prefix: string, count: number): string {
 
 beforeAll(async () => {
   initReference(file)
+
   const db = new DatabaseSync(file)
+
   db.exec(`CREATE TABLE dbc_ItemSet (ID INTEGER, ${columns('ItemID', 17)});
     CREATE TABLE dbc_Talent (ID INTEGER, ${columns('SpellRank', 9)});
     CREATE TABLE dbc_SkillLineAbility (ID INTEGER, SkillLine INTEGER, Spell INTEGER);
@@ -39,7 +41,9 @@ beforeAll(async () => {
     INSERT INTO world_creature_multispawn VALUES (1, 51), (2, 51), (3, 51);
     INSERT INTO world_gameobject VALUES (4, 70, 60, 45), (5, 70, 60, 46);
   `)
+
   const insert = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
+
   for (const id of [
     'itemset:1',
     'item:10',
@@ -55,6 +59,7 @@ beforeAll(async () => {
     'map:60'
   ])
     insert.run(id, id.split(':')[0], id, 'dbc_ItemSet', 1, '', '')
+
   db.close()
   buildClientFactionSpawnLinks(file)
   unpackPackage(dir)
@@ -91,15 +96,20 @@ test('navigates each independent key in both directions, preserving spawn rows',
       ['map:60', 'spawns', 'gameobject:70 (2 stored spawn rows)']
     ].map(async ([id, rel, expected]) => {
       const result = await client.callTool({ name: 'related', arguments: { id, rel } })
+
       expect(JSON.stringify(result.content)).toContain(expected)
     })
   )
+
   const result = await client.callTool({
     name: 'related',
     arguments: { id: 'itemset:1', rel: 'contains' }
   })
+
   expect(JSON.stringify(result.content)).not.toContain('item:999')
+
   const db = new DatabaseSync(file, { readOnly: true })
+
   expect(db.prepare('SELECT position_x FROM world_creature WHERE guid = 1').get()?.position_x).toBe(
     42
   )

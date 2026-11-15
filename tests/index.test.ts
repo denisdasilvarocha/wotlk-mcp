@@ -18,7 +18,9 @@ const client = new Client({ name: 'test', version: '1' })
 beforeAll(async () => {
   initReference(database)
   unpackPackage(directory)
+
   const db = new DatabaseSync(database)
+
   db.exec(`CREATE TABLE world_example (name TEXT, description TEXT, empty TEXT, zero INTEGER);
     INSERT INTO world_example VALUES ('Example', 'first line' || char(10) || 'second line', '', 0);
     INSERT INTO record VALUES ('item:123', 'item', 'Example', 'world_example', 1, '', '')`)
@@ -48,24 +50,29 @@ afterAll(async () => {
 
 test('packaged server retrieves Offsets and reports missing IDs individually', async () => {
   const tools = await client.listTools()
+
   expect(tools.tools.map((tool) => tool.name).toSorted()).toEqual([
     'get',
     'related',
     'search',
     'sql'
   ])
+
   const get = tools.tools.find((tool) => tool.name === 'get')
+
   expect(get?.inputSchema).toMatchObject({
     properties: { ids: { minItems: 1, maxItems: 20 } },
     additionalProperties: false
   })
   expect(get?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
+
   const result = await client.callTool({
     name: 'get',
     arguments: {
       ids: ['offset:Globals::PlayerName', 'offset:missing']
     }
   })
+
   expect(JSON.stringify(result)).toContain('va: 0x00C79D18')
   expect(JSON.stringify(result)).toContain('note: current player name')
   expect(JSON.stringify(result)).toContain('not found: offset:missing')
@@ -78,7 +85,9 @@ test('invalid IDs and oversized batches are tool errors', async () => {
       client.callTool({ name: 'get', arguments: { ids } })
     )
   )
+
   for (const result of results) expect(result.isError).toBe(true)
+
   for (const result of results) {
     expect(JSON.stringify(result)).toContain('valid kinds:')
     expect(JSON.stringify(result)).not.toContain('\\n')
@@ -87,6 +96,7 @@ test('invalid IDs and oversized batches are tool errors', async () => {
 
 test('wide source rows retain full text and omit empty fields only in rendering', async () => {
   const result = await client.callTool({ name: 'get', arguments: { ids: ['item:123'] } })
+
   expect(result.content).toEqual([
     { type: 'text', text: 'item:123\nname: Example\ndescription: first line\n  second line' }
   ])
@@ -94,19 +104,23 @@ test('wide source rows retain full text and omit empty fields only in rendering'
 
 test('get decodes conditional enums and retains unknown bits and sentinels while SQL stays raw', async () => {
   const get = await client.callTool({ name: 'get', arguments: { ids: ['item:124'] } })
+
   expect(JSON.stringify(get)).toContain('subclass: 3 (AXE)')
   expect(JSON.stringify(get)).toContain('flags: 9 (KNOWN, 8)')
   expect(JSON.stringify(get)).toContain('sentinel: -1')
   expect(JSON.stringify(get)).toContain('unknown: 99')
+
   const sql = await client.callTool({
     name: 'sql',
     arguments: { query: 'SELECT subclass, flags, sentinel FROM world_decoding' }
   })
+
   expect(JSON.stringify(sql)).toContain('3\\t9\\t-1')
 })
 
 test('invalid local overrides are actionable errors', async () => {
   const other = new Client({ name: 'test-invalid', version: '1' })
+
   await other.connect(
     new StdioClientTransport({
       command: process.execPath,
@@ -114,11 +128,13 @@ test('invalid local overrides are actionable errors', async () => {
       env: { ...process.env, WOTLK_MCP_DB: path.join(directory, 'missing.sqlite') }
     })
   )
+
   try {
     const result = await other.callTool({
       name: 'get',
       arguments: { ids: ['offset:Globals::PlayerName'] }
     })
+
     expect(result.isError).toBe(true)
     expect(JSON.stringify(result)).toContain('invalid WOTLK_MCP_DB')
   } finally {
@@ -129,11 +145,14 @@ test('invalid local overrides are actionable errors', async () => {
 test('a newer schema major is rejected rather than substituted', async () => {
   const incompatible = path.join(directory, 'newer.sqlite')
   const db = new DatabaseSync(incompatible)
+
   db.exec(
     "CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '2.0.0')"
   )
   db.close()
+
   const other = new Client({ name: 'test-newer', version: '1' })
+
   await other.connect(
     new StdioClientTransport({
       command: process.execPath,
@@ -141,11 +160,13 @@ test('a newer schema major is rejected rather than substituted', async () => {
       env: { ...process.env, WOTLK_MCP_DB: incompatible }
     })
   )
+
   try {
     const result = await other.callTool({
       name: 'get',
       arguments: { ids: ['offset:Globals::PlayerName'] }
     })
+
     expect(result.isError).toBe(true)
     expect(JSON.stringify(result)).toContain('incompatible schema version 2.0.0')
   } finally {

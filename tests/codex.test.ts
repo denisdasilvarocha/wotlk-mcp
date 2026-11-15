@@ -26,6 +26,7 @@ import { unpackPackage } from './package.ts'
 
 test('Codex importer preserves source details and rejects altered inputs', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'codex-'))
+
   try {
     const files: Record<string, string> = {
       'api-functions': `export const API_FUNCTIONS = [{name:'Foo',description:'Does foo',category:'Demo',parameters:[{name:'x'}],returns:[{name:'y'}],memoryAddress:'0x1234'}]`,
@@ -37,15 +38,20 @@ test('Codex importer preserves source details and rejects altered inputs', async
       'secure-templates': `export const SECURE_TEMPLATES = [{name:'SecureActionButtonTemplate',description:'Secure',attributes:[{name:'type'}],examples:[]}]`,
       'book-chapters': `export const CHAPTER_PAGES = {1:45}`
     }
-    mkdirSync(path.join(dir, 'src/data'), { recursive: true })
     const hashes: Record<string, string> = {}
+
+    mkdirSync(path.join(dir, 'src/data'), { recursive: true })
+
     const aggregate = createHash('sha256')
+
     for (const [name, text] of Object.entries(files)) {
       const file = `src/data/${name}.ts`
+
       writeFileSync(path.join(dir, file), text)
       hashes[file] = createHash('sha256').update(text).digest('hex')
       aggregate.update(file).update('\0').update(text)
     }
+
     const source: CodexSource = {
       directory: dir,
       revision: 'fixture',
@@ -53,9 +59,12 @@ test('Codex importer preserves source details and rejects altered inputs', async
       sha256: aggregate.digest('hex')
     }
     const dbPath = path.join(dir, 'reference.sqlite')
+
     initReference(dbPath)
+
     const bin = path.join(dir, 'bin')
     const log = path.join(dir, 'docker.log')
+
     mkdirSync(bin)
     writeFileSync(
       path.join(bin, 'docker'),
@@ -65,14 +74,18 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
 `
     )
     chmodSync(path.join(bin, 'docker'), 0o755)
+
     const originalPath = process.env.PATH
+
     process.env.PATH = `${bin}${path.delimiter}${originalPath}`
+
     try {
       await expect(readCodex(source, 'node@sha256:fixture')).rejects.toThrow('evaluation failed')
       expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual(['run', 'rm'])
     } finally {
       process.env.PATH = originalPath
     }
+
     importCodex(dbPath, source, {
       API_FUNCTIONS: [
         {
@@ -123,7 +136,9 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
       ],
       CHAPTER_PAGES: { 1: 45 }
     })
+
     const db = new DatabaseSync(dbPath, { readOnly: true })
+
     try {
       expect(
         db.prepare("SELECT hint, search_text FROM record WHERE id='fn:Foo'").get()
@@ -152,8 +167,11 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
     } finally {
       db.close()
     }
+
     unpackPackage(dir)
+
     const client = new Client({ name: 'codex-test', version: '1' })
+
     try {
       await client.connect(
         new StdioClientTransport({
@@ -162,16 +180,19 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
           env: { ...process.env, WOTLK_MCP_DB: dbPath }
         })
       )
+
       const result = await client.callTool({
         name: 'get',
         arguments: { ids: ['fn:Foo', 'method:Region:SetPoint', 'widget:Region'] }
       })
+
       expect(JSON.stringify(result)).toContain('memoryAddress: 0x1234')
       expect(JSON.stringify(result)).toContain('declaringWidget: Region')
       expect(JSON.stringify(result)).toContain('OnShow')
     } finally {
       await client.close()
     }
+
     writeFileSync(path.join(dir, 'src/data/cvars.ts'), 'corrupted')
     await expect(readCodex(source, '')).rejects.toThrow('Codex SHA-256 mismatch')
   } finally {
@@ -182,12 +203,15 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
 test('Codex cancellation removes the container before exit even if Docker ignores SIGTERM', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'codex-cancel-'))
   const bin = path.join(dir, 'bin')
+  const files: Record<string, string> = {}
   const started = path.join(dir, 'started')
   const cleaned = path.join(dir, 'cleaned')
+
   mkdirSync(bin)
   mkdirSync(path.join(dir, 'src/data'), { recursive: true })
-  const files: Record<string, string> = {}
+
   const aggregate = createHash('sha256')
+
   for (const name of [
     'api-functions',
     'events',
@@ -200,16 +224,19 @@ test('Codex cancellation removes the container before exit even if Docker ignore
   ]) {
     const file = `src/data/${name}.ts`
     const bytes = `export const fixture = ${JSON.stringify(name)}`
+
     writeFileSync(path.join(dir, file), bytes)
     files[file] = createHash('sha256').update(bytes).digest('hex')
     aggregate.update(file).update('\0').update(bytes)
   }
+
   const source: CodexSource = {
     directory: dir,
     revision: 'fixture',
     files,
     sha256: aggregate.digest('hex')
   }
+
   writeFileSync(
     path.join(bin, 'docker'),
     `#!${process.execPath}
@@ -224,6 +251,7 @@ if (process.argv[2] === 'run') {
 `
   )
   chmodSync(path.join(bin, 'docker'), 0o755)
+
   const script = `import { readCodex } from ${JSON.stringify(pathToFileURL(path.resolve('build/codex.ts')).href)};
 try { await readCodex(${JSON.stringify(source)}, 'node@sha256:fixture') } catch {}`
   const child = spawn(process.execPath, ['--input-type=module', '-e', script], {
@@ -231,6 +259,7 @@ try { await readCodex(${JSON.stringify(source)}, 'node@sha256:fixture') } catch 
     stdio: 'ignore'
   })
   const exit = new Promise<number | null>((resolve) => child.once('exit', resolve))
+
   try {
     for (let i = 0; i < 40 && !existsSync(started) && child.exitCode === null; i++)
       // eslint-disable-next-line no-await-in-loop -- Wait for the child to install its signal handler.
@@ -242,6 +271,7 @@ try { await readCodex(${JSON.stringify(source)}, 'node@sha256:fixture') } catch 
     expect(existsSync(cleaned)).toBe(true)
   } finally {
     child.kill('SIGKILL')
+
     if (existsSync(started))
       try {
         process.kill(Number(readFileSync(started, 'utf8')), 'SIGKILL')

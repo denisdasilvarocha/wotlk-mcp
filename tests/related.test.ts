@@ -18,19 +18,23 @@ const client = new Client({ name: 'related-test', version: '1' })
 beforeAll(async () => {
   initReference(database)
   unpackPackage(directory)
+
   const db = new DatabaseSync(database)
+
   db.exec(`CREATE TABLE world_evidence (creature INTEGER, item INTEGER, chance TEXT);
     INSERT INTO world_evidence VALUES (1, 2, '25%'), (1, 2, '5%'), (1, 2, '25%');
     INSERT INTO record VALUES ('creature:1', 'creature', 'Creature', 'world_evidence', 1, '', ''),
       ('item:2', 'item', 'Item', 'world_evidence', 1, '', ''),
       ('item:10', 'item', 'Other', 'world_evidence', 1, '', ''),
       ('quest:1', 'quest', 'Quest', 'world_evidence', 1, '', '');`)
+
   for (const row of db.prepare('SELECT chance FROM world_evidence').all())
     addLink(db, 'creature:1', 'drops', 'item:2', String(row.chance))
+
   addLink(db, 'creature:1', 'drops', 'item:10')
   addLink(db, 'creature:1', 'starts', 'quest:1')
   addLink(db, 'quest:1', 'rewards', 'item:2', 'choice')
-  const insert = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
+
   const forwards = [
     'drops',
     'starts',
@@ -46,13 +50,17 @@ beforeAll(async () => {
     'spawns in',
     'implemented by'
   ]
+  const insert = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
+
   for (const [index, relation] of forwards.entries()) {
-    const source = `item:source${index}`
     const destination = `item:destination${index}`
+    const source = `item:source${index}`
+
     insert.run(source, 'item', source, 'world_evidence', 1, '', '')
     insert.run(destination, 'item', destination, 'world_evidence', 1, '', '')
     addLink(db, source, relation, destination)
   }
+
   db.close()
   await client.connect(
     new StdioClientTransport({
@@ -74,6 +82,7 @@ async function related(args: Record<string, unknown>): ReturnType<typeof client.
 
 test('related is discoverable with all forward and inverse names', async () => {
   const tool = (await client.listTools()).tools.find((entry) => entry.name === 'related')
+
   expect(tool?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
   expect(tool?.inputSchema.properties?.rel).toMatchObject({
     enum: [
@@ -152,6 +161,7 @@ test('rejects malformed IDs, relation names, bounds and unknown properties', asy
       { id: 'item:1', extra: true }
     ].map(related)
   )
+
   for (const result of results) {
     expect(result.isError).toBe(true)
     expect(JSON.stringify(result.content)).not.toContain('\\n')
@@ -174,6 +184,7 @@ test('every relation and inverse filters the correct endpoint', async () => {
     ['spawns in', 'spawns'],
     ['implemented by', 'implements']
   ]
+
   await Promise.all(
     pairs.map(async ([forward, inverse], index) => {
       expect((await related({ id: `item:source${index}`, rel: forward })).content).toEqual([

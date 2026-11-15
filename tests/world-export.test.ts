@@ -13,6 +13,7 @@ import { unpackPackage } from './package.ts'
 
 function runner(dir: string): string {
   const file = path.join(dir, 'run-world.ts')
+
   writeFileSync(
     file,
     `import { importWorld } from ${JSON.stringify(path.resolve('build/world.ts'))}
@@ -21,27 +22,33 @@ await importWorld(process.argv[2], { directory: ${JSON.stringify(dir)}, archive:
   )
   mkdirSync(path.join(dir, 'data/sql/custom'), { recursive: true })
   mkdirSync(path.join(dir, 'modules'), { recursive: true })
+
   return file
 }
 
 test('exported artifact preserves world rows and indexes only curated templates', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-export-'))
+
   try {
     const bin = path.join(dir, 'bin')
     const rows = path.join(dir, 'rows')
     const database = path.join(dir, 'reference.sqlite')
     const world = path.join(dir, 'data/world')
     const sqlNull: null = JSON.parse('null')
+
     mkdirSync(bin)
     mkdirSync(rows)
     mkdirSync(path.join(dir, 'data'))
     cpSync('data/world', world, { recursive: true })
+
     const exporter = runner(dir)
     const schema = path.join(world, 'schema-columns.tsv')
+
     writeFileSync(
       schema,
       `${readFileSync(schema, 'utf8')}synthetic_types\t1\tamount\tdecimal(30,10)\tNO\tNULL\t\t\t\nsynthetic_types\t2\tpayload\tvarbinary(8)\tNO\tNULL\t\t\t\nsynthetic_types\t3\tmissing\tvarchar(10)\tYES\tNULL\t\tutf8mb4\tutf8mb4_unicode_ci\nsynthetic_types\t4\tcreated\tdatetime\tNO\tNULL\t\t\t\nsynthetic_types\t5\tnegative_zero\tdouble\tNO\tNULL\t\t\t\nsynthetic_types\t6\tfraction\tfloat\tNO\tNULL\t\t\t\n`
     )
+
     const fixtures: Record<string, Record<string, string | Buffer | null>> = {
       creature_template: {
         entry: '101',
@@ -109,28 +116,39 @@ test('exported artifact preserves world rows and indexes only curated templates'
       }
     }
     const columns = new Map<string, { name: string; type: string; nullable: boolean }[]>()
+
     for (const line of readFileSync(schema, 'utf8').trimEnd().split('\n')) {
       const [table, , name, type, nullable] = line.split('\t')
+
       if (!(table in fixtures)) continue
+
       const entries = columns.get(table) ?? []
+
       entries.push({ name, type, nullable: nullable === 'YES' })
       columns.set(table, entries)
     }
+
     for (const [table, entries] of columns) {
       const encoded = entries.map(({ name, type, nullable }) => {
         const values = fixtures[table]
         let value = values[name]
+
         if (!Object.hasOwn(values, name)) {
           value = ''
+
           if (nullable) value = sqlNull
           else if (/^(tinyint|smallint|mediumint|int|bigint|float|double|real)\b/.test(type))
             value = '0'
         }
+
         if (value === sqlNull) return 'N'
+
         return `V${Buffer.from(value).toString('hex').toUpperCase()}`
       })
+
       writeFileSync(path.join(rows, table), `${encoded.join('\t')}\n`)
     }
+
     writeFileSync(
       path.join(bin, 'docker'),
       `#!/bin/sh
@@ -151,6 +169,7 @@ esac
       { mode: 0o755 }
     )
     initReference(database)
+
     const result = spawnSync('vpx', [exporter, database, path.join(dir, 'work')], {
       cwd: dir,
       encoding: 'utf8',
@@ -161,8 +180,11 @@ esac
         WORLD_ROWS: rows
       }
     })
+
     expect(result.status).toBe(0)
+
     const db = new DatabaseSync(database, { readOnly: true })
+
     try {
       expect(
         db.prepare("SELECT pin, sha256, attribution FROM source WHERE name = 'world'").get()
@@ -178,11 +200,13 @@ esac
           value: `acore/importer@sha256:${'c'.repeat(64)}`
         }
       )
+
       const indexed = db
         .prepare(
           "SELECT id, name, source_table, source_row, search_text, hint FROM record WHERE kind IN ('creature', 'item', 'quest', 'gameobject') ORDER BY id"
         )
         .all()
+
       expect(indexed).toHaveLength(4)
       expect(indexed).toEqual(
         expect.arrayContaining([
@@ -215,14 +239,19 @@ esac
           })
         ])
       )
+
       for (const row of indexed) {
         let key = 'entry'
+
         if (row.id === 'quest:303') key = 'ID'
+
         const source = db
           .prepare(`SELECT "${key}" AS key FROM "${String(row.source_table)}" WHERE rowid = ?`)
           .get(Number(row.source_row))
+
         expect(source).toMatchObject({ key: Number(String(row.id).split(':')[1]) })
       }
+
       expect(
         db.prepare("SELECT id FROM record_fts WHERE record_fts MATCH 'snowy'").get()
       ).toMatchObject({ id: 'item:202' })
@@ -296,8 +325,11 @@ esac
     } finally {
       db.close()
     }
+
     unpackPackage(dir)
+
     const client = new Client({ name: 'world-test', version: '1' })
+
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,
@@ -309,11 +341,13 @@ esac
         )
       })
     )
+
     try {
       const response = await client.callTool({
         name: 'get',
         arguments: { ids: ['creature:101', 'item:202', 'quest:303', 'gameobject:404'] }
       })
+
       expect(response.isError).not.toBe(true)
       expect(JSON.stringify(response.content)).toContain('Frost Warden')
       expect(JSON.stringify(response.content)).toContain('A snowy souvenir')
@@ -322,8 +356,11 @@ esac
     } finally {
       await client.close()
     }
+
     const failedDatabase = path.join(dir, 'failed.sqlite')
+
     initReference(failedDatabase)
+
     const failed = spawnSync('vpx', [exporter, failedDatabase, path.join(dir, 'failed-work')], {
       cwd: dir,
       encoding: 'utf8',
@@ -335,9 +372,12 @@ esac
         WORLD_MISMATCH: '1'
       }
     })
+
     expect(failed.status).not.toBe(0)
     expect(failed.stderr).toContain('count or logical hash mismatch')
+
     const rolledBack = new DatabaseSync(failedDatabase, { readOnly: true })
+
     try {
       expect(
         rolledBack
@@ -347,10 +387,13 @@ esac
     } finally {
       rolledBack.close()
     }
+
     const edgeFile = path.join(rows, 'synthetic_types')
     const edgeFields = readFileSync(edgeFile, 'utf8').trimEnd().split('\t')
+
     edgeFields[4] = 'V2D30'
     writeFileSync(edgeFile, `${edgeFields.join('\t')}\n`)
+
     const loss = spawnSync('vpx', [exporter, failedDatabase, path.join(dir, 'loss-work')], {
       cwd: dir,
       encoding: 'utf8',
@@ -361,11 +404,14 @@ esac
         WORLD_ROWS: rows
       }
     })
+
     expect(loss.status).not.toBe(0)
     expect(loss.stderr).toContain(
       'World floating conversion loss in synthetic_types.negative_zero: -0'
     )
+
     const afterLoss = new DatabaseSync(failedDatabase, { readOnly: true })
+
     try {
       expect(
         afterLoss.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name LIKE 'world_%'").get()
@@ -380,9 +426,11 @@ esac
 
 test('exporter reports a failed MySQL command without changing the reference', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-export-'))
+
   try {
     const bin = path.join(dir, 'bin')
     const database = path.join(dir, 'reference.sqlite')
+
     mkdirSync(bin)
     writeFileSync(
       path.join(bin, 'docker'),
@@ -392,16 +440,22 @@ test('exporter reports a failed MySQL command without changing the reference', (
       }
     )
     initReference(database)
+
     const exporter = runner(dir)
     const before = new DatabaseSync(database)
     const count = before.prepare('SELECT count(*) AS n FROM record').get()
+
     before.close()
+
     const result = spawnSync('vpx', [exporter, database, path.join(dir, 'work')], {
       encoding: 'utf8',
       env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` }
     })
+
     expect(result.status).not.toBe(0)
+
     const after = new DatabaseSync(database, { readOnly: true })
+
     expect(after.prepare('SELECT count(*) AS n FROM record').get()).toEqual(count)
     expect(
       after.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name LIKE 'world_%'").get()

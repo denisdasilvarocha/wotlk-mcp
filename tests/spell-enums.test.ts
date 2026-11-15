@@ -13,9 +13,12 @@ import { unpackPackage } from './package.js'
 
 test('spell mappings validate fields and materialize named references without changing raw data', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'spell-enums-'))
+
   try {
     const database = path.join(dir, 'reference.sqlite')
+
     initReference(database)
+
     const db = new DatabaseSync(database)
     const columns = [
       'Attributes',
@@ -41,6 +44,8 @@ test('spell mappings validate fields and materialize named references without ch
         `ImplicitTargetB_${i}`
       ])
     ]
+    const root = 'azerothcore-wotlk-2948c203faa0d23c4772441119ebe98e5b7cad95'
+
     db.exec(
       `CREATE TABLE dbc_Spell (ID INTEGER, Name_lang TEXT, ${columns.map((x) => `"${x}" INTEGER`).join(', ')}, Category INTEGER, Missing INTEGER); INSERT INTO dbc_Spell (ID, Name_lang, Effect_1, Effect_2, Effect_3, EffectAura_1, EffectAura_2, EffectAura_3, ImplicitTargetA_1, ImplicitTargetA_2, ImplicitTargetA_3, Attributes, AttributesExG, SchoolMask, ProcTypeMask, PowerType, Category, Missing) VALUES (1, 'Example', 1, 2, 9999, 1, 2, 1, 1, 2, 1, 9, 2, 1, 2, -1, 4, 7); INSERT INTO record VALUES ('spell:1', 'spell', 'Example', 'dbc_Spell', 1, '', ''); CREATE TABLE dbc_Category (ID INTEGER, Name_lang TEXT); INSERT INTO dbc_Category VALUES (4, 'Example category'); CREATE TABLE dbc_foreign_key (source_table TEXT, field TEXT, target_table TEXT, target_field TEXT); INSERT INTO dbc_foreign_key VALUES ('dbc_Spell', 'Category', 'dbc_Category', 'ID'), ('dbc_Spell', 'Missing', 'dbc_Category', 'ID');`
     )
@@ -48,7 +53,7 @@ test('spell mappings validate fields and materialize named references without ch
       'UPDATE dbc_Spell SET ImplicitTargetB_1 = 1, ImplicitTargetB_2 = 2, ImplicitTargetB_3 = 1, Targets = 1, TargetCreatureType = 2, InterruptFlags = 1, AuraInterruptFlags = 2, ChannelInterruptFlags = 1'
     )
     db.close()
-    const root = 'azerothcore-wotlk-2948c203faa0d23c4772441119ebe98e5b7cad95'
+
     const headerNames: Record<string, string[]> = {
       'src/server/shared/SharedDefines.h': [
         'SpellSchools',
@@ -68,8 +73,10 @@ test('spell mappings validate fields and materialize named references without ch
       'src/server/game/Spells/SpellInfo.h': ['SpellCastTargetFlags'],
       'src/server/game/Spells/SpellMgr.h': ['ProcFlags']
     }
+
     for (const [file, names] of Object.entries(headerNames)) {
       const destination = path.join(dir, root, file)
+
       mkdirSync(path.dirname(destination), { recursive: true })
       writeFileSync(
         destination,
@@ -81,8 +88,11 @@ test('spell mappings validate fields and materialize named references without ch
           .join('\n')
       )
     }
+
     importSpellEnums(database, path.join(dir, root))
+
     const output = new DatabaseSync(database)
+
     expect(
       output
         .prepare("SELECT value, name FROM enum_value WHERE enum_name = 'reference.dbc_Category.ID'")
@@ -114,7 +124,9 @@ test('spell mappings validate fields and materialize named references without ch
     ).toBe(6)
     output.close()
     unpackPackage(dir)
+
     const client = new Client({ name: 'test-spell', version: '1' })
+
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,
@@ -122,10 +134,12 @@ test('spell mappings validate fields and materialize named references without ch
         env: { ...process.env, WOTLK_MCP_DB: database }
       })
     )
+
     try {
       const get = JSON.stringify(
         await client.callTool({ name: 'get', arguments: { ids: ['spell:1'] } })
       )
+
       for (const expected of [
         'Effect_1: 1 (FIRST)',
         'Effect_2: 2 (SECOND)',
@@ -153,6 +167,7 @@ test('spell mappings validate fields and materialize named references without ch
         'Missing: 7'
       ])
         expect(get).toContain(expected)
+
       const sql = JSON.stringify(
         await client.callTool({
           name: 'sql',
@@ -161,19 +176,26 @@ test('spell mappings validate fields and materialize named references without ch
           }
         })
       )
+
       expect(sql).toContain('1\\t2\\t9999\\t9\\t4')
     } finally {
       await client.close()
     }
+
     const invalid = new DatabaseSync(database)
+
     invalid.exec('ALTER TABLE dbc_Spell DROP COLUMN Effect_3')
+
     const values = invalid.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()
     const fields = invalid.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
+
     invalid.close()
     expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
       'Missing mapped column dbc_Spell.Effect_3'
     )
+
     const unchanged = new DatabaseSync(database, { readOnly: true })
+
     expect(unchanged.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()).toEqual(
       values
     )
@@ -181,10 +203,14 @@ test('spell mappings validate fields and materialize named references without ch
       unchanged.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
     ).toEqual(fields)
     unchanged.close()
+
     const restored = new DatabaseSync(database)
+
     restored.exec('ALTER TABLE dbc_Spell ADD COLUMN Effect_3 INTEGER')
     restored.close()
+
     const shared = path.join(dir, root, 'src/server/shared/SharedDefines.h')
+
     writeFileSync(
       shared,
       readFileSync(shared, 'utf8').replace('enum SpellEffects', 'enum RemovedSpellEffects')
@@ -192,7 +218,9 @@ test('spell mappings validate fields and materialize named references without ch
     expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
       'Missing pinned enum SpellEffects'
     )
+
     const afterMissingEnum = new DatabaseSync(database, { readOnly: true })
+
     expect(
       afterMissingEnum.prepare('SELECT * FROM enum_value ORDER BY enum_name, value').all()
     ).toEqual(values)

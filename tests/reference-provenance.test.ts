@@ -10,14 +10,13 @@ import { writeProvenance } from '../build/provenance.ts'
 import type { Sources } from '../build/sources.ts'
 import { schema } from '../src/schema.ts'
 
-function digest(value: string | Buffer): string {
-  return createHash('sha256').update(value).digest('hex')
-}
 function fixtureSources(directory: string): Sources {
   const archive = { directory, archive: '', revision: '', sha256: '' }
+
   writeFileSync(path.join(directory, 'LICENSE.md'), 'Fixture definitions licence')
   writeFileSync(path.join(directory, 'LICENSE'), 'Fixture world licence')
   writeFileSync(path.join(directory, 'AUTHORS'), 'Fixture world authors')
+
   return {
     client: '',
     clientManifestHash: digest(readFileSync('data/client-inputs/manifest.json')),
@@ -30,17 +29,25 @@ function fixtureSources(directory: string): Sources {
   }
 }
 
+function digest(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex')
+}
+
 test('final provenance hashes typed logical tables and emits notices from the embedded manifest', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'provenance-'))
+
   try {
     const database = path.join(dir, 'reference.sqlite')
     const notice = path.join(dir, 'NOTICE.md')
     const db = new DatabaseSync(database)
+
     db.exec(schema)
     db.exec(
       "INSERT INTO meta VALUES ('input_pins', '{}'), ('hash.sample', 'original-export-proof'), ('count.sample', 'original-count'); CREATE TABLE sample (value); INSERT INTO sample VALUES (42); CREATE TABLE typed (value); INSERT INTO typed VALUES (NULL), (42), (42.5), ('42'), (x'3432')"
     )
+
     const source = db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)')
+
     source.run(
       'wowdbdefs',
       'definition-pin',
@@ -63,17 +70,24 @@ test('final provenance hashes typed logical tables and emits notices from the em
       'Client extraction'
     )
     source.run('codex', 'codex-pin', 'codex-hash', 'Unlicensed', 'Codex authors')
+
     const manifestHash = digest(readFileSync('data/client-inputs/manifest.json'))
+
     db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(
       JSON.stringify({ client_inputs: manifestHash })
     )
     db.close()
+
     const inputs = fixtureSources(dir)
+
     function run(): void {
       writeProvenance(database, notice, inputs)
     }
+
     run()
+
     const result = new DatabaseSync(database)
+
     function meta(): Record<string, unknown> {
       return Object.fromEntries(
         result
@@ -82,7 +96,9 @@ test('final provenance hashes typed logical tables and emits notices from the em
           .map((row) => [row.key, row.value])
       )
     }
+
     const initial = meta()
+
     expect(initial['hash.sample']).toBe('original-export-proof')
     expect(initial['count.sample']).toBe('original-count')
     expect(initial['canonical_count.sample']).toBe('1')
@@ -92,7 +108,9 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(initial['canonical_hash.meta']).toBeUndefined()
     expect(initial['canonical_hash.record_fts']).toBeUndefined()
     expect(initial['canonical_hash.record_fts_data']).toBeUndefined()
+
     const text = readFileSync(notice, 'utf8')
+
     expect(text).toContain('Fixture definitions licence')
     expect(text).toContain('Fixture world licence')
     expect(text).toContain('Fixture world authors')
@@ -120,10 +138,12 @@ test('final provenance hashes typed logical tables and emits notices from the em
 
 test('a mismatched client pin fails without altering the manifest or writing a notice', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'provenance-invalid-'))
+
   try {
     const database = path.join(dir, 'reference.sqlite')
     const notice = path.join(dir, 'NOTICE.md')
     const db = new DatabaseSync(database)
+
     db.exec(schema)
     db.exec(
       "INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')"
@@ -132,7 +152,9 @@ test('a mismatched client pin fails without altering the manifest or writing a n
     expect(() => writeProvenance(database, notice, fixtureSources(dir))).toThrow(
       'Client manifest pin does not match'
     )
+
     const result = new DatabaseSync(database, { readOnly: true })
+
     expect(result.prepare('SELECT name FROM source').all()).toEqual([{ name: 'client-data' }])
     expect(result.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toMatchObject({
       value: '{}'

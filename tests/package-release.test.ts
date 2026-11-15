@@ -19,10 +19,12 @@ afterAll(() => rmSync(directory, { recursive: true, force: true }))
 test('release guard permits only an aligned tag with a published, verified compatible database', async () => {
   const dbPath = path.join(directory, 'reference.sqlite')
   const db = new DatabaseSync(dbPath)
+
   db.exec(
     `CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '${wotlkSchemaMajor}.0.0')`
   )
   db.close()
+
   const compressed = brotliCompressSync(readFileSync(dbPath))
   const digest = `sha256:${createHash('sha256').update(compressed).digest('hex')}`
   let releases: unknown[] = []
@@ -36,10 +38,15 @@ test('release guard permits only an aligned tag with a published, verified compa
       response.end()
     }
   })
+
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+
   const address = server.address()
+
   if (!address || typeof address === 'string') throw new Error('No server address')
+
   const base = `http://127.0.0.1:${address.port}`
+
   function command(releaseTag: string): ReturnType<typeof run> {
     return run(process.execPath, [
       'scripts/check-package-release.mjs',
@@ -48,6 +55,7 @@ test('release guard permits only an aligned tag with a published, verified compa
       `${base}/package`
     ])
   }
+
   try {
     await expect(command(version)).rejects.toThrow('tag')
     await expect(command(tag)).rejects.toThrow('published')
@@ -94,9 +102,13 @@ test('release guard permits only an aligned tag with a published, verified compa
         assets: [{ name: 'wotlk.sqlite.br', digest, browser_download_url: `${base}/asset` }]
       }
     ]
+
     const otherVersion = `${version.split('.')[0]}.999999.0`
+
     versions = { [otherVersion]: { wotlkSchemaMajor } }
+
     const result = await command(tag)
+
     expect(result.stdout).toContain(
       `Package ${tag} has a published compatible schema ${wotlkSchemaMajor} database`
     )

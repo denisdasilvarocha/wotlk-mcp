@@ -24,6 +24,7 @@ function run(command: string, args: string[], cwd?: string): void {
         windowsVerbatimArguments: true
       }
     )
+
     if (result.error) throw result.error
     if (result.status !== 0) throw new Error(result.stderr)
   } else execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
@@ -32,11 +33,15 @@ function run(command: string, args: string[], cwd?: string): void {
 test('a clean installed tarball exposes an executable MCP server without a bundled database', async () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-install-'))
   const client = new Client({ name: 'install-test', version: '1' })
+
   try {
     const database = path.join(directory, 'reference.sqlite')
+
     initReference(database)
+
     const archive = packPackage(directory)
     const files = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' })
+
     expect(files).not.toMatch(/\.sqlite(?:\.br)?$/m)
     expect(files).not.toContain('src/')
     writeFileSync(
@@ -48,16 +53,21 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
       })
     )
     run('vp', ['install'], directory)
+
+    let command = 'npx'
     const installed = JSON.parse(
       readFileSync(path.join(directory, 'node_modules/wotlk-mcp/package.json'), 'utf8')
     )
+
     expect(installed.version).toBe(version)
-    let command = 'npx'
+
     let args = ['-y', `wotlk-mcp@${version}`]
+
     if (process.platform === 'win32') {
       command = 'cmd'
       args = ['/d', '/s', '/c', `npx -y wotlk-mcp@${version}`]
     }
+
     await client.connect(
       new StdioClientTransport({
         command,
@@ -66,10 +76,12 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
         env: { ...process.env, WOTLK_MCP_DB: database }
       })
     )
+
     const result = await client.callTool({
       name: 'get',
       arguments: { ids: ['offset:Globals::PlayerName'] }
     })
+
     expect(JSON.stringify(result)).toContain('offset:Globals::PlayerName')
     expect(JSON.stringify(result)).toContain('va: 0x00C79D18')
     expect(JSON.stringify(result)).not.toContain('not found:')

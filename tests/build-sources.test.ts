@@ -13,14 +13,14 @@ import path from 'node:path'
 
 import { expect, test } from 'vite-plus/test'
 
-function executable(dir: string, name: string, body: string): void {
-  const file = path.join(dir, name)
-  writeFileSync(file, `#!/bin/sh\nset -eu\n${body}\n`)
-  chmodSync(file, 0o755)
-}
+const wowRevision = 'a'.repeat(40)
+const worldRevision = 'b'.repeat(40)
+const codexRevision = 'c'.repeat(40)
+const digest = 'd'.repeat(64)
 
 function run(output: string, bin: string): SpawnSyncReturns<string> {
   if (!existsSync(path.join(bin, 'fetch.mjs'))) writeFileSync(path.join(bin, 'fetch.mjs'), '')
+
   return spawnSync(
     process.execPath,
     [
@@ -37,11 +37,6 @@ function run(output: string, bin: string): SpawnSyncReturns<string> {
     }
   )
 }
-
-const wowRevision = 'a'.repeat(40)
-const worldRevision = 'b'.repeat(40)
-const codexRevision = 'c'.repeat(40)
-const digest = 'd'.repeat(64)
 
 function fixtures(
   dir: string,
@@ -67,8 +62,11 @@ function fixtures(
       }
     }
   }
+
   if (options.failedDownload) archiveResponse = 'null, { status: 503 }'
+
   if (options.mismatch) checkoutRevision = 'e'.repeat(40)
+
   if (options.badProvenance) provenance = {}
   writeFileSync(
     path.join(dir, 'fetch.mjs'),
@@ -109,13 +107,24 @@ function fixtures(
   )
 }
 
+function executable(dir: string, name: string, body: string): void {
+  const file = path.join(dir, name)
+
+  writeFileSync(file, `#!/bin/sh\nset -eu\n${body}\n`)
+  chmodSync(file, 0o755)
+}
+
 test('does not overwrite an existing input directory', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+
   try {
     const output = path.join(dir, 'inputs')
+
     mkdirSync(output)
     writeFileSync(path.join(output, 'keep'), 'existing')
+
     const result = run(output, dir)
+
     expect(result.status).not.toBe(0)
     expect(readFileSync(path.join(output, 'keep'), 'utf8')).toBe('existing')
   } finally {
@@ -125,15 +134,19 @@ test('does not overwrite an existing input directory', () => {
 
 test('rejects a corrupt private release before extraction and removes partial inputs', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+
   try {
     const output = path.join(dir, 'inputs')
+
     executable(
       dir,
       'gh',
       'for last do :; done\nprintf corrupt > "$last/client-inputs-12340-engb-1.tar.gz"'
     )
     executable(dir, 'tar', `echo extracted > '${dir}/extracted'; exit 1`)
+
     const result = run(output, dir)
+
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('bundle SHA-256 mismatch')
     expect(existsSync(path.join(dir, 'extracted'))).toBe(false)
@@ -145,11 +158,16 @@ test('rejects a corrupt private release before extraction and removes partial in
 
 test('returns immutable source identities and acquired file hashes', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+
   try {
     fixtures(dir)
+
     const result = run(path.join(dir, 'inputs'), dir)
+
     expect(result.status).toBe(0)
+
     const sources = JSON.parse(result.stdout.trim().split('\n').at(-1) ?? '')
+
     expect(sources.wowdbdefs.revision).toBe(wowRevision)
     expect(sources.azerothcore.revision).toBe(worldRevision)
     expect(sources.codex.revision).toBe(codexRevision)
@@ -173,10 +191,13 @@ test.each([
   ['failed archive download', { failedDownload: true }]
 ])('rejects %s and removes owned inputs', (_name, options) => {
   const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+
   try {
     fixtures(dir, options)
+
     const output = path.join(dir, 'inputs')
     const result = run(output, dir)
+
     expect(result.status).not.toBe(0)
     expect(existsSync(output)).toBe(false)
   } finally {

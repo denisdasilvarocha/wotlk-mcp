@@ -7,11 +7,23 @@ import { expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
 
+const failures = [
+  { mode: 'updater', message: 'updater-failure' },
+  { mode: 'schema', message: 'schema columns drifted' },
+  { mode: 'export', message: 'export-failure' }
+]
+
+const signals: { signal: NodeJS.Signals; code: number }[] = [
+  { signal: 'SIGINT', code: 130 },
+  { signal: 'SIGTERM', code: 143 }
+]
+
 function fixture(mode: string): { dir: string; runner: string; env: NodeJS.ProcessEnv } {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-import-'))
   const bin = path.join(dir, 'bin')
   const source = path.join(dir, 'source')
   const database = path.join(dir, 'reference.sqlite')
+
   mkdirSync(bin)
   mkdirSync(path.join(source, 'data/sql/custom'), { recursive: true })
   mkdirSync(path.join(source, 'modules'), { recursive: true })
@@ -44,7 +56,9 @@ esac
 `,
     { mode: 0o755 }
   )
+
   const runner = path.join(dir, 'runner.ts')
+
   writeFileSync(
     runner,
     `import { importWorld } from ${JSON.stringify(path.resolve('build/world.ts'))}
@@ -52,6 +66,7 @@ try { await importWorld(${JSON.stringify(database)}, { directory: ${JSON.stringi
 catch (error) { console.error(error); process.exitCode ||= 1 }
 `
   )
+
   return {
     dir,
     runner,
@@ -64,19 +79,18 @@ catch (error) { console.error(error); process.exitCode ||= 1 }
   }
 }
 
-const failures = [
-  { mode: 'updater', message: 'updater-failure' },
-  { mode: 'schema', message: 'schema columns drifted' },
-  { mode: 'export', message: 'export-failure' }
-]
 for (const { mode, message } of failures)
   test(`World ${mode} failure attempts resource cleanup and reports failure`, () => {
     const f = fixture(mode)
+
     try {
       const result = spawnSync(process.execPath, [f.runner], { encoding: 'utf8', env: f.env })
+
       expect(result.status).not.toBe(0)
       expect(result.stderr + result.stdout).toContain(message)
+
       const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
+
       expect(commands.match(/^rm -fv /gm)).toHaveLength(2)
       expect(commands).toMatch(/^network rm /m)
       expect(existsSync(path.join(f.dir, 'network'))).toBe(false)
@@ -90,17 +104,21 @@ for (const { mode, message } of failures)
 
 test('cleanup failure preserves the original error and attempts every removal', () => {
   const f = fixture('cleanup')
+
   try {
     const result = spawnSync(process.execPath, [f.runner], { encoding: 'utf8', env: f.env })
+
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('World resource cleanup failed')
     expect(result.stderr.lastIndexOf('updater-failure')).toBeGreaterThan(
       result.stderr.indexOf('World resource cleanup failed')
     )
+
     const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
     const removals = commands
       .split('\n')
       .filter((line) => line.startsWith('rm -fv ') || line.startsWith('network rm '))
+
     expect(removals).toHaveLength(3)
     expect(removals[0]).toMatch(/-importer$/)
     expect(removals[1]).toMatch(/-mysql$/)
@@ -114,9 +132,12 @@ test('cleanup failure preserves the original error and attempts every removal', 
 
 test('custom SQL is rejected before Docker resources are created', () => {
   const f = fixture('updater')
+
   try {
     writeFileSync(path.join(f.dir, 'source/data/sql/custom/extra.sql'), 'SELECT 1;')
+
     const result = spawnSync(process.execPath, [f.runner], { encoding: 'utf8', env: f.env })
+
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('custom or module SQL is not allowed')
     expect(existsSync(path.join(f.dir, 'commands'))).toBe(false)
@@ -124,18 +145,15 @@ test('custom SQL is rejected before Docker resources are created', () => {
     rmSync(f.dir, { recursive: true, force: true })
   }
 })
-
-const signals: { signal: NodeJS.Signals; code: number }[] = [
-  { signal: 'SIGINT', code: 130 },
-  { signal: 'SIGTERM', code: 143 }
-]
 test.each(signals)(
   '$signal cleans containers and network before exit',
   async ({ signal, code }) => {
     const f = fixture('signal')
+
     try {
       const child = spawn(process.execPath, [f.runner], { env: f.env, stdio: 'ignore' })
       const exited = new Promise<number | null>((resolve) => child.on('exit', resolve))
+
       for (
         let i = 0;
         i < 200 &&
@@ -149,9 +167,13 @@ test.each(signals)(
 
       expect(existsSync(path.join(f.dir, 'waiting'))).toBe(true)
       child.kill(signal)
+
       const status = await exited
+
       expect(status).toBe(code)
+
       const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
+
       expect(commands.match(/^rm -fv /gm)).toHaveLength(2)
       expect(commands).toMatch(/^network rm /m)
       expect(existsSync(path.join(f.dir, 'network'))).toBe(false)
