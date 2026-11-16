@@ -114,7 +114,8 @@ async function archive(
 
   const directory = path.join(output, name)
 
-  mkdirSync(directory, { mode: 0o700 })
+  // Public sources; Linux containers read the bind mount as a different user.
+  mkdirSync(directory, { mode: 0o755 })
   run('tar', ['-xzf', file, '-C', directory, '--strip-components=1'])
 
   return { directory, archive: file, revision: commit, sha256: hash.digest('hex') }
