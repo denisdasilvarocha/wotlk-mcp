@@ -1,3 +1,22 @@
 {
-  "status": "unapproved"
+  "status": "approved",
+  "reviewer": "Denis Da Silva Rocha",
+  "date": "2026-11-16",
+  "record": "https://github.com/denisdasilvarocha/wotlk-mcp/issues/45#issuecomment-6912218636",
+  "fixtures_sha256": "4570ead10bf44657154a613280ddeaaf56e1acc5f619cd2b7ac559e70df43d41",
+  "world_cases": [
+    "W01",
+    "W02",
+    "W03",
+    "W04",
+    "W05",
+    "W06",
+    "W06i",
+    "W07",
+    "W07i",
+    "W08",
+    "W09",
+    "W10",
+    "W11"
+  ]
 }
