@@ -76,7 +76,7 @@ jobs:
           set -euo pipefail
           d="$RUNNER_TEMP/candidate"
           node scripts/database-release.mjs create "$d/gate.json" "$d/wotlk.sqlite" "$d/wotlk.sqlite.br" "$d/NOTICE.md" "$d/fidelity.json" "$d/build-report.json" "$d/gate.json"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: packed-tool
           path: ${{ runner.temp }}/candidate/*.tgz
