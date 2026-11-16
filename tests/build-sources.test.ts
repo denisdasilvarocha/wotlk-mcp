@@ -6,6 +6,7 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -180,6 +181,8 @@ test('returns immutable source identities and acquired file hashes', () => {
       '7c45cdb5f1843f9166f13cce1ab0840dccb83571934732b17c71f19d683a3e8b'
     )
     expect(Object.keys(sources.codex.files)).toHaveLength(8)
+    // The world importer container runs as another user and must traverse the source.
+    expect(statSync(sources.azerothcore.directory).mode & 0o005).toBe(0o005)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
