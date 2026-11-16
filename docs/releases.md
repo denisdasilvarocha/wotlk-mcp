@@ -2,9 +2,6 @@
 
 This project publishes two independent things: the reference database, as GitHub releases tagged `db-v<major>.<minor>.<patch>`, and the npm package, tagged `v<version>`. Data updates need only a database release. Installed servers pick up a new database on their next update check, without a package release.
 
-> [!IMPORTANT]
-> Nothing has been published yet. Database publication needs owner setup that does not exist yet (see [Authorize publication](#authorize-publication)), and acceptance needs approved World Data fixtures. A workflow run or a configured environment is not owner approval.
-
 ## Rules for every release
 
 - Release assets are immutable. Never overwrite an asset, edit a published database, or reuse a tag for different contents. A correction is a new version that passes every gate again.
@@ -111,12 +108,10 @@ The [package release workflow](../.github/workflows/package-release.yml) publish
 
 ### One-time npm setup
 
-npm trusted publishing requires an existing package. The owner must:
+npm trusted publishing requires an existing package. This setup is done; it is recorded here in case the trust configuration must be recreated:
 
-1. Create the unscoped `wotlk-mcp` package on npm. This is a separate owner decision; the workflow does not do it.
-2. In the package settings on npm, add a GitHub Actions trusted publisher: user `denisdasilvarocha`, repository `wotlk-mcp`, workflow `package-release.yml`, no environment, with **Allow npm publish**. Do not grant dist-tag management. npm discards an unused new trust configuration after two days, so set it up just before the first release.
-
-The repository must also be public before the first published package can download a database without a token.
+1. The unscoped `wotlk-mcp` package was created by publishing a placeholder `0.0.0` by hand, outside the repository; npm also added its own `0.0.0-stage` placeholder for the new package. Both are deprecated and contain no server.
+2. The package has a GitHub Actions trusted publisher for `npm publish` (npm always allows `npm stage publish` too): user `denisdasilvarocha`, repository `wotlk-mcp`, workflow `package-release.yml`, no environment, no dist-tag management. To recreate it, run `npm trust github wotlk-mcp --file package-release.yml --repo denisdasilvarocha/wotlk-mcp --allow-publish` with an account that uses two-factor authentication. npm discards a new trust configuration that is not used within two days.
 
 ### Publish a version
 

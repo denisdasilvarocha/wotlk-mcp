@@ -8,9 +8,6 @@ wotlk-mcp is a [Model Context Protocol](https://modelcontextprotocol.io) server 
 - **Lua API and Interface source**: global functions, events, widgets and methods, CVars, combat log events, secure templates, slash commands, and every FrameXML, GlueXML, and Blizzard addon source line.
 - **Offsets**: native client addresses, linked to the Lua methods they implement.
 
-> [!NOTE]
-> The `wotlk-mcp` package and its reference database are not published yet. The install commands below work once the first release is out.
-
 ## Requirements
 
 - [Node.js](https://nodejs.org/) 24.15.0 or newer, which includes `npx`
