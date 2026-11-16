@@ -403,7 +403,9 @@ test.skipIf(process.platform !== 'linux')(
     }
 
     expect(
-      readdirSync(path.join(home, '.cache', 'wotlk-mcp')).some((name) => name.startsWith('state-'))
+      readdirSync(path.join(home, '.cache', 'wotlk-mcp', 'schema-1')).some((name) =>
+        name.startsWith('state-')
+      )
     ).toBe(true)
     scenario = 'offline'
 

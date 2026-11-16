@@ -2,15 +2,53 @@ name: CI
 
 on:
   pull_request:
+    # edited reruns the title check when the PR title changes.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  ci:
+  pr-title:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    steps:
+      - name: Check Conventional Commits title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9._/-]+\))?!?: \S.*$'
+          if ! printf '%s' "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title must follow Conventional Commits, e.g. 'feat(api): add export'. Got: $TITLE"
+            exit 1
+          fi
+
+  workflows:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Linters run their latest release: new rules land without a template change.
+      # Safe to float: read-only token, no secrets, no persisted credentials.
+      - name: actionlint
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest
+      - name: zizmor
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          advanced-security: false
+
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -20,5 +58,24 @@ jobs:
           node-version: '24'
           cache: true
       - run: vp check
-      - run: vp test
+      # Tests import the packed server from dist/.
       - run: vp pack
+      - run: vp test
+
+  # The only required status check. It always runs, so it never stays pending,
+  # and adding or renaming jobs above needs no ruleset change.
+  ci:
+    if: always()
+    needs: [pr-title, workflows, check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to succeed or be skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            case "$result" in
+              success | skipped) ;;
+              *) echo "::error::A required job ended with: $result"; exit 1 ;;
+            esac
+          done

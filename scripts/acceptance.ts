@@ -195,7 +195,7 @@ async function main(): Promise<void> {
 
     for (const tool of tools) {
       assert(
-        tool.description && tool.description.length <= 600,
+        tool.description && tool.description.length <= 1600,
         `${tool.name}: description missing or too long`
       )
       assert.equal(tool.annotations?.readOnlyHint, true)

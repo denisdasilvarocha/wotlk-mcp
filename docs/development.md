@@ -19,8 +19,8 @@ To run the server, you also need a reference database. Build one with `vp run bu
 | Command                           | Purpose                                                   |
 | --------------------------------- | --------------------------------------------------------- |
 | `vp check`                        | Format, lint, and type-check.                             |
-| `vp test`                         | Run the test suite.                                       |
 | `vp pack`                         | Compile the server and SQL worker into `dist/`.           |
+| `vp test`                         | Run the test suite. Many tests use `dist/`; pack first.   |
 | `vp run dev`                      | Recompile the server on change. It does not rebuild data. |
 | `vp run build`                    | Build the complete reference database and server.         |
 | `vpx scripts/validate-offsets.ts` | Validate the curated Offsets in `data/offsets/`.          |
@@ -28,7 +28,7 @@ To run the server, you also need a reference database. Build one with `vp run bu
 
 Some tests also need Python 3, `tar`, npm, and network access, because they verify the client inputs or install the packed tarball.
 
-CI runs `vp check`, `vp test`, and `vp pack` on every pull request and on pushes to `main`. On pushes to `main`, a separate workflow runs the download, package install, search, interface import, release gate, and SQL tests on Ubuntu, macOS, and Windows with Node 24.15.0 and 26.
+CI runs `vp check`, `vp pack`, and `vp test` on every pull request and on pushes to `main`, and checks the pull request title and the workflows. On pushes to `main`, a separate workflow runs the download, package install, search, interface import, release gate, and SQL tests on Ubuntu, macOS, and Windows with Node 24.15.0 and 26.
 
 ## Repository layout
 

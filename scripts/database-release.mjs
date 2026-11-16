@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  appendFileSync,
   createReadStream,
   createWriteStream,
   mkdtempSync,
@@ -326,7 +327,17 @@ if (command === 'previous') {
   const asset = assetOf(saved, 'wotlk.sqlite.br')
 
   validRelease(saved, String(release.id), tag, asset.digest)
-  console.log(JSON.stringify({ id: release.id, tag, digest: asset.digest }))
+  const result = { id: release.id, tag, digest: asset.digest }
+
+  console.log(JSON.stringify(result))
+
+  if (process.env.GITHUB_OUTPUT)
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      Object.entries(result)
+        .map(([key, value]) => `${key}=${value}\n`)
+        .join('')
+    )
 } else if (command === 'download') {
   const [id, digest, output] = args
 
