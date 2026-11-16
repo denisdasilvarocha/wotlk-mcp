@@ -15,17 +15,30 @@ export default defineConfig({
     useTabs: false
   },
   lint: {
+    categories: {
+      correctness: 'error',
+      pedantic: 'error',
+      perf: 'error',
+      suspicious: 'error'
+    },
     ignorePatterns: ['dist/**'],
+    jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     options: {
       typeAware: true,
       typeCheck: true
     },
-    categories: {
-      correctness: 'error',
-      suspicious: 'error',
-      perf: 'error',
-      pedantic: 'error'
-    },
+    overrides: [
+      {
+        files: ['**/*.test.ts'],
+        rules: {
+          'import/max-dependencies': 'off',
+          'max-classes-per-file': 'off',
+          'max-depth': 'off',
+          'max-lines': 'off',
+          'max-lines-per-function': 'off'
+        }
+      }
+    ],
     plugins: [
       'eslint',
       'typescript',
@@ -37,11 +50,18 @@ export default defineConfig({
       'jsdoc',
       'vitest'
     ],
-    jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
     rules: {
+      curly: ['error', 'all'],
       'func-style': ['error', 'declaration'],
+      'sort-keys': 'error',
+      'typescript/array-type': ['error', { default: 'array' }],
+      'typescript/consistent-type-exports': 'error',
+      'typescript/consistent-type-imports': 'error',
+      'typescript/explicit-function-return-type': 'error',
+      'typescript/no-non-null-assertion': 'error',
+      'unicorn/import-style': 'error',
       'vite-plus/prefer-vite-plus-imports': 'error',
-      curly: ['error', 'multi']
+      yoda: 'error'
     }
   },
   pack: {
