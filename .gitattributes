@@ -1,0 +1,10 @@
+# Normalize text to LF in the repository; Git detects binaries.
+* text=auto eol=lf
+
+# Windows scripts need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Collapse lockfiles in diffs and keep them out of language stats.
+# Keep only the lines for lockfiles the repository has.
+pnpm-lock.yaml -diff linguist-generated

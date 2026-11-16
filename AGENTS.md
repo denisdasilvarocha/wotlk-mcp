@@ -9,7 +9,7 @@ Run from the repository root. The toolchain is Vite+ (`vp`, `vpx`); do not use `
 ```sh
 vp install                          # install deps and git hooks; run after pulling
 vp test tests/sql.test.ts           # run one test file (prefer this)
-vp test                             # full suite, ~30 s; some tests need network, Python 3, tar, npm
+vp test                             # full suite, ~30 s; run vp pack first; some tests need network, Python 3, tar, npm
 vp check                            # format check, lint, type-check (CI gate)
 vp check --fix                      # same, and fixes formatting; modifies files
 vp pack                             # compile src/ into dist/
@@ -20,7 +20,7 @@ vp run build ./output-next          # full database build; slow, needs Docker, g
 ## Workflow
 
 1. After each change, run the focused test for the touched area.
-2. Before reporting done, run `vp check`, `vp test`, and `vp pack`; CI runs exactly these three.
+2. Before reporting done, run `vp check`, `vp pack`, and `vp test`, in that order; CI runs exactly these three, and tests use `dist/`.
 3. After editing `data/offsets/`, run `vpx scripts/validate-offsets.ts`.
 
 ## Gotchas

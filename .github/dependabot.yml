@@ -1,0 +1,28 @@
+# One entry per detected ecosystem; github-actions always.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    # Conventional title, so Dependabot PRs pass the PR-title check.
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      # Majors stay out of the group so they get their own PR and are never auto-merged.
+      npm:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      actions:
+        update-types: [minor, patch]
