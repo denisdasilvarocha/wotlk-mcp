@@ -28,6 +28,7 @@ jobs:
   candidate:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     environment: database-publication
     permissions:
       contents: write
@@ -91,6 +92,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: ['24.15.0', 'node']
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     permissions:
       # GitHub shows draft releases and their assets only to tokens with write access.
       contents: write
@@ -128,6 +130,7 @@ jobs:
   promote:
     needs: [candidate, acceptance]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: database-publication
     permissions:
       contents: write

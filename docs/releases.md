@@ -4,7 +4,7 @@ This project publishes two independent things: the reference database, as GitHub
 
 ## Rules for every release
 
-- Release assets are immutable. Never overwrite an asset, edit a published database, or reuse a tag for different contents. A correction is a new version that passes every gate again.
+- Release assets are immutable. Never overwrite an asset, edit a published database, or reuse a tag for different contents. A correction is a new version that passes every gate again. GitHub enforces this: the repository enables immutable releases, and the `Release tags` ruleset blocks moving or deleting any tag.
 - Release tags are never reused, including tags of deleted or failed drafts.
 - Keep old database releases available; older package majors still download them.
 
@@ -104,7 +104,9 @@ Any change to the fixture file needs a new approval.
 
 ## npm package releases
 
-The [package release workflow](../.github/workflows/package-release.yml) publishes the package when you push a `v<version>` tag.
+The [release workflow](../.github/workflows/package-release.yml) uses [release-please](https://github.com/googleapis/release-please). Every push to `main` opens or updates a release pull request (`chore(main): release X.Y.Z`) that sets `version` in `package.json` and adds a `CHANGELOG.md` entry from the pull request titles merged since the last release. `feat` bumps the minor version, `fix` the patch version, and a breaking change (`!` or a `BREAKING CHANGE:` footer) the major version. Commits that only touch `.github/`, `build/`, `data/`, `docs/`, `scripts/`, or `tests/` do not count, because they do not change the package; `release-please-config.json` lists these paths.
+
+The workflow authenticates as the repository's GitHub App (variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY`), so the release pull request runs CI and the tag it creates starts the publish job. The Dependabot auto-merge workflow uses the same App; store the private key in the Dependabot secrets too.
 
 ### One-time npm setup
 
@@ -116,16 +118,10 @@ npm trusted publishing requires an existing package. This setup is done; it is r
 ### Publish a version
 
 1. Publish a compatible database release first.
-2. Set `version` in `package.json`.
-3. If the schema major changed, update both `acceptedSchemaMajor` in `src/schema.ts` and `wotlkSchemaMajor` in `package.json`, and bump the package major. A breaking change to a tool's parameters or output also needs a new package major.
-4. Commit, then tag the same commit and push the tag:
+2. If the schema major changed, the pull request that changes it updates both `acceptedSchemaMajor` in `src/schema.ts` and `wotlkSchemaMajor` in `package.json`, and marks its title as breaking (`feat!: ...`) so the release is a new package major. A breaking change to a tool's parameters or output is also marked breaking.
+3. Merge the release pull request. To choose the version yourself, add a `Release-As: X.Y.Z` line to the body of any pull request merged before it.
 
-   ```sh
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-Before publishing, `scripts/check-package-release.mjs` fails if:
+Merging creates the `v<version>` tag and a draft release. The `publish` job then runs `scripts/check-package-release.mjs`, which fails if:
 
 - The tag does not equal `v` plus the `package.json` version.
 - The two schema-major values disagree.
@@ -133,9 +129,11 @@ Before publishing, `scripts/check-package-release.mjs` fails if:
 - An earlier version with the same package major used a different schema major.
 - No published database exists for the package's schema major, or its asset fails the digest or schema check.
 
-The workflow then packs the server, runs the package tests, publishes with `npm publish`, and creates a GitHub release with generated notes.
+The job then packs the server, runs the package tests, attests the npm tarball, uploads it to the draft release, publishes it with `npm publish`, and publishes the release.
 
-If npm publication succeeds but the GitHub release step fails, do not rerun the publish: npm rejects republishing a version. Create the missing GitHub release for the existing tag instead.
+If the job fails before `npm publish`, fix the cause and rerun it; the draft still accepts the tarball. If the check cannot pass for this version, leave the tag in place and release a new patch version. If npm publication succeeds but publishing the release fails, do not rerun the job: npm rejects republishing a version. Publish the draft instead with `gh release edit vX.Y.Z --draft=false --latest`.
+
+Merging the release pull request changes `package.json`, which also starts the database release workflow. Decline its deployment approval when no database release is due.
 
 ## Roll back a database release
 
@@ -171,4 +169,4 @@ Deleting a release does not delete its Git tag; leave the tag in place so the ve
 
 ## Client-input release
 
-Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources.ts` pins its manifest hash. It was published once and is not part of the database or package workflows. Never replace its asset; changed inputs need a new release name. GitHub does not enforce this, because the repository does not enable immutable releases.
+Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources.ts` pins its manifest hash. It was published once and is not part of the database or package workflows. Never replace its asset; changed inputs need a new release name. It was published before the repository enabled immutable releases, so GitHub does not lock its asset.

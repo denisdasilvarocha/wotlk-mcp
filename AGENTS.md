@@ -33,14 +33,14 @@ vp run build ./output-next          # full database build; slow, needs Docker, g
 
 ## Invariants
 
-- `acceptedSchemaMajor` in `src/schema.ts` must equal `wotlkSchemaMajor` in `package.json`. Changing it, or making a breaking change to a tool's parameters or output, requires a new package major.
+- `acceptedSchemaMajor` in `src/schema.ts` must equal `wotlkSchemaMajor` in `package.json`. Changing it, or making a breaking change to a tool's parameters or output, requires a new package major: mark the PR title breaking (`feat!: ...`) so release-please cuts it.
 - When a build stage fails on a schema, layout, hash, or provenance check, fix the cause; do not relax validation, skip a domain, or drop source data to get past it.
 - Links come only from stored keys, never from names or text; source rows are stored exactly. See the interpretation rules in `docs/build.md`.
 
 ## Boundaries
 
 - **Ask first:** adding dependencies; changing `vite.config.ts` lint rules or CI workflows; bumping the schema major.
-- **Never:** create, edit, or delete GitHub releases or tags, or run `npm publish`; releases are immutable and need owner authorization (`docs/releases.md`). Prepare the change and hand it to the user.
+- **Never:** create, edit, or delete GitHub releases or tags, merge a release-please PR (`chore(main): release ...`), or run `npm publish`; releases are immutable and need owner authorization (`docs/releases.md`). Prepare the change and hand it to the user.
 
 ## Commits
 
