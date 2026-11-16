@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -87,6 +87,11 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       'Achievement'
     ])
       make(name, ['int ID', 'string Name_lang'], ['$id$ID<32>', 'Name_lang'], [1, 0])
+    // WoWDBDefs names some definitions with different casing than the client DBC.
+    renameSync(
+      path.join(dir, 'fixture', 'definitions', 'Map.dbd'),
+      path.join(dir, 'fixture', 'definitions', 'MAP.dbd')
+    )
 
     const archive = path.join(dir, 'definitions.tar.gz')
 
