@@ -5,6 +5,6 @@
 *.cmd text eol=crlf
 *.bat text eol=crlf
 
-# Collapse lockfiles in diffs and keep them out of language stats.
-# Keep only the lines for lockfiles the repository has.
-pnpm-lock.yaml -diff linguist-generated
+# Collapse lockfiles in GitHub diffs and keep them out of language stats.
+# No -diff: lockfile changes stay reviewable in `git diff`.
+pnpm-lock.yaml linguist-generated

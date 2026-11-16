@@ -13,6 +13,7 @@ trim_trailing_whitespace = false
 
 [{Makefile,*.mk,go.mod,*.go}]
 indent_style = tab
+indent_size = tab
 
 [*.{py,rs}]
 indent_size = 4
