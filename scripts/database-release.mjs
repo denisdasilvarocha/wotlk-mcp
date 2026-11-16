@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
   appendFileSync,
@@ -16,6 +16,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
+import { promisify } from 'node:util'
 import { createBrotliDecompress } from 'node:zlib'
 
 const api = process.env.GITHUB_API_URL ?? 'https://api.github.com'
@@ -268,7 +269,9 @@ if (command === 'previous') {
 
     if (gate.allow_shrink === true) argumentsForGate.push('--allow-shrink')
 
-    const checked = JSON.parse(execFileSync('vpx', argumentsForGate, { encoding: 'utf8' }))
+    // Async: a blocked event loop keeps idle API sockets the server already closed.
+    const { stdout } = await promisify(execFile)('vpx', argumentsForGate, { encoding: 'utf8' })
+    const checked = JSON.parse(stdout)
 
     if (JSON.stringify(checked) !== JSON.stringify(gate))
       throw new Error('gate report does not match candidate and previous release')
