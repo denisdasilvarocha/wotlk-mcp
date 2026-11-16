@@ -2,9 +2,6 @@
 
 The server reads one SQLite reference database. It does not bundle one: it either opens the file you point it at, or downloads a published database from this repository's GitHub releases and caches it.
 
-> [!NOTE]
-> No database release is published yet, so the download path does not work today. [Build the reference](build.md) and set `WOTLK_MCP_DB`.
-
 ## Use a local database
 
 Set `WOTLK_MCP_DB` to the database path in your client's MCP server configuration. From a shell:
