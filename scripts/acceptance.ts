@@ -157,7 +157,8 @@ async function main(): Promise<void> {
   const failures: string[] = []
 
   try {
-    execFileSync('tar', ['-xzf', path.resolve(archive), '-C', dir])
+    // stdin, not -f: GNU tar (Git Bash on Windows) reads "D:\..." as a remote host.
+    execFileSync('tar', ['-xz', '-C', dir], { input: readFileSync(path.resolve(archive)) })
 
     const root = path.join(dir, 'package')
     const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
