@@ -29,7 +29,8 @@ export function runSql(
       clearTimeout(timer)
       reject(error)
     })
-    worker.once('exit', (code) => {
+    // 'exit' can fire before the result message is read; 'close' waits for the IPC channel.
+    worker.once('close', (code) => {
       clearTimeout(timer)
       reject(new Error(`SQL worker exited unexpectedly (${code})`))
     })
