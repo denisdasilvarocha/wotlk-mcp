@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
@@ -58,6 +58,12 @@ export function importClientData(
 
   {
     const definitionsDirectory = path.join(definitions.directory, 'definitions')
+    const definitionNames = readdirSync(definitionsDirectory)
+    // WoWDBDefs casing differs from client names (BannedAddons.dbd for BannedAddOns.dbc).
+    const definitionFiles = new Map(definitionNames.map((file) => [file.toLowerCase(), file]))
+
+    if (definitionFiles.size !== definitionNames.length)
+      throw new Error('Ambiguous WoWDBDefs definitions differing only in case')
     const db = new DatabaseSync(database)
     db.exec('BEGIN')
     try {
@@ -93,13 +99,11 @@ export function importClientData(
 
         if (hash(data) !== entry.sha256) throw new Error(`Client hash mismatch: ${entry.path}`)
 
-        let definition: string
+        const file = definitionFiles.get(`${name}.dbd`.toLowerCase())
 
-        try {
-          definition = readFileSync(path.join(definitionsDirectory, `${name}.dbd`), 'utf8')
-        } catch {
-          throw new Error(`Missing definition: ${name}`)
-        }
+        if (!file) throw new Error(`Missing definition: ${name}`)
+
+        const definition = readFileSync(path.join(definitionsDirectory, file), 'utf8')
 
         const sections = definition.split(/\r?\n\s*\r?\n/)
         const columns = new Map<string, { type: string; target?: string }>()
