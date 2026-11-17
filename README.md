@@ -56,10 +56,10 @@ Show me the ChatFrame_OnEvent source in FrameXML.
 
 | Tool | Description |
 | --- | --- |
-| [`search`](docs/tools.md#search) | Find IDs by name or text, such as `Thunderfury` → `item:19019`. |
-| [`get`](docs/tools.md#get) | Read full Records, or a window of Interface source lines. |
-| [`related`](docs/tools.md#related) | Follow Links: loot sources, quest givers, rewards, vendors, trainers, spawns. |
-| [`sql`](docs/tools.md#sql) | Run read-only SQLite queries for counts, filters, and joins. |
+| [search](docs/tools.md#search) | Find IDs by name or text, such as `Thunderfury` → `item:19019`. |
+| [get](docs/tools.md#get) | Read full Records, or a window of Interface source lines. |
+| [related](docs/tools.md#related) | Follow Links: loot sources, quest givers, rewards, vendors, trainers, spawns. |
+| [sql](docs/tools.md#sql) | Run read-only SQLite queries for counts, filters, and joins. |
 
 ### Data
 
@@ -86,10 +86,6 @@ The reference covers only the 3.3.5a build 12340 Windows x86 client, not retail,
 - [Contributing guide](.github/CONTRIBUTING.md): setup, checks, and pull request conventions.
 - [Code of Conduct](.github/CODE_OF_CONDUCT.md): expected behavior in the project.
 - [Issues](https://github.com/denisdasilvarocha/wotlk-mcp/issues/new/choose): report bugs and request features.
-
-## Security
-
-- [Security policy](.github/SECURITY.md): report vulnerabilities privately, never in a public issue.
 
 ## License
 
