@@ -51,6 +51,8 @@ Release metadata may contain null digests for unrelated assets. The selected dat
 
 The gate also assigns the database version by comparing the candidate with the previous release. Removing a table, changing a column type, removing a Record kind, or giving an existing source row a different Record ID is a major bump. Adding a table, column, or Record kind is a minor bump. Anything else is a patch. The version is then raised above every version already used in that major, including drafts, prereleases, and plain Git tags. A major bump needs a new package major, because each package major accepts one schema major.
 
+Stable-ID comparisons use temporary, per-source key projections; neither database's schema nor source rows are modified.
+
 ### Prepare a candidate locally
 
 The release commands need these variables:

@@ -27,15 +27,29 @@ function compareKinds(old: Database, kindSet: Names): { addition: boolean; break
   }
 }
 
-function recordIdChanged(db: Database, table: string, equal: string): boolean {
+function recordIdChanged(db: Database, table: string, keys: readonly string[]): boolean {
+  const columns = keys.map((name) => quoteIdentifier(name))
+  const oldKeys = columns.map((name) => `s.${name}`).join(', ')
+  const newKeys = columns.map((name) => `t.${name}`).join(', ')
+  const equal = columns.map((name) => `s.${name} IS t.${name}`).join(' AND ')
+
   return (
     db
-      .prepare(`SELECT 1 FROM previous_gate.record p
-            JOIN previous_gate.${quoteIdentifier(table)} s ON s.rowid=p.source_row
-            JOIN main.${quoteIdentifier(table)} t ON ${equal}
-            JOIN main.record c ON c.source_row=t.rowid AND c.source_table=p.source_table AND c.kind=p.kind
-            WHERE p.source_table=? AND c.id<>p.id LIMIT 1`)
-      .get(table) !== undefined
+      .prepare(`WITH old_records AS MATERIALIZED (
+              SELECT p.id AS record_id, p.kind AS record_kind, ${oldKeys}
+              FROM previous_gate.record p
+              JOIN previous_gate.${quoteIdentifier(table)} s ON s.rowid=p.source_row
+              WHERE p.source_table=?
+            ), new_records AS MATERIALIZED (
+              SELECT c.id AS record_id, c.kind AS record_kind, ${newKeys}
+              FROM main.record c
+              JOIN main.${quoteIdentifier(table)} t ON t.rowid=c.source_row
+              WHERE c.source_table=?
+            )
+            SELECT 1 FROM old_records s
+            JOIN new_records t ON ${equal} AND s.record_kind=t.record_kind
+            WHERE s.record_id<>t.record_id LIMIT 1`)
+      .get(table, table) !== undefined
   )
 }
 
@@ -117,11 +131,7 @@ export function changedRecordIds(
         keys.push('declaringWidget')
       }
 
-      const equal = keys
-        .map((name) => `s.${quoteIdentifier(name)} IS t.${quoteIdentifier(name)}`)
-        .join(' AND ')
-
-      if (recordIdChanged(db, table, equal)) {
+      if (recordIdChanged(db, table, keys)) {
         breaking = true
       }
     }
