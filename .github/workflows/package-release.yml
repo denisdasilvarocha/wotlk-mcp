@@ -76,6 +76,7 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: gh release upload "$TAG" "$RUNNER_TEMP"/release/*.tgz --clobber --repo "$GITHUB_REPOSITORY"
       - name: Publish with npm trusted publishing
+        working-directory: ${{ runner.temp }}/release
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |

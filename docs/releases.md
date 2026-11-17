@@ -131,7 +131,7 @@ Merging creates the `v<version>` tag and a draft release. The `publish` job then
 - An earlier version with the same package major used a different schema major.
 - No published database exists for the package's schema major, or its asset fails the digest or schema check.
 
-The job then packs the server, runs the package tests, attests the npm tarball, uploads it to the draft release, publishes it with `npm publish`, and publishes the release.
+The job then packs the server, runs the package tests, attests the npm tarball, uploads it to the draft release, publishes it with `npm publish` from the tarball's staging directory, and publishes the release. Publishing outside the checkout keeps npm's publication step separate from the checkout's pnpm `devEngines` requirement.
 
 If the job fails before `npm publish`, fix the cause and rerun it; the draft still accepts the tarball. If the check cannot pass for this version, leave the tag in place and release a new patch version. If npm publication succeeds but publishing the release fails, do not rerun the job: npm rejects republishing a version. Publish the draft instead with `gh release edit vX.Y.Z --draft=false --latest`.
 
