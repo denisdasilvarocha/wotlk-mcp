@@ -1,3 +1,7 @@
+import { importCodex, readCodex } from '../../build/codex/index.ts'
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
@@ -14,14 +18,9 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
 
-import { importCodex, readCodex } from '../../build/codex/index.ts'
-import { initReference } from '../../build/offsets.ts'
 import type { CodexSource } from '../../build/sources/index.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
 async function waitForStart(started: string, getExitCode: () => number | null): Promise<void> {
   for (let i = 0; i < 40 && !existsSync(started) && getExitCode() === null; i++) {

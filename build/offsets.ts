@@ -1,13 +1,12 @@
+import { schema } from '../src/schema.ts'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import * as z from 'zod'
 
 import type { Database } from '../src/database.ts'
-import { schema } from '../src/schema.ts'
 
 export const offsetTopicSchema = z.array(
   z.strictObject({

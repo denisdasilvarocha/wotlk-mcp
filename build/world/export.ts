@@ -1,12 +1,12 @@
-import { existsSync } from 'node:fs'
-import { DatabaseSync } from 'node:sqlite'
-
-import type { SourceArchive } from '../sources/index.ts'
 import { hashRow } from './data.ts'
 import { populateWorldMetadata } from './metadata.ts'
 import { createWorldScanner } from './scan.ts'
 import { readWorldSchema, verifyWorldSchema } from './schema.ts'
 import { exportTable } from './table.ts'
+import { existsSync } from 'node:fs'
+import { DatabaseSync } from 'node:sqlite'
+
+import type { SourceArchive } from '../sources/index.ts'
 
 function mysqlArguments(container: string): string[] {
   return [

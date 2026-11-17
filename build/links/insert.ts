@@ -1,5 +1,6 @@
-import type { Database } from '../../src/database.ts'
 import { relations } from '../../src/schema.ts'
+
+import type { Database } from '../../src/database.ts'
 
 export type AddLink = (
   sourceId: string,

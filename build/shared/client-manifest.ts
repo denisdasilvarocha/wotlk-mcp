@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-
 import { isRecord } from './record.ts'
 import { sha256Hex } from './sha256.ts'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 
 /** SHA-256 of the original build 12340 client executable the inputs were extracted from. */
 export const clientExecutableSha256 =

@@ -1,14 +1,14 @@
+import { readClientManifest, type ClientManifestFile } from '../shared/client-manifest.ts'
+import { isRecord } from '../shared/record.ts'
+import { sha256Hex } from '../shared/sha256.ts'
+import { parseLayout } from './layout.ts'
+import { importTable } from './table.ts'
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { readClientManifest, type ClientManifestFile } from '../shared/client-manifest.ts'
-import { isRecord } from '../shared/record.ts'
-import { sha256Hex } from '../shared/sha256.ts'
 import type { SourceArchive } from '../sources/index.ts'
-import { parseLayout } from './layout.ts'
-import { importTable } from './table.ts'
 
 const kinds: Readonly<Record<string, string>> = {
   Achievement: 'achievement',

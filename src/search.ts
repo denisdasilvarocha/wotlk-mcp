@@ -1,6 +1,5 @@
-import type { StatementSync } from 'node:sqlite'
-
 import type { Database } from './database.js'
+import type { StatementSync } from 'node:sqlite'
 
 interface SearchInput {
   query: string

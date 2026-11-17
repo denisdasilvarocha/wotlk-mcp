@@ -1,6 +1,7 @@
 import { quoteIdentifier } from '../build/shared/table-hash.ts'
-import type { Database } from '../src/database.ts'
 import { rows } from './release-gate-checks.ts'
+
+import type { Database } from '../src/database.ts'
 
 type Schema = Readonly<
   Pick<

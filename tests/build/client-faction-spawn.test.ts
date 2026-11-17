@@ -1,14 +1,12 @@
+import { buildClientFactionSpawnLinks } from '../../build/links/client-faction-spawn.ts'
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
-
-import { buildClientFactionSpawnLinks } from '../../build/links/client-faction-spawn.ts'
-import { initReference } from '../../build/offsets.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-client-links-'))
 const file = path.join(dir, 'reference.sqlite')

@@ -1,3 +1,4 @@
+import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -6,10 +7,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliCompressSync, brotliDecompressSync } from 'node:zlib'
-
 import { expect, test } from 'vite-plus/test'
-
-import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
 
 function readReport(file: string): {
   uncompressed_bytes: unknown

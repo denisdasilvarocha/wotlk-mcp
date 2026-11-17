@@ -1,9 +1,4 @@
-import { randomBytes } from 'node:crypto'
-import { mkdirSync, readdirSync } from 'node:fs'
-import path from 'node:path'
-
 import { run } from '../shared/exec.ts'
-import type { SourceArchive } from '../sources/index.ts'
 import { exportWorld } from './export.ts'
 import {
   cleanupWorldResources,
@@ -13,6 +8,11 @@ import {
   prepareWorldInputs,
   runWorldImporter
 } from './import-containers.ts'
+import { randomBytes } from 'node:crypto'
+import { mkdirSync, readdirSync } from 'node:fs'
+import path from 'node:path'
+
+import type { SourceArchive } from '../sources/index.ts'
 
 const mysqlImage = 'mysql@sha256:106d5197fd8e4892980469ad42eb20f7a336bd81509aae4ee175d852f5cc4565'
 

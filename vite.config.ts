@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
+  staged: { '*': 'vp check --fix' },
   fmt: {
     ignorePatterns: ['dist/**'],
     printWidth: 100,
@@ -8,38 +9,39 @@ export default defineConfig({
     semi: false,
     singleAttributePerLine: true,
     singleQuote: true,
-    sortImports: true,
+    sortImports: {
+      groups: ['value-import', 'type-import'],
+      newlinesBetween: true
+    },
     sortPackageJson: { sortScripts: true },
     tabWidth: 2,
     trailingComma: 'none',
     useTabs: false
   },
   lint: {
+    ignorePatterns: ['dist/**'],
     categories: {
       correctness: 'error',
-      pedantic: 'error',
       perf: 'error',
       suspicious: 'error'
     },
-    ignorePatterns: ['dist/**'],
     options: {
       typeAware: true,
       typeCheck: true
     },
     plugins: [
       'eslint',
+      'import',
+      'jsdoc',
+      'node',
+      'oxc',
+      'promise',
       'typescript',
       'unicorn',
-      'oxc',
-      'import',
-      'promise',
-      'node',
-      'jsdoc',
       'vitest'
     ]
   },
   pack: {
     entry: ['src/index.ts', 'src/sql-worker.ts']
-  },
-  staged: { '*': 'vp check --fix' }
+  }
 })

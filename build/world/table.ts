@@ -1,9 +1,9 @@
+import { quoteIdentifier } from '../shared/table-hash.ts'
 import { createHash, type Hash } from 'node:crypto'
-import type { StatementSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { quoteIdentifier } from '../shared/table-hash.ts'
 import type { Column, Value } from './data.ts'
+import type { StatementSync } from 'node:sqlite'
 
 interface ExportContext {
   readonly db: Database

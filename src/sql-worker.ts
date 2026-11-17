@@ -1,4 +1,5 @@
 import { DatabaseSync, constants } from 'node:sqlite'
+
 import type { SQLOutputValue } from 'node:sqlite'
 
 const maxOutput = 32000

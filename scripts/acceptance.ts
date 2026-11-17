@@ -1,15 +1,13 @@
+import { approvalFailure, kinds, relations } from './acceptance-constants.ts'
+import { Client } from '@modelcontextprotocol/client'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-
-import { Client } from '@modelcontextprotocol/client'
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import * as z from 'zod'
-
-import { approvalFailure, kinds, relations } from './acceptance-constants.ts'
 
 const fixture = z
   .strictObject({

@@ -1,15 +1,13 @@
+import { importNative } from '../../build/native/index.ts'
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
 import { createHash } from 'node:crypto'
 import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
-
-import { importNative } from '../../build/native/index.ts'
-import { initReference } from '../../build/offsets.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex')

@@ -1,11 +1,10 @@
-import { DatabaseSync } from 'node:sqlite'
-
 import { clientExecutableSha256 } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
 import { sha256Hex } from '../shared/sha256.ts'
 import { readNativeInput } from './input.ts'
 import { insertRegistrations } from './insert.ts'
 import { resolveWidgets } from './resolution.ts'
+import { DatabaseSync } from 'node:sqlite'
 
 export function importNative(
   database: string,

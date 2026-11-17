@@ -1,12 +1,12 @@
+import { openReference } from '../reference.js'
+import { cached, cacheDirectory, publish, removeIfPossible, states } from './cache.js'
+import { selectRelease, transferAsset } from './release.js'
 import { randomUUID } from 'node:crypto'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { openReference } from '../reference.js'
-import { cached, cacheDirectory, publish, removeIfPossible, states } from './cache.js'
 import type { CacheState } from './cache.js'
-import { selectRelease, transferAsset } from './release.js'
 
 let received = 0
 let total: number | undefined

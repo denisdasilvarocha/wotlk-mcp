@@ -1,14 +1,12 @@
+import { importSpellEnums } from '../../build/enums/spell.ts'
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.js'
+import { Client } from '@modelcontextprotocol/client'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
-
-import { importSpellEnums } from '../../build/enums/spell.ts'
-import { initReference } from '../../build/offsets.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.js'
 
 test('spell mappings validate fields and materialize named references without changing raw data', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'spell-enums-'))

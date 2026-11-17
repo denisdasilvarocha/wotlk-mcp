@@ -1,10 +1,10 @@
+import { sha256Hex } from '../shared/sha256.ts'
+import { canonicalTableHash, canonicalTables } from '../shared/table-hash.ts'
 import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { sha256Hex } from '../shared/sha256.ts'
-import { canonicalTableHash, canonicalTables } from '../shared/table-hash.ts'
 import type { Sources } from '../sources/index.ts'
 
 type ProvenanceSources = Readonly<Omit<Sources, 'azerothcore' | 'codex' | 'wowdbdefs'>> & {

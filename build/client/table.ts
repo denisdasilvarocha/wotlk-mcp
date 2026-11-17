@@ -1,11 +1,11 @@
+import { quoteIdentifier } from '../shared/table-hash.ts'
+import { readValue } from './values.ts'
 import { createHash } from 'node:crypto'
-import type { StatementSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { quoteIdentifier } from '../shared/table-hash.ts'
 import type { Field } from './layout.ts'
-import { readValue } from './values.ts'
 import type { DbcBuffer } from './values.ts'
+import type { StatementSync } from 'node:sqlite'
 
 type Statements = Readonly<{
   foreign: Readonly<Pick<StatementSync, 'run'>>

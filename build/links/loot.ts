@@ -1,8 +1,8 @@
+import { linkWriter, type AddLink } from './insert.ts'
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { linkWriter, type AddLink } from './insert.ts'
 
 const sources = [
   ['creature', 'creature', 'lootid', 1],

@@ -1,13 +1,12 @@
-import { execFileSync } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
-import path from 'node:path'
-
 import { runImportStages } from './import-stages.ts'
 import { runLinkStages } from './link-stages.ts'
 import { writeReferenceArtifact } from './reference/artifact.ts'
 import { writeFidelity } from './reference/fidelity.ts'
 import { writeProvenance } from './reference/provenance.ts'
 import { acquireSources } from './sources/index.ts'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync } from 'node:fs'
+import path from 'node:path'
 
 const usage = `Usage: vp run build [new-output-directory]
 

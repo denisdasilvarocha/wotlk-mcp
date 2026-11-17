@@ -1,7 +1,7 @@
+import { acceptedSchemaMajor, kinds } from './schema.js'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 
 import type { Database } from './database.js'
-import { acceptedSchemaMajor, kinds } from './schema.js'
 
 type SqlValue = string | number | bigint | null | { readonly toString: () => string }
 

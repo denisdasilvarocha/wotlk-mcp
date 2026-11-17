@@ -1,6 +1,7 @@
-import type { Database } from '../../src/database.ts'
 import { resolveTable } from './decision.ts'
 import { parseStrings, type Registration, type TableDecision } from './registration.ts'
+
+import type { Database } from '../../src/database.ts'
 
 type Decisions = Readonly<Record<string, TableDecision | undefined>>
 

@@ -1,8 +1,8 @@
-import type { DatabaseSync } from 'node:sqlite'
-
 import { quoteIdentifier } from '../build/shared/table-hash.ts'
-import type { Database } from '../src/database.ts'
 import { kinds, relations } from '../src/schema.ts'
+
+import type { Database } from '../src/database.ts'
+import type { DatabaseSync } from 'node:sqlite'
 
 function stable(value: unknown): string {
   if (Array.isArray(value)) {

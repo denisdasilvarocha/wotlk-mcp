@@ -1,8 +1,8 @@
+import { addLinkRows } from './insert.ts'
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { addLinkRows } from './insert.ts'
 
 function addQuestLinks(db: Database): void {
   for (const kind of ['creature', 'gameobject']) {

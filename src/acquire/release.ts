@@ -1,12 +1,10 @@
+import { acceptedSchemaMajor } from '../schema.js'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
-
 import * as z from 'zod'
-
-import { acceptedSchemaMajor } from '../schema.js'
 
 const headers: Record<string, string> = {
   Accept: 'application/vnd.github+json',

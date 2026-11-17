@@ -1,8 +1,6 @@
-import { readdirSync } from 'node:fs'
-
-import * as z from 'zod'
-
 import { loadOffsets, offsetTopicSchema } from '../build/offsets.ts'
+import { readdirSync } from 'node:fs'
+import * as z from 'zod'
 
 try {
   const [, , argument] = process.argv

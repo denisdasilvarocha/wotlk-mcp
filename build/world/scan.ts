@@ -1,7 +1,6 @@
+import { decode, type Column } from './data.ts'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
-
-import { decode, type Column } from './data.ts'
 
 export function createWorldScanner(mysqlArgs: readonly string[], signal: Readonly<AbortSignal>) {
   return async function scan(

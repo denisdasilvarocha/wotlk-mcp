@@ -1,5 +1,6 @@
-import type { Database } from './database.js'
 import { relations } from './schema.js'
+
+import type { Database } from './database.js'
 
 interface RelatedInput {
   id: string

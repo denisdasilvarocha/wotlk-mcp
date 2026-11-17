@@ -1,7 +1,6 @@
+import { asArray, asRecord } from './records.mjs'
 import { execFile } from 'node:child_process'
 import { appendFileSync } from 'node:fs'
-
-import { asArray, asRecord } from './records.mjs'
 
 /** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
 /** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */

@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-
 import * as z from 'zod'
 
 export const kinds = [

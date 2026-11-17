@@ -1,7 +1,6 @@
-import type { StatementSync } from 'node:sqlite'
-
 import type { Database } from '../../src/database.ts'
 import type { SourceArchive } from '../sources/index.ts'
+import type { StatementSync } from 'node:sqlite'
 
 function populateWorldRecords(db: Database): void {
   db.exec(`

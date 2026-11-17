@@ -1,16 +1,14 @@
+import { importClientData } from '../../build/client/index.js'
+import { initReference } from '../../build/offsets.js'
+import { packagedServer, unpackPackage } from '../helpers/package.js'
+import { Client } from '@modelcontextprotocol/client'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
-
-import { importClientData } from '../../build/client/index.js'
-import { initReference } from '../../build/offsets.js'
-import { packagedServer, unpackPackage } from '../helpers/package.js'
 
 function digest(
   data: { readonly [index: number]: number; readonly length: number } | string

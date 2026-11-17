@@ -1,10 +1,8 @@
+import { writeReferenceArtifact } from '../build/reference/artifact.ts'
 import { execFileSync } from 'node:child_process'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-
 import { z } from 'zod'
-
-import { writeReferenceArtifact } from '../build/reference/artifact.ts'
 
 const [directory, ...options] = process.argv.slice(2).filter((arg) => arg !== '--')
 

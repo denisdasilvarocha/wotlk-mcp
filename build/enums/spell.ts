@@ -1,12 +1,11 @@
+import { quoteIdentifier } from '../shared/table-hash.ts'
+import { parseEnum } from './parser.ts'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import { z } from 'zod'
 
 import type { Database } from '../../src/database.ts'
-import { quoteIdentifier } from '../shared/table-hash.ts'
-import { parseEnum } from './parser.ts'
 
 const mappingSchema = z.object({
   field: z.string().regex(/^\w+$/u),

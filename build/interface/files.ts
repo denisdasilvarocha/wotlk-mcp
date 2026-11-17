@@ -1,10 +1,10 @@
+import { sha256Hex } from '../shared/sha256.ts'
+import { commandParser, type Command } from './commands.ts'
 import { lstatSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 import type { Database } from '../../src/database.ts'
 import type { ClientManifestFile } from '../shared/client-manifest.ts'
-import { sha256Hex } from '../shared/sha256.ts'
-import { commandParser, type Command } from './commands.ts'
 
 function readInterfaceFile(
   directory: string,

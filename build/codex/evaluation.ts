@@ -1,7 +1,7 @@
-import path from 'node:path'
-
 import { run } from '../shared/exec.ts'
 import { codexNames } from '../sources/index.ts'
+import path from 'node:path'
+
 import type { CodexData } from './index.ts'
 
 const parseCodex: (text: string) => CodexData = JSON.parse

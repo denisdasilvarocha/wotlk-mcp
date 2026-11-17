@@ -1,12 +1,11 @@
+import { ownerApproved, readRelease, readTag } from './database-release-readers.mjs'
+import { asArray } from './records.mjs'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
-
-import { ownerApproved, readRelease, readTag } from './database-release-readers.mjs'
-import { asArray } from './records.mjs'
 
 const api = process.env.GITHUB_API_URL ?? 'https://api.github.com'
 export const digestPattern = /^sha256:[0-9a-f]{64}$/u

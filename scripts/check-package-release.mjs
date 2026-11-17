@@ -1,3 +1,5 @@
+import { acceptedSchemaMajor } from '../src/schema.ts'
+import { asArray, asRecord, asString } from './records.mjs'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -6,9 +8,6 @@ import { DatabaseSync } from 'node:sqlite'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
-
-import { acceptedSchemaMajor } from '../src/schema.ts'
-import { asArray, asRecord, asString } from './records.mjs'
 
 /** @type {Record<string, string>} */
 const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'wotlk-mcp-release' }

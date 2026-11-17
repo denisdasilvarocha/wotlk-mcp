@@ -1,12 +1,12 @@
-import path from 'node:path'
-
 import { importClientData } from './client/index.ts'
 import { importCodex, readCodex } from './codex/index.ts'
 import { importInterface } from './interface/index.ts'
 import { importNative } from './native/index.ts'
 import { initReference } from './offsets.ts'
-import type { Sources } from './sources/index.ts'
 import { importWorld } from './world/index.ts'
+import path from 'node:path'
+
+import type { Sources } from './sources/index.ts'
 
 type Run = <T>(label: string, action: () => T | Promise<T>) => Promise<T>
 

@@ -1,8 +1,3 @@
-import { createHash } from 'node:crypto'
-import { createReadStream, readFileSync, statSync } from 'node:fs'
-import { DatabaseSync } from 'node:sqlite'
-import { createBrotliDecompress } from 'node:zlib'
-
 import { canonicalTableHash, canonicalTables } from '../build/shared/table-hash.ts'
 import {
   checkFullText,
@@ -16,6 +11,10 @@ import {
   schema
 } from './release-gate-checks.ts'
 import { changedRecordIds, compareSchemas } from './release-gate-comparison.ts'
+import { createHash } from 'node:crypto'
+import { createReadStream, readFileSync, statSync } from 'node:fs'
+import { DatabaseSync } from 'node:sqlite'
+import { createBrotliDecompress } from 'node:zlib'
 
 function assertEmpty(sql: string, error: string): void {
   if (db.prepare(sql).get()) {

@@ -1,13 +1,11 @@
+import { openReference } from '../reference.js'
+import { acceptedSchemaMajor } from '../schema.js'
 import { randomUUID } from 'node:crypto'
 import { unlinkSync } from 'node:fs'
 import { link, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
-
 import * as z from 'zod'
-
-import { openReference } from '../reference.js'
-import { acceptedSchemaMajor } from '../schema.js'
 
 const cacheStateSchema = z.object({
   file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/u),

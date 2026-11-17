@@ -1,14 +1,13 @@
+import { writeProvenance } from '../../build/reference/provenance.ts'
+import { schema } from '../../src/schema.ts'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import { expect, test } from 'vite-plus/test'
 
-import { writeProvenance } from '../../build/reference/provenance.ts'
 import type { Sources } from '../../build/sources/index.ts'
-import { schema } from '../../src/schema.ts'
 
 function fixtureSources(directory: string): Sources {
   const archive = { archive: '', directory, revision: '', sha256: '' }

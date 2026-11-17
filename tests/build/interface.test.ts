@@ -1,13 +1,11 @@
+import { importInterface } from '../../build/interface/index.ts'
+import { schema } from '../../src/schema.ts'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import { expect, test } from 'vite-plus/test'
-
-import { importInterface } from '../../build/interface/index.ts'
-import { schema } from '../../src/schema.ts'
 
 const source =
   'SLASH_CAST1 = "/cast";\r\nSLASH_CAST2 = "/spell";\r\nSecureCmdList["CAST"] = function() end\r\nEMOTE102_CMD1 = "/wave";\r\n--SlashCmdList["CAST"] = function() end\r\n'

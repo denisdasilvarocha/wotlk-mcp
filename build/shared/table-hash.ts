@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
-import type { Hash } from 'node:crypto'
 
 import type { Database } from '../../src/database.ts'
+import type { Hash } from 'node:crypto'
 
 function hashField(
   hash: Readonly<Pick<Hash, 'update'>>,

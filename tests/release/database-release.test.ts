@@ -1,3 +1,4 @@
+import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
 import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -6,10 +7,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliCompressSync } from 'node:zlib'
-
 import { expect, test } from 'vite-plus/test'
-
-import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
 
 type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
   ? T

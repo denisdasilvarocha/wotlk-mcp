@@ -1,14 +1,12 @@
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
 import { spawnSync } from 'node:child_process'
 import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
-
-import { initReference } from '../../build/offsets.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
 function runner(dir: string): string {
   const file = path.join(dir, 'run-world.ts')

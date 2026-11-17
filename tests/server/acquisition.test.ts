@@ -1,3 +1,7 @@
+import { initReference } from '../../build/offsets.ts'
+import { unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { once } from 'node:events'
@@ -18,14 +22,8 @@ import { DatabaseSync } from 'node:sqlite'
 import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { brotliCompressSync } from 'node:zlib'
-
-import { Client } from '@modelcontextprotocol/client'
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 import * as z from 'zod'
-
-import { initReference } from '../../build/offsets.ts'
-import { unpackPackage } from '../helpers/package.ts'
 
 let authorization = ''
 let base: string

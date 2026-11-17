@@ -1,12 +1,10 @@
+import { sha256Hex } from '../shared/sha256.ts'
+import { image, run, worldRevision } from './images.ts'
 import { createHash } from 'node:crypto'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { open } from 'node:fs/promises'
 import path from 'node:path'
-
 import { z } from 'zod'
-
-import { sha256Hex } from '../shared/sha256.ts'
-import { image, run, worldRevision } from './images.ts'
 
 const clientAsset = 'client-inputs-12340-engb-1.tar.gz'
 

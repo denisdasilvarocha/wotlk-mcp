@@ -2,7 +2,6 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import nodePath from 'node:path'
-
 import { describe, expect, it } from 'vite-plus/test'
 
 const catalog = 'data/offsets'

@@ -1,7 +1,8 @@
-import type { Database } from '../../src/database.ts'
 import { linkWriter } from '../links/insert.ts'
-import type { Registration, TableDecision } from './registration.ts'
 import { declaringWidget } from './widget.ts'
+
+import type { Database } from '../../src/database.ts'
+import type { Registration, TableDecision } from './registration.ts'
 
 type Lookup = { readonly get: (key: string) => readonly string[] | undefined }
 

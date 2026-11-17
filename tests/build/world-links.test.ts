@@ -1,14 +1,12 @@
+import { buildWorldLinks } from '../../build/links/world.ts'
+import { initReference } from '../../build/offsets.ts'
+import { packagedServer, unpackPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
-import { Client } from '@modelcontextprotocol/client'
 import { expect, test } from 'vite-plus/test'
-
-import { buildWorldLinks } from '../../build/links/world.ts'
-import { initReference } from '../../build/offsets.ts'
-import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
 const client = new Client({ name: 'world-links-test', version: '1' })
 

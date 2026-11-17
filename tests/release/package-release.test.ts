@@ -2,14 +2,14 @@ import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createServer, type Server } from 'node:http'
-import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliCompressSync } from 'node:zlib'
-
 import { afterAll, expect, test } from 'vite-plus/test'
 import { z } from 'zod'
+
+import type { AddressInfo } from 'node:net'
 
 const { version, wotlkSchemaMajor } = z
   .object({

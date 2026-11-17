@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-
 import { clientExecutableSha256, readClientManifest } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
 import { sha256Hex } from '../shared/sha256.ts'
@@ -11,6 +8,8 @@ import {
   type TableDecision,
   validateRegistrations
 } from './registration.ts'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 
 type Decisions = Record<string, TableDecision | undefined>
 

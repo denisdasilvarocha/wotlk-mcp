@@ -1,8 +1,3 @@
-import { createReadStream, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import path from 'node:path'
-import { Readable } from 'node:stream'
-
 import {
   assetOf,
   authorize,
@@ -26,6 +21,10 @@ import {
   validateMatrix,
   writeOutput
 } from './database-release-readers.mjs'
+import { createReadStream, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { Readable } from 'node:stream'
 
 const [command, ...args] = process.argv.slice(2)
 

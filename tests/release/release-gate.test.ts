@@ -1,5 +1,5 @@
+import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
 import { spawnSync } from 'node:child_process'
-import type { SpawnSyncReturns } from 'node:child_process'
 import {
   copyFileSync,
   mkdtempSync,
@@ -12,10 +12,9 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliCompressSync } from 'node:zlib'
-
 import { afterAll, expect, test } from 'vite-plus/test'
 
-import { createReleaseFixture, sealReleaseFixture } from '../helpers/release-fixture.ts'
+import type { SpawnSyncReturns } from 'node:child_process'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'release-gate-'))
 afterAll(() => {

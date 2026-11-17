@@ -1,7 +1,3 @@
-import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
-import { serveStdio } from '@modelcontextprotocol/server/stdio'
-import * as z from 'zod'
-
 import pkg from '../package.json' with { type: 'json' }
 import { getReferencePath, takeUpdateWarning } from './acquire/index.js'
 import { getRecords, openReference } from './reference.js'
@@ -9,6 +5,9 @@ import { getRelated } from './related.js'
 import { kinds, relations } from './schema.js'
 import { searchRecords } from './search.js'
 import { runSql } from './sql.js'
+import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import * as z from 'zod'
 
 const instructions = [
   'Offline reference for World of Warcraft: Wrath of the Lich King 3.3.5a, client build 12340. Use it whenever a task needs facts about that game version instead of recalling them from memory: spells, items, creatures and NPCs, quests, game objects, loot, vendors, trainers, spawns, talents, achievements, factions, maps and zones; the addon Lua API (functions, events, widgets and their methods, CVars, combat log events, secure templates, slash commands) and Blizzard FrameXML/GlueXML source; or native client addresses (offsets). Typical users build private servers (AzerothCore, TrinityCore), addons or client tools for 3.3.5a. Do not use it for retail, Classic or other expansions.',

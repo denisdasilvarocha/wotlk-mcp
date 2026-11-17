@@ -1,10 +1,8 @@
+import { parseEnum } from './parser.ts'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import { z } from 'zod'
-
-import { parseEnum } from './parser.ts'
 
 const schema = z
   .object({

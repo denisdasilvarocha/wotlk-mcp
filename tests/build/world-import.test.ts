@@ -1,12 +1,10 @@
+import { initReference } from '../../build/offsets.ts'
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
-
 import { expect, test } from 'vite-plus/test'
-
-import { initReference } from '../../build/offsets.ts'
 
 const failures = [
   { message: 'updater-failure', mode: 'updater' },

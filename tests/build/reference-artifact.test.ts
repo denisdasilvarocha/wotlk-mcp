@@ -1,3 +1,4 @@
+import { writeReferenceArtifact } from '../../build/reference/artifact.ts'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -5,10 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { brotliDecompressSync } from 'node:zlib'
-
 import { expect, test } from 'vite-plus/test'
-
-import { writeReferenceArtifact } from '../../build/reference/artifact.ts'
 
 function readReport(file: string): {
   uncompressed_bytes: unknown

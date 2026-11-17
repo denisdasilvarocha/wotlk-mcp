@@ -1,3 +1,5 @@
+import { importWorldEnums } from '../../build/enums/world.ts'
+import { initReference } from '../../build/offsets.ts'
 import {
   appendFileSync,
   mkdtempSync,
@@ -9,11 +11,7 @@ import {
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-
 import { expect, test } from 'vite-plus/test'
-
-import { importWorldEnums } from '../../build/enums/world.ts'
-import { initReference } from '../../build/offsets.ts'
 
 const ROOT = 'azerothcore-wotlk-2948c203faa0d23c4772441119ebe98e5b7cad95'
 

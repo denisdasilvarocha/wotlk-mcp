@@ -1,12 +1,10 @@
+import { initReference } from '../../build/offsets.ts'
+import { packPackage } from '../helpers/package.ts'
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-
 import { expect, test } from 'vite-plus/test'
-
-import { initReference } from '../../build/offsets.ts'
-import { packPackage } from '../helpers/package.ts'
 
 function run(archive: string, db: string, file: string): ReturnType<typeof spawnSync> {
   return spawnSync('vpx', ['scripts/acceptance.ts', archive, db, file], {

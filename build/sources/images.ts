@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process'
-
 import { z } from 'zod'
 
 export function run(command: string, commandArgs: readonly string[]): string {

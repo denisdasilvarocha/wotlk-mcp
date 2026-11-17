@@ -1,14 +1,12 @@
+import { initReference } from '../../build/offsets.ts'
+import { packPackage } from '../helpers/package.ts'
+import { Client } from '@modelcontextprotocol/client'
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-
-import { Client } from '@modelcontextprotocol/client'
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { expect, test } from 'vite-plus/test'
-
-import { initReference } from '../../build/offsets.ts'
-import { packPackage } from '../helpers/package.ts'
 
 const version = readVersion('package.json')
 

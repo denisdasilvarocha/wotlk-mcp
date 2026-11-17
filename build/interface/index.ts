@@ -1,11 +1,11 @@
+import { insertFiles } from './files.ts'
+import { interfaceFiles } from './manifest.ts'
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
 import type { Command, Evidence } from './commands.ts'
-import { insertFiles } from './files.ts'
-import { interfaceFiles } from './manifest.ts'
 
 const provenance =
   'enGB English stand-in; enUS byte identity is not verified; locale-only differences may exist'

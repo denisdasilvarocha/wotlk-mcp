@@ -1,7 +1,6 @@
-import { DatabaseSync } from 'node:sqlite'
-
 import { canonicalTableHash, canonicalTables } from '../../build/shared/table-hash.ts'
 import { kinds, relations } from '../../src/schema.ts'
+import { DatabaseSync } from 'node:sqlite'
 
 export function createReleaseFixture(database: string): void {
   const db = new DatabaseSync(database)

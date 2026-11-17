@@ -1,6 +1,7 @@
 import { sha256Hex } from '../shared/sha256.ts'
-import type { Registration, TableDecision } from './registration.ts'
 import { sorted } from './widget.ts'
+
+import type { Registration, TableDecision } from './registration.ts'
 
 type Widgets = Readonly<
   Pick<Map<string, readonly string[]>, 'get' | 'has' | typeof Symbol.iterator>

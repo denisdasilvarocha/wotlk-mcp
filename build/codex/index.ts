@@ -1,10 +1,9 @@
-import { randomBytes } from 'node:crypto'
-import { DatabaseSync } from 'node:sqlite'
-
 import { run } from '../shared/exec.ts'
 import { hashCodex, type CodexSource } from '../sources/index.ts'
 import { evaluateCodex } from './evaluation.ts'
 import { importCodexRows } from './rows.ts'
+import { randomBytes } from 'node:crypto'
+import { DatabaseSync } from 'node:sqlite'
 
 export type CodexValue =
   | string
