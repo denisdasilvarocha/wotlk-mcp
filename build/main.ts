@@ -2,12 +2,12 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 
-import { writeReferenceArtifact } from './artifact.ts'
-import { writeFidelity } from './fidelity.ts'
-import { runImportStages } from './main-import-stages.ts'
-import { runLinkStages } from './main-link-stages.ts'
-import { writeProvenance } from './provenance.ts'
-import { acquireSources } from './sources.ts'
+import { runImportStages } from './import-stages.ts'
+import { runLinkStages } from './link-stages.ts'
+import { writeReferenceArtifact } from './reference/artifact.ts'
+import { writeFidelity } from './reference/fidelity.ts'
+import { writeProvenance } from './reference/provenance.ts'
+import { acquireSources } from './sources/index.ts'
 
 const usage = `Usage: vp run build [new-output-directory]
 

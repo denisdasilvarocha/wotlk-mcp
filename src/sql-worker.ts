@@ -3,8 +3,6 @@ import type { SQLOutputValue } from 'node:sqlite'
 
 const maxOutput = 32000
 
-type Cell = Exclude<SQLOutputValue, Uint8Array> | Readonly<Pick<Uint8Array, 'toString'>>
-
 const pragmas = new Set([
   'table_info',
   'table_xinfo',
@@ -19,6 +17,8 @@ const actions = new Set([
   constants.SQLITE_FUNCTION,
   constants.SQLITE_RECURSIVE
 ])
+
+type Cell = Exclude<SQLOutputValue, Uint8Array> | Readonly<Pick<Uint8Array, 'toString'>>
 
 function execute(path: string, query: string, limit: number): string {
   const db = new DatabaseSync(path, { allowExtension: false, readOnly: true })

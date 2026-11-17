@@ -1,8 +1,47 @@
 import type { DatabaseSync } from 'node:sqlite'
 
-import { quoteIdentifier } from '../build/table-hash.ts'
+import { quoteIdentifier } from '../build/shared/table-hash.ts'
 import type { Database } from '../src/database.ts'
 import { kinds, relations } from '../src/schema.ts'
+
+function stable(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item: unknown) => stable(item)).join(',')}]`
+  }
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.entries(value)
+      .toSorted(([a]: readonly [string, unknown], [b]: readonly [string, unknown]) =>
+        a.localeCompare(b)
+      )
+      .map(([k, v]: readonly [string, unknown]) => `${JSON.stringify(k)}:${stable(v)}`)
+      .join(',')}}`
+  }
+
+  return JSON.stringify(value) ?? fail('Invalid input pin')
+}
+
+function scalar(connection: Database, sql: string): number {
+  return Number(Object.values(connection.prepare(sql).get() ?? {})[0])
+}
+
+function checkIntegrity(db: Database): void {
+  if (
+    rows(db, 'PRAGMA integrity_check').some(
+      (row: Readonly<Record<string, unknown>>) => Object.values(row)[0] !== 'ok'
+    )
+  ) {
+    fail('SQLite integrity check failed')
+  }
+  db.exec('SAVEPOINT fts_check')
+  try {
+    db.exec(
+      "INSERT INTO record_fts(record_fts) VALUES('integrity-check'); INSERT INTO ui_line_fts(ui_line_fts) VALUES('integrity-check');"
+    )
+  } finally {
+    db.exec('ROLLBACK TO fts_check; RELEASE fts_check')
+  }
+}
+
 export function rows(
   connection: Database,
   sql: string
@@ -37,22 +76,6 @@ export function metadata(connection: Database, key: string): string {
 
 export function fail(message: string): never {
   throw new Error(message)
-}
-
-function stable(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item: unknown) => stable(item)).join(',')}]`
-  }
-  if (value !== null && typeof value === 'object') {
-    return `{${Object.entries(value)
-      .toSorted(([a]: readonly [string, unknown], [b]: readonly [string, unknown]) =>
-        a.localeCompare(b)
-      )
-      .map(([k, v]: readonly [string, unknown]) => `${JSON.stringify(k)}:${stable(v)}`)
-      .join(',')}}`
-  }
-
-  return JSON.stringify(value) ?? fail('Invalid input pin')
 }
 
 export function counts(connection: Database): Record<string, number> {
@@ -100,10 +123,6 @@ export function schema(connection: Database): Map<string, Map<string, string>> {
   }
 
   return result
-}
-
-function scalar(connection: Database, sql: string): number {
-  return Number(Object.values(connection.prepare(sql).get() ?? {})[0])
 }
 
 export function checkVocabulary(
@@ -217,23 +236,5 @@ export function checkFullText(
 
   if (!scalar(db, 'SELECT count(*) FROM source')) {
     fail('Empty source manifest')
-  }
-}
-
-function checkIntegrity(db: Database): void {
-  if (
-    rows(db, 'PRAGMA integrity_check').some(
-      (row: Readonly<Record<string, unknown>>) => Object.values(row)[0] !== 'ok'
-    )
-  ) {
-    fail('SQLite integrity check failed')
-  }
-  db.exec('SAVEPOINT fts_check')
-  try {
-    db.exec(
-      "INSERT INTO record_fts(record_fts) VALUES('integrity-check'); INSERT INTO ui_line_fts(ui_line_fts) VALUES('integrity-check');"
-    )
-  } finally {
-    db.exec('ROLLBACK TO fts_check; RELEASE fts_check')
   }
 }

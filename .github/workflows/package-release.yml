@@ -62,7 +62,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
       - run: vp pack
-      - run: vp test tests/package-release.test.ts tests/package-install.test.ts
+      - run: vp test tests/release/package-release.test.ts tests/release/package-install.test.ts
       - name: Pack npm tarball
         run: vp pm pack --pack-destination "$RUNNER_TEMP/release"
       # Build provenance for the exact tarball published to npm.

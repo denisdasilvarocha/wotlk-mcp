@@ -2,7 +2,9 @@ import { DatabaseSync, type StatementSync } from 'node:sqlite'
 
 import type { Database } from './database.js'
 import { acceptedSchemaMajor, kinds } from './schema.js'
+
 type SqlValue = string | number | bigint | null | { readonly toString: () => string }
+
 type SqlRow = Readonly<Record<string, SqlValue>>
 
 function isTruthy(value: SqlValue | undefined): boolean {
@@ -90,62 +92,6 @@ function renderEnumValue(
   }
 
   return rendered
-}
-
-export function openReference(path: string): DatabaseSync {
-  let db: DatabaseSync | undefined
-
-  try {
-    db = new DatabaseSync(path, { readOnly: true })
-
-    const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
-    const version = row?.value
-
-    if (
-      typeof version !== 'string' ||
-      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`, 'u').test(version)
-    ) {
-      throw new Error(
-        `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
-      )
-    }
-
-    db.prepare('SELECT id, kind, name, source_table, source_row FROM record LIMIT 0').all()
-    db.prepare('SELECT source_id, relation, destination_id, notes FROM link LIMIT 0').all()
-    db.prepare('SELECT id, name, text FROM record_fts LIMIT 0').all()
-    db.prepare('SELECT path, line, text FROM ui_line_fts LIMIT 0').all()
-    db.prepare('SELECT enum_name, value, name FROM enum_value LIMIT 0').all()
-    db.prepare(
-      'SELECT source_table, field, enum_name, flags, condition_field, condition_value FROM enum_field LIMIT 0'
-    ).all()
-    db.prepare('SELECT name, pin, sha256, licence, attribution FROM source LIMIT 0').all()
-
-    return db
-  } catch (error) {
-    db?.close()
-    throw error
-  }
-}
-
-export function getRecords(
-  db: Database,
-  ids: readonly string[],
-  from = 1,
-  to = from + 199
-): string {
-  if (to < from) {
-    throw new Error('get requires to ≥ from')
-  }
-
-  const index = db.prepare('SELECT name, source_table, source_row FROM record WHERE id = ?')
-  const mappings = db.prepare(
-    'SELECT field, enum_name, flags, condition_field, condition_value FROM enum_field WHERE source_table = ?'
-  )
-  const values = db.prepare(
-    'SELECT value, name FROM enum_value WHERE enum_name = ? ORDER BY value, name'
-  )
-
-  return ids.map((id) => getRecord(db, id, from, to, index, mappings, values)).join('\n\n')
 }
 
 function getRecord(
@@ -257,4 +203,60 @@ function nativeFacts(db: Database, id: string): string[] {
     }
   }
   return lines
+}
+
+export function openReference(path: string): DatabaseSync {
+  let db: DatabaseSync | undefined
+
+  try {
+    db = new DatabaseSync(path, { readOnly: true })
+
+    const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
+    const version = row?.value
+
+    if (
+      typeof version !== 'string' ||
+      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`, 'u').test(version)
+    ) {
+      throw new Error(
+        `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
+      )
+    }
+
+    db.prepare('SELECT id, kind, name, source_table, source_row FROM record LIMIT 0').all()
+    db.prepare('SELECT source_id, relation, destination_id, notes FROM link LIMIT 0').all()
+    db.prepare('SELECT id, name, text FROM record_fts LIMIT 0').all()
+    db.prepare('SELECT path, line, text FROM ui_line_fts LIMIT 0').all()
+    db.prepare('SELECT enum_name, value, name FROM enum_value LIMIT 0').all()
+    db.prepare(
+      'SELECT source_table, field, enum_name, flags, condition_field, condition_value FROM enum_field LIMIT 0'
+    ).all()
+    db.prepare('SELECT name, pin, sha256, licence, attribution FROM source LIMIT 0').all()
+
+    return db
+  } catch (error) {
+    db?.close()
+    throw error
+  }
+}
+
+export function getRecords(
+  db: Database,
+  ids: readonly string[],
+  from = 1,
+  to = from + 199
+): string {
+  if (to < from) {
+    throw new Error('get requires to ≥ from')
+  }
+
+  const index = db.prepare('SELECT name, source_table, source_row FROM record WHERE id = ?')
+  const mappings = db.prepare(
+    'SELECT field, enum_name, flags, condition_field, condition_value FROM enum_field WHERE source_table = ?'
+  )
+  const values = db.prepare(
+    'SELECT value, name FROM enum_value WHERE enum_name = ? ORDER BY value, name'
+  )
+
+  return ids.map((id) => getRecord(db, id, from, to, index, mappings, values)).join('\n\n')
 }

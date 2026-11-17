@@ -1,4 +1,4 @@
-import { quoteIdentifier } from '../build/table-hash.ts'
+import { quoteIdentifier } from '../build/shared/table-hash.ts'
 import type { Database } from '../src/database.ts'
 import { rows } from './release-gate-checks.ts'
 
@@ -11,7 +11,33 @@ type Schema = Readonly<
     'get' | 'has' | 'keys' | typeof Symbol.iterator
   >
 >
+
 type Names = Readonly<Pick<ReadonlySet<string>, 'has' | typeof Symbol.iterator>>
+
+function compareKinds(old: Database, kindSet: Names): { addition: boolean; breaking: boolean } {
+  const oldKinds = new Set(
+    rows(old, 'SELECT DISTINCT kind FROM record').map((row: Readonly<Record<string, unknown>>) =>
+      String(row.kind)
+    )
+  )
+  return {
+    addition: [...kindSet].some((kind) => !oldKinds.has(kind)),
+    breaking: [...oldKinds].some((kind) => !kindSet.has(kind))
+  }
+}
+
+function recordIdChanged(db: Database, table: string, equal: string): boolean {
+  return (
+    db
+      .prepare(`SELECT 1 FROM previous_gate.record p
+            JOIN previous_gate.${quoteIdentifier(table)} s ON s.rowid=p.source_row
+            JOIN main.${quoteIdentifier(table)} t ON ${equal}
+            JOIN main.record c ON c.source_row=t.rowid AND c.source_table=p.source_table AND c.kind=p.kind
+            WHERE p.source_table=? AND c.id<>p.id LIMIT 1`)
+      .get(table) !== undefined
+  )
+}
+
 export function compareSchemas(
   before: Schema,
   after: Schema,
@@ -51,18 +77,6 @@ export function compareSchemas(
   addition ||= kinds.addition
   breaking ||= kinds.breaking
   return { addition, breaking }
-}
-
-function compareKinds(old: Database, kindSet: Names): { addition: boolean; breaking: boolean } {
-  const oldKinds = new Set(
-    rows(old, 'SELECT DISTINCT kind FROM record').map((row: Readonly<Record<string, unknown>>) =>
-      String(row.kind)
-    )
-  )
-  return {
-    addition: [...kindSet].some((kind) => !oldKinds.has(kind)),
-    breaking: [...oldKinds].some((kind) => !kindSet.has(kind))
-  }
 }
 
 export function changedRecordIds(
@@ -114,16 +128,4 @@ export function changedRecordIds(
     db.exec('DETACH DATABASE previous_gate')
   }
   return breaking
-}
-
-function recordIdChanged(db: Database, table: string, equal: string): boolean {
-  return (
-    db
-      .prepare(`SELECT 1 FROM previous_gate.record p
-            JOIN previous_gate.${quoteIdentifier(table)} s ON s.rowid=p.source_row
-            JOIN main.${quoteIdentifier(table)} t ON ${equal}
-            JOIN main.record c ON c.source_row=t.rowid AND c.source_table=p.source_table AND c.kind=p.kind
-            WHERE p.source_table=? AND c.id<>p.id LIMIT 1`)
-      .get(table) !== undefined
-  )
 }

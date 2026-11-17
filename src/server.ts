@@ -3,7 +3,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio'
 import * as z from 'zod'
 
 import pkg from '../package.json' with { type: 'json' }
-import { getReferencePath, takeUpdateWarning } from './acquire.js'
+import { getReferencePath, takeUpdateWarning } from './acquire/index.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated } from './related.js'
 import { kinds, relations } from './schema.js'
@@ -101,6 +101,8 @@ const sqlInput = z.strictObject({
   query: z.string().min(1).describe('One SQLite SELECT statement or an allowed PRAGMA.')
 })
 
+const annotations: ToolAnnotations = { openWorldHint: false, readOnlyHint: true }
+
 async function withReference(
   read: (db: Parameters<typeof searchRecords>[0]) => string
 ): Promise<string> {
@@ -137,8 +139,6 @@ async function respond(run: () => Promise<string>): Promise<CallToolResult> {
 
   return result
 }
-
-const annotations: ToolAnnotations = { openWorldHint: false, readOnlyHint: true }
 
 function createServer(): McpServer {
   const server = new McpServer(

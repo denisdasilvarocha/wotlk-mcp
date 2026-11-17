@@ -1,26 +1,10 @@
 import { execFile } from 'node:child_process'
 import { appendFileSync } from 'node:fs'
 
-/**
- * @param {Readonly<{digest: string, id: number, tag: string}>} result - Release output.
- */
-export function writeOutput(result) {
-  if (process.env.GITHUB_OUTPUT !== undefined && process.env.GITHUB_OUTPUT !== '') {
-    let output = ''
-    for (const [key, value] of Object.entries(result)) {
-      output += `${key}=${value}\n`
-    }
-    appendFileSync(process.env.GITHUB_OUTPUT, output)
-  }
-}
+import { asArray, asRecord } from './records.mjs'
 
-/**
- * @param {unknown} value - Parsed value.
- * @returns {value is Readonly<Record<string, unknown>>} Whether value is an object.
- */
-function isRecord(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
+/** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
 
 /**
  * @param {(value: string) => void} resolve - Promise resolver.
@@ -37,6 +21,19 @@ function finishGate(resolve, reject, error, output) {
 }
 
 /**
+ * @param {Readonly<{digest: string, id: number, tag: string}>} result - Release output.
+ */
+export function writeOutput(result) {
+  if (process.env.GITHUB_OUTPUT !== undefined && process.env.GITHUB_OUTPUT !== '') {
+    let output = ''
+    for (const [key, value] of Object.entries(result)) {
+      output += `${key}=${value}\n`
+    }
+    appendFileSync(process.env.GITHUB_OUTPUT, output)
+  }
+}
+
+/**
  * @param {readonly string[]} args - Gate arguments.
  * @returns {Promise<string>} Gate output.
  */
@@ -44,31 +41,6 @@ export function runGate(args) {
   return new Promise((resolve, reject) => {
     execFile('vpx', args, { encoding: 'utf8' }, finishGate.bind(null, resolve, reject))
   })
-}
-
-/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
-/** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
-
-/**
- * @param {unknown} value - Parsed value.
- * @returns {Readonly<Record<string, unknown>>} Object value.
- */
-function asRecord(value) {
-  if (!isRecord(value)) {
-    throw new TypeError('invalid GitHub API object')
-  }
-  return value
-}
-
-/**
- * @param {unknown} value - Parsed array.
- * @returns {readonly unknown[]} Array value.
- */
-function asArray(value) {
-  if (!Array.isArray(value)) {
-    throw new TypeError('invalid GitHub API array')
-  }
-  return value
 }
 
 /**
@@ -171,5 +143,3 @@ export function validateMatrix(value) {
     }
   }
 }
-
-export { asArray }

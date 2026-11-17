@@ -3,8 +3,6 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { Readable } from 'node:stream'
 
-const [command, ...args] = process.argv.slice(2)
-
 import {
   assetOf,
   authorize,
@@ -28,6 +26,8 @@ import {
   validateMatrix,
   writeOutput
 } from './database-release-readers.mjs'
+
+const [command, ...args] = process.argv.slice(2)
 
 if (command === 'previous') {
   const [output, versions] = args

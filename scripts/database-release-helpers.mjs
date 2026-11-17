@@ -5,12 +5,8 @@ import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
 
-import { asArray, ownerApproved, readRelease, readTag } from './database-release-readers.mjs'
-
-/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
-/** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
-/** @typedef {{ readonly name: string }} Tag */
-/** @typedef {Readonly<{ body?: string | (() => ReadableStream), duplex?: 'half', headers?: Readonly<Record<string, string>>, method?: string }>} RequestOptions */
+import { ownerApproved, readRelease, readTag } from './database-release-readers.mjs'
+import { asArray } from './records.mjs'
 
 const api = process.env.GITHUB_API_URL ?? 'https://api.github.com'
 export const digestPattern = /^sha256:[0-9a-f]{64}$/u
@@ -25,6 +21,11 @@ export const headers = {
 }
 export const versionPattern = /^db-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u
 
+/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
+/** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
+/** @typedef {{ readonly name: string }} Tag */
+/** @typedef {Readonly<{ body?: string | (() => ReadableStream), duplex?: 'half', headers?: Readonly<Record<string, string>>, method?: string }>} RequestOptions */
+
 export {
   assetOf,
   authorize,
@@ -36,15 +37,6 @@ export {
   request,
   usedVersions,
   validRelease
-}
-if (
-  repository === undefined ||
-  repository === '' ||
-  !/^[\w.-]+\/[\w.-]+$/u.test(repository) ||
-  token === undefined ||
-  token === ''
-) {
-  throw new Error('GITHUB_REPOSITORY and GITHUB_TOKEN are required')
 }
 
 /** @param {string} output - Output path. */
@@ -288,4 +280,14 @@ async function download(asset, output) {
   } finally {
     rmSync(temporary, { force: true })
   }
+}
+
+if (
+  repository === undefined ||
+  repository === '' ||
+  !/^[\w.-]+\/[\w.-]+$/u.test(repository) ||
+  token === undefined ||
+  token === ''
+) {
+  throw new Error('GITHUB_REPOSITORY and GITHUB_TOKEN are required')
 }

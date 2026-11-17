@@ -26,4 +26,4 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: node --version
       - run: vp pack
-      - run: vp test --testTimeout 30000 --hookTimeout 60000 tests/acquisition.test.ts tests/package-install.test.ts tests/search.test.ts tests/import-interface.test.ts tests/release-gate.test.ts tests/sql.test.ts
+      - run: vp test --testTimeout 30000 --hookTimeout 60000 tests/server/acquisition.test.ts tests/release/package-install.test.ts tests/server/search.test.ts tests/build/interface.test.ts tests/release/release-gate.test.ts tests/server/sql.test.ts

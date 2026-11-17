@@ -8,7 +8,7 @@ Run from the repository root. The toolchain is Vite+ (`vp`, `vpx`); do not use `
 
 ```sh
 vp install                          # install deps and git hooks; run after pulling
-vp test tests/sql.test.ts           # run one test file (prefer this)
+vp test tests/server/sql.test.ts    # run one test file (prefer this)
 vp test                             # full suite, ~30 s; run vp pack first; some tests need network, Python 3, tar, npm
 vp check                            # format check, lint, type-check (CI gate)
 vp check --fix                      # same, and fixes formatting; modifies files

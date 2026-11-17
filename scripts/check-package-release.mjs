@@ -8,118 +8,16 @@ import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
 
 import { acceptedSchemaMajor } from '../src/schema.ts'
+import { asArray, asRecord, asString } from './records.mjs'
 
 /** @type {Record<string, string>} */
 const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'wotlk-mcp-release' }
 const semver =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/u
 
-const [
-  tag,
-  releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases',
-  registryUrl = 'https://registry.npmjs.org/wotlk-mcp'
-] = process.argv.slice(2)
-
-const pkg = asRecord(JSON.parse(readFileSync('package.json', 'utf8')))
-const packageVersion = String(pkg.version)
-const version = semver.exec(packageVersion)
-
-if (!version || tag !== `v${packageVersion}`) {
-  throw new Error('package version and v<semver> tag must match')
-}
-
-if (
-  typeof pkg.wotlkSchemaMajor !== 'number' ||
-  !Number.isSafeInteger(pkg.wotlkSchemaMajor) ||
-  pkg.wotlkSchemaMajor < 1
-) {
-  throw new Error('invalid accepted schema major')
-}
-const schemaMajor = pkg.wotlkSchemaMajor
-
-if (pkg.wotlkSchemaMajor !== acceptedSchemaMajor) {
-  throw new Error('package metadata does not match accepted schema major')
-}
-
-if (process.env.GITHUB_TOKEN !== undefined && process.env.GITHUB_TOKEN !== '') {
-  headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
-}
-const registry = await fetch(registryUrl)
-
-if (registry.status === 404) {
-  throw new Error(
-    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see docs/releases.md)'
-  )
-}
-
-if (!registry.ok) {
-  throw new Error(`npm registry lookup failed: ${registry.status}`)
-}
-
-const metadata = asRecord(await registry.json())
-
-if (metadata.versions === null || typeof metadata.versions !== 'object') {
-  throw new Error('invalid npm registry metadata')
-}
-
-for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
-  const parsed = semver.exec(publishedVersion)
-
-  if (!parsed) {
-    continue
-  }
-  if (publishedVersion === packageVersion) {
-    throw new Error('package version already published')
-  }
-  if (parsed[1] === version[1] && asRecord(published).wotlkSchemaMajor !== pkg.wotlkSchemaMajor) {
-    throw new Error('schema major changed without a package-major change')
-  }
-}
-
 /**
  * @typedef {{ readonly digest?: string, readonly url: string }} ReleaseAsset
  */
-
-/**
- * @param {unknown} value - Value to inspect.
- * @returns {value is Record<string, unknown>} Whether the value is an object.
- */
-function isRecord(value) {
-  return typeof value === 'object' && value !== null
-}
-
-/**
- * @param {unknown} value - Value to inspect.
- * @returns {Readonly<Record<string, unknown>>} The object.
- */
-function asRecord(value) {
-  if (!isRecord(value)) {
-    throw new TypeError('expected an object')
-  }
-  return value
-}
-
-/**
- * @param {unknown} value - Value to inspect.
- * @returns {readonly unknown[]} The array.
- */
-function asArray(value) {
-  if (!Array.isArray(value)) {
-    throw new TypeError('expected an array')
-  }
-  return value
-}
-
-/**
- * @param {unknown} value - Value to inspect.
- * @returns {string} The string.
- */
-function asString(value) {
-  if (typeof value !== 'string') {
-    throw new TypeError('expected a string')
-  }
-  return value
-}
 
 /**
  * @param {unknown} value - Release to inspect.
@@ -236,6 +134,68 @@ function checkSchema(database) {
     }
   } finally {
     db.close()
+  }
+}
+
+const [
+  tag,
+  releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases',
+  registryUrl = 'https://registry.npmjs.org/wotlk-mcp'
+] = process.argv.slice(2)
+
+const pkg = asRecord(JSON.parse(readFileSync('package.json', 'utf8')))
+const packageVersion = String(pkg.version)
+const version = semver.exec(packageVersion)
+
+if (!version || tag !== `v${packageVersion}`) {
+  throw new Error('package version and v<semver> tag must match')
+}
+
+if (
+  typeof pkg.wotlkSchemaMajor !== 'number' ||
+  !Number.isSafeInteger(pkg.wotlkSchemaMajor) ||
+  pkg.wotlkSchemaMajor < 1
+) {
+  throw new Error('invalid accepted schema major')
+}
+const schemaMajor = pkg.wotlkSchemaMajor
+
+if (pkg.wotlkSchemaMajor !== acceptedSchemaMajor) {
+  throw new Error('package metadata does not match accepted schema major')
+}
+
+if (process.env.GITHUB_TOKEN !== undefined && process.env.GITHUB_TOKEN !== '') {
+  headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
+}
+const registry = await fetch(registryUrl)
+
+if (registry.status === 404) {
+  throw new Error(
+    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see docs/releases.md)'
+  )
+}
+
+if (!registry.ok) {
+  throw new Error(`npm registry lookup failed: ${registry.status}`)
+}
+
+const metadata = asRecord(await registry.json())
+
+if (metadata.versions === null || typeof metadata.versions !== 'object') {
+  throw new Error('invalid npm registry metadata')
+}
+
+for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
+  const parsed = semver.exec(publishedVersion)
+
+  if (!parsed) {
+    continue
+  }
+  if (publishedVersion === packageVersion) {
+    throw new Error('package version already published')
+  }
+  if (parsed[1] === version[1] && asRecord(published).wotlkSchemaMajor !== pkg.wotlkSchemaMajor) {
+    throw new Error('schema major changed without a package-major change')
   }
 }
 

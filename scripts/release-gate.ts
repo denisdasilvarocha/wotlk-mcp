@@ -3,7 +3,7 @@ import { createReadStream, readFileSync, statSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { createBrotliDecompress } from 'node:zlib'
 
-import { canonicalTableHash, canonicalTables } from '../build/table-hash.ts'
+import { canonicalTableHash, canonicalTables } from '../build/shared/table-hash.ts'
 import {
   checkFullText,
   checkSources,
@@ -16,6 +16,12 @@ import {
   schema
 } from './release-gate-checks.ts'
 import { changedRecordIds, compareSchemas } from './release-gate-comparison.ts'
+
+function assertEmpty(sql: string, error: string): void {
+  if (db.prepare(sql).get()) {
+    fail(error)
+  }
+}
 
 let usedVersions: unknown = []
 const args = process.argv.slice(2).filter((arg) => arg !== '--')
@@ -50,12 +56,6 @@ if (!Array.isArray(usedVersions)) {
   throw new TypeError('Invalid used versions')
 }
 const db = new DatabaseSync(database)
-
-function assertEmpty(sql: string, error: string): void {
-  if (db.prepare(sql).get()) {
-    fail(error)
-  }
-}
 
 if (previous) {
   old = new DatabaseSync(previous, { readOnly: true })

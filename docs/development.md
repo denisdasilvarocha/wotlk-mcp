@@ -34,13 +34,26 @@ CI runs `vp check`, `vp pack`, and `vp test` on every pull request and on pushes
 
 ```text
 .
-├── src/       MCP server, tools, database download, and shared schema
-├── build/     Reference build pipeline (vp run build)
-├── data/      Curated inputs: Offsets JSON, client-input manifest, World Data proofs
-├── scripts/   Offsets validation, release gates, acceptance, and publication
-├── tests/     Vitest suites and fixtures
-└── docs/      Guides
+├── src/                 MCP server, tools, and shared schema
+│   └── acquire/         Database download, cache, and updates
+├── build/               Reference build pipeline (vp run build); main.ts is the entry
+│   ├── sources/         Pinned input acquisition and verification
+│   ├── client/          DBC import
+│   ├── codex/           API codex import: functions, events, widgets, CVars
+│   ├── interface/       Interface source import
+│   ├── native/          Native Lua registration import
+│   ├── world/           World Data import and export
+│   ├── links/           Link stage: relations between records
+│   ├── enums/           Link stage: enum values from AzerothCore headers
+│   ├── reference/       Artifact, fidelity report, and provenance
+│   └── shared/          Helpers used by several stages
+├── data/                Curated inputs: Offsets JSON, client-input manifest, World Data proofs
+├── scripts/             Offsets validation, release gates, acceptance, and publication
+├── tests/               Vitest suites: build/, server/, release/; helpers/ and fixtures/
+└── docs/                Guides
 ```
+
+A folder's entry module is `index.ts`; import it by its full path (`./world/index.ts`). Within a file, code runs top to bottom: imports, constants and schemas, types, private helpers, exported functions, then any entry-point code.
 
 ## Compatibility rules
 
