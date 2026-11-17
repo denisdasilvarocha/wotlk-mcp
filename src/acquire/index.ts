@@ -2,7 +2,7 @@ import { openReference } from '../reference.js'
 import { cached, cacheDirectory, publish, removeIfPossible, states } from './cache.js'
 import { selectRelease, transferAsset } from './release.js'
 import { randomUUID } from 'node:crypto'
-import { mkdir, rename, writeFile } from 'node:fs/promises'
+import { mkdir, rename } from 'node:fs/promises'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
@@ -15,7 +15,7 @@ let warningReported = false
 
 let outcome: ReturnType<typeof acquire> | undefined = acquire()
 
-async function acquire(): Promise<{ path?: string; error?: unknown }> {
+async function acquire(): Promise<{ path: string } | { error: unknown }> {
   try {
     return { path: await selectReference() }
   } catch (error) {
@@ -37,29 +37,25 @@ async function selectReference(): Promise<string> {
 
   if (snapshot) {
     ;({ warningMajor } = snapshot.state)
-    if (warningMajor !== undefined && warningMajor !== 0) {
+    if (warningMajor) {
       console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
     }
-    void (async (): Promise<void> => {
-      try {
-        await update(cacheDirectory(), snapshot.state)
-      } catch (error) {
-        console.error(
-          `reference update check failed: ${String(error).replaceAll(/[\r\n]+/gu, ' ')}`
-        )
-      }
-    })()
+    void update(cacheDirectory(), snapshot.state).catch((error: unknown) => {
+      console.error(`reference update check failed: ${String(error).replaceAll(/[\r\n]+/gu, ' ')}`)
+    })
     return snapshot.path
   }
 
   try {
-    const result = await download()
+    await download()
 
-    if (result === undefined || result === '') {
+    const downloaded = await cached(cacheDirectory())
+
+    if (!downloaded) {
       throw new Error('verified cache could not be opened')
     }
 
-    return result
+    return downloaded.path
   } catch (error) {
     throw new Error(
       `no reference database: download failed (${String(error).replaceAll(/[\r\n]+/gu, ' ')}); retry online or set WOTLK_MCP_DB`,
@@ -86,12 +82,7 @@ async function update(directory: string, current: CacheState): Promise<void> {
 
   try {
     lock.exec('BEGIN IMMEDIATE')
-  } catch (error) {
-    lock.close()
-    throw error
-  }
 
-  try {
     try {
       const latest = (await states(directory))[0]?.state ?? current
       const now = Date.now()
@@ -104,12 +95,12 @@ async function update(directory: string, current: CacheState): Promise<void> {
 
       await publish(directory, attempted, now)
 
-      let promoted: string | undefined
+      let promoted = false
 
       try {
         promoted = await download(attempted)
       } finally {
-        if (promoted === undefined || promoted === '') {
+        if (!promoted) {
           await publish(directory, { ...attempted, warningMajor }, Math.max(Date.now(), now + 1))
         }
       }
@@ -121,62 +112,24 @@ async function update(directory: string, current: CacheState): Promise<void> {
   }
 }
 
-function setTotal(value: number): void {
-  total = value
-}
-
-function addReceived(value: number): void {
-  received += value
-}
-
-async function selectedSnapshot(directory: string): Promise<string> {
-  const snapshot = await cached(directory)
-
-  if (!snapshot) {
-    throw new Error('verified cache could not be opened')
-  }
-
-  return snapshot.path
-}
-
 function downloadProgress(): string {
-  let progress = ''
-  if (received) {
-    progress = ` (${received}`
-    if (total !== undefined && total !== 0) {
-      progress += ` of ${total}`
-    }
-    progress += ' bytes)'
-  }
-  return progress
+  return received ? ` (${received}${total ? ` of ${total}` : ''} bytes)` : ''
 }
 
-function releaseAsset(selected: Awaited<ReturnType<typeof selectRelease>>): {
-  readonly url: string
-  readonly digest: string
-} {
-  const asset = selected.release.assets.find((item) => item.name === 'wotlk.sqlite.br')
-  if (
-    asset?.digest === undefined ||
-    asset.digest === null ||
-    asset.digest === '' ||
-    !/^sha256:[0-9a-f]{64}$/iu.test(asset.digest)
-  ) {
-    throw new Error('release asset missing required SHA-256 digest')
-  }
-  return { digest: asset.digest, url: asset.url }
-}
-
-async function download(existing?: CacheState): Promise<string | undefined> {
-  const selected = await selectRelease((value) => {
+async function download(existing?: CacheState): Promise<boolean> {
+  const release = await selectRelease((value) => {
     warningMajor = value
   })
 
-  if (existing && selected.release.tag_name === existing.version) {
-    return undefined
+  if (release.tag_name === existing?.version) {
+    return false
   }
 
-  const asset = releaseAsset(selected)
+  const asset = release.assets.find((item) => item.name === 'wotlk.sqlite.br')
+
+  if (!asset?.digest || !/^sha256:[0-9a-f]{64}$/iu.test(asset.digest)) {
+    throw new Error('release asset missing required SHA-256 digest')
+  }
 
   const directory = cacheDirectory()
 
@@ -185,61 +138,45 @@ async function download(existing?: CacheState): Promise<string | undefined> {
   const id = randomUUID()
   const compressed = path.join(directory, `${process.pid}-${id}.br.partial`)
   const partial = path.join(directory, `${process.pid}-${id}.sqlite.partial`)
-  const final = path.join(directory, `${selected.release.tag_name}-${process.pid}-${id}.sqlite`)
-  const statePartial = path.join(directory, `${process.pid}-${id}.json.partial`)
+  const final = path.join(directory, `${release.tag_name}-${process.pid}-${id}.sqlite`)
 
   try {
-    await transferAsset(asset.url, asset.digest, compressed, partial, setTotal, addReceived)
+    await transferAsset(
+      asset.url,
+      asset.digest,
+      compressed,
+      partial,
+      (value) => {
+        total = value
+      },
+      (value) => {
+        received += value
+      }
+    )
     openReference(partial).close()
     await rename(partial, final)
 
-    await publishDownloadState(
+    const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
+
+    await publish(
       directory,
-      statePartial,
-      final,
-      id,
-      selected.release.tag_name,
-      existing
+      {
+        file: path.basename(final),
+        lastCheck: existing?.lastCheck ?? checked,
+        version: release.tag_name,
+        warningMajor
+      },
+      checked
     )
 
-    if (existing) {
-      return final
-    }
-
-    return await selectedSnapshot(directory)
+    return true
   } finally {
-    await Promise.all([
-      removeIfPossible(compressed),
-      removeIfPossible(partial),
-      removeIfPossible(statePartial)
-    ])
+    await Promise.all([removeIfPossible(compressed), removeIfPossible(partial)])
   }
 }
 
-async function publishDownloadState(
-  directory: string,
-  partial: string,
-  final: string,
-  id: string,
-  version: string,
-  existing?: CacheState
-): Promise<void> {
-  const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
-  await writeFile(
-    partial,
-    JSON.stringify({
-      file: path.basename(final),
-      lastCheck: existing?.lastCheck ?? checked,
-      version,
-      warningMajor
-    } satisfies CacheState),
-    { flag: 'wx' }
-  )
-  await rename(partial, path.join(directory, `state-${checked}-${id}.json`))
-}
-
 export function takeUpdateWarning(): string | undefined {
-  if (warningMajor === undefined || warningMajor === 0 || warningReported) {
+  if (!warningMajor || warningReported) {
     return undefined
   }
 
@@ -262,29 +199,15 @@ export async function getReferencePath(): Promise<string> {
       })
     ])
 
-    if (
-      typeof result.error === 'number'
-        ? result.error !== 0 && !Number.isNaN(result.error)
-        : result.error !== undefined &&
-          result.error !== null &&
-          result.error !== false &&
-          result.error !== 0n &&
-          result.error !== ''
-    ) {
+    if ('error' in result) {
       if (outcome === attempt) {
         outcome = undefined
       }
       throw result.error instanceof Error ? result.error : new Error(String(result.error))
     }
 
-    if (result.path === undefined || result.path === '') {
-      throw new Error('no reference database')
-    }
-
     return result.path
   } finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
+    clearTimeout(timer)
   }
 }

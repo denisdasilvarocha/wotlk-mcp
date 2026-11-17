@@ -9,6 +9,8 @@ import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcont
 import { serveStdio } from '@modelcontextprotocol/server/stdio'
 import * as z from 'zod'
 
+import type { Database } from './database.js'
+
 const instructions = [
   'Offline reference for World of Warcraft: Wrath of the Lich King 3.3.5a, client build 12340. Use it whenever a task needs facts about that game version instead of recalling them from memory: spells, items, creatures and NPCs, quests, game objects, loot, vendors, trainers, spawns, talents, achievements, factions, maps and zones; the addon Lua API (functions, events, widgets and their methods, CVars, combat log events, secure templates, slash commands) and Blizzard FrameXML/GlueXML source; or native client addresses (offsets). Typical users build private servers (AzerothCore, TrinityCore), addons or client tools for 3.3.5a. Do not use it for retail, Classic or other expansions.',
   '',
@@ -46,11 +48,10 @@ const searchInput = z.strictObject({
     )
 })
 
-const idPattern = `^(${kinds.join('|')}):.+$`
 const recordId = z
   .string()
   .regex(
-    new RegExp(idPattern, 'u'),
+    new RegExp(`^(${kinds.join('|')}):.+$`, 'u'),
     'Use a kind-qualified ID such as item:19019, fn:UnitHealth or file:FrameXML/ChatFrame.lua; find IDs with search'
   )
 
@@ -102,9 +103,7 @@ const sqlInput = z.strictObject({
 
 const annotations: ToolAnnotations = { openWorldHint: false, readOnlyHint: true }
 
-async function withReference(
-  read: (db: Parameters<typeof searchRecords>[0]) => string
-): Promise<string> {
+async function withReference(read: (db: Database) => string): Promise<string> {
   const db = openReference(await getReferencePath())
 
   try {
@@ -121,18 +120,12 @@ async function respond(run: () => Promise<string>): Promise<CallToolResult> {
   try {
     result = { content: [{ text: await run(), type: 'text' }] }
   } catch (error) {
-    let text = String(error)
-
-    if (error instanceof Error) {
-      text = error.message
-    }
-
+    const text = error instanceof Error ? error.message : String(error)
     result = { content: [{ text: text.replaceAll(/[\r\n]+/gu, ' '), type: 'text' }], isError: true }
   }
 
   const warning = takeUpdateWarning()
-
-  if (warning !== undefined && warning !== '') {
+  if (warning) {
     result.content.push({ text: warning, type: 'text' })
   }
 
@@ -150,12 +143,7 @@ function createServer(): McpServer {
     },
     { instructions }
   )
-  registerReferenceTools(server)
-  registerQueryTools(server)
-  return server
-}
 
-function registerReferenceTools(server: Readonly<Pick<McpServer, 'registerTool'>>): void {
   server.registerTool(
     'search',
     {
@@ -169,10 +157,7 @@ function registerReferenceTools(server: Readonly<Pick<McpServer, 'registerTool'>
       inputSchema: searchInput,
       title: 'Search WotLK Reference'
     },
-    (input: Readonly<Omit<z.output<typeof searchInput>, 'kind'> & { kind?: readonly string[] }>) =>
-      respond(() =>
-        withReference((db: Parameters<typeof searchRecords>[0]) => searchRecords(db, input))
-      )
+    (input) => respond(() => withReference((db) => searchRecords(db, input)))
   )
   server.registerTool(
     'get',
@@ -187,16 +172,8 @@ function registerReferenceTools(server: Readonly<Pick<McpServer, 'registerTool'>
       inputSchema: getInput,
       title: 'Get WotLK Records'
     },
-    (input: Readonly<Omit<z.output<typeof getInput>, 'ids'> & { ids: readonly string[] }>) =>
-      respond(() =>
-        withReference((db: Parameters<typeof getRecords>[0]) =>
-          getRecords(db, input.ids, input.from, input.to)
-        )
-      )
+    (input) => respond(() => withReference((db) => getRecords(db, input.ids, input.from, input.to)))
   )
-}
-
-function registerQueryTools(server: Readonly<Pick<McpServer, 'registerTool'>>): void {
   server.registerTool(
     'sql',
     {
@@ -211,10 +188,7 @@ function registerQueryTools(server: Readonly<Pick<McpServer, 'registerTool'>>): 
       inputSchema: sqlInput,
       title: 'Query WotLK SQL'
     },
-    (
-      input: Readonly<z.output<typeof sqlInput>>,
-      ctx: Readonly<{ mcpReq: Readonly<{ signal: Readonly<AbortSignal> }> }>
-    ) =>
+    (input, ctx) =>
       respond(async () =>
         runSql(await getReferencePath(), input.query, input.limit, ctx.mcpReq.signal)
       )
@@ -232,9 +206,10 @@ function registerQueryTools(server: Readonly<Pick<McpServer, 'registerTool'>>): 
       inputSchema: relatedInput,
       title: 'Related WotLK Records'
     },
-    (input: Readonly<z.output<typeof relatedInput>>) =>
-      respond(() => withReference((db: Parameters<typeof getRelated>[0]) => getRelated(db, input)))
+    (input) => respond(() => withReference((db) => getRelated(db, input)))
   )
+
+  return server
 }
 
 serveStdio(createServer)

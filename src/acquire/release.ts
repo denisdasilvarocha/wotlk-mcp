@@ -12,7 +12,7 @@ const headers: Record<string, string> = {
 }
 const releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases?per_page=100'
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
-if (token !== undefined && token !== '') {
+if (token) {
   headers.Authorization = `Bearer ${token}`
 }
 
@@ -31,7 +31,6 @@ export type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
     ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
     : T
 type Release = DeepReadonly<z.infer<typeof releasesSchema>[number]>
-type Candidate = { readonly release: Release; readonly version: readonly number[] }
 
 async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>> {
   const response = await fetch(url, { headers })
@@ -48,7 +47,7 @@ async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>
     .find((part) => /;\s*rel="next"/u.test(part))
     ?.match(/^<([^>]+)>/u)?.[1]
 
-  if (next !== undefined && next !== '') {
+  if (next) {
     page.push(...(await releasePages(next)))
   }
 
@@ -57,40 +56,36 @@ async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>
 
 export async function selectRelease(
   setWarning: (value: number | undefined) => void
-): Promise<Candidate> {
+): Promise<Release> {
   const releases = await releasePages(releasesUrl)
   const candidates = releases
-    .flatMap((release: Release) => {
-      const match = /^db-v(\d+)\.(\d+)\.(\d+)$/u.exec(release.tag_name)
+    .flatMap((release) => {
+      const match = /^db-v(\d+)\.\d+\.\d+$/u.exec(release.tag_name)
 
       if (!match || release.draft || release.prerelease) {
         return []
       }
 
-      return [{ release, version: match.slice(1).map(Number) }]
+      return [{ major: Number(match[1]), release }]
     })
-    .toSorted((a: Candidate, b: Candidate) =>
-      (b.release.published_at ?? '').localeCompare(a.release.published_at ?? '')
-    )
-  const selected = candidates.find(({ version }: Candidate) => version[0] === acceptedSchemaMajor)
-  const higher = candidates.find(({ version }: Candidate) => version[0] > acceptedSchemaMajor)
+    .toSorted((a, b) => (b.release.published_at ?? '').localeCompare(a.release.published_at ?? ''))
+  const selected = candidates.find(({ major }) => major === acceptedSchemaMajor)
+  const higher = candidates.find(({ major }) => major > acceptedSchemaMajor)
 
-  setWarning(higher?.version[0])
+  setWarning(higher?.major)
 
   if (higher) {
-    console.error(`newer reference data needs wotlk-mcp@${higher.version[0]}; update your config`)
+    console.error(`newer reference data needs wotlk-mcp@${higher.major}; update your config`)
+  }
+  if (selected) {
+    return selected.release
   }
 
-  if (!selected) {
-    if (higher) {
-      throw new Error(
-        `no compatible release; newer reference data needs wotlk-mcp@${higher.version[0]}`
-      )
-    }
-
-    throw new Error('no compatible published reference release')
-  }
-  return selected
+  throw new Error(
+    higher
+      ? `no compatible release; newer reference data needs wotlk-mcp@${higher.major}`
+      : 'no compatible published reference release'
+  )
 }
 
 export async function transferAsset(

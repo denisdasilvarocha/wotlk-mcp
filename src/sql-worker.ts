@@ -1,6 +1,6 @@
 import { DatabaseSync, constants } from 'node:sqlite'
 
-import type { SQLOutputValue } from 'node:sqlite'
+import type { SQLOutputValue, StatementSync } from 'node:sqlite'
 
 const maxOutput = 32000
 
@@ -52,10 +52,15 @@ function execute(path: string, query: string, limit: number): string {
   }
 }
 
-function render(statement: Readonly<ReturnType<DatabaseSync['prepare']>>, limit: number): string {
-  const header = renderHeader(statement)
-  const { length: headerLength } = header
-  let length = headerLength
+function render(statement: Readonly<StatementSync>, limit: number): string {
+  const columns = statement.columns()
+
+  if (columns.length === 0) {
+    throw new Error('SQL statement must return columns')
+  }
+
+  const header = columns.map((column) => escape(column.name, true)).join('\t')
+  let { length } = header
   let reason = ''
   const rows = [header]
 
@@ -101,16 +106,6 @@ function render(statement: Readonly<ReturnType<DatabaseSync['prepare']>>, limit:
   return rows.join('\n')
 }
 
-function renderHeader(statement: Readonly<ReturnType<DatabaseSync['prepare']>>): string {
-  const columns = statement.columns()
-
-  if (columns.length === 0) {
-    throw new Error('SQL statement must return columns')
-  }
-
-  return columns.map((column: Readonly<{ name: string }>) => escape(column.name, true)).join('\t')
-}
-
 function escape(value: Cell, header = false): string {
   if (value === null) {
     return 'NULL'
@@ -133,13 +128,13 @@ function escape(value: Cell, header = false): string {
 }
 
 process.once('message', (data: Readonly<{ path: string; query: string; limit: number }>) => {
+  let result: { text?: string; error?: string }
+
   try {
-    process.send?.({ text: execute(data.path, data.query, data.limit) }, () =>
-      process.disconnect?.()
-    )
+    result = { text: execute(data.path, data.query, data.limit) }
   } catch (error) {
-    process.send?.({ error: String(error).replaceAll(/[\r\n]+/gu, ' ') }, () =>
-      process.disconnect?.()
-    )
+    result = { error: String(error).replaceAll(/[\r\n]+/gu, ' ') }
   }
+
+  process.send?.(result, () => process.disconnect?.())
 })

@@ -15,18 +15,6 @@ const cacheStateSchema = z.object({
 })
 export type CacheState = z.infer<typeof cacheStateSchema>
 
-type CacheEntry = { name: string; state: CacheState }
-
-async function linkSnapshot(source: string, session: string): Promise<void> {
-  await link(source, session)
-  openReference(session).close()
-}
-
-async function cacheNames(directory: string): Promise<string[]> {
-  await mkdir(directory, { recursive: true })
-  return readdir(directory)
-}
-
 function removeSessionOnExit(session: string): void {
   process.once('exit', () => {
     try {
@@ -40,12 +28,12 @@ function removeSessionOnExit(session: string): void {
 async function cleanup(
   directory: string,
   names: readonly string[],
-  keep: readonly string[]
+  keep: ReadonlySet<string>
 ): Promise<void> {
   const now = Date.now()
   await Promise.all(
     names.map(async (name) => {
-      if (keep.includes(name)) {
+      if (keep.has(name)) {
         return
       }
 
@@ -59,10 +47,10 @@ async function cleanup(
       if (!partial && !session && !old) {
         return
       }
-      if ((partial || session) && processAlive(Number((partial ?? session)?.[1]))) {
-        return
-      }
-      if (promoting && processAlive(Number(promoting[1]))) {
+
+      const owner = partial ?? session ?? promoting
+
+      if (owner && processAlive(Number(owner[1]))) {
         return
       }
 
@@ -102,7 +90,9 @@ function processAlive(pid: number): boolean {
 export async function cached(
   directory: string
 ): Promise<{ path: string; state: CacheState } | undefined> {
-  const names = await cacheNames(directory)
+  await mkdir(directory, { recursive: true })
+
+  const names = await readdir(directory)
   const entries = await states(directory)
   const keep = new Set<string>()
   const files = new Set<string>()
@@ -115,41 +105,36 @@ export async function cached(
       return
     }
 
-    if (files.has(entry.state.file)) {
-      await select(index + 1)
-      return
-    }
+    if (!files.has(entry.state.file)) {
+      const session = path.join(directory, `session-${process.pid}-${randomUUID()}.sqlite`)
 
-    const source = path.join(directory, entry.state.file)
-    const session = path.join(directory, `session-${process.pid}-${randomUUID()}.sqlite`)
+      try {
+        await link(path.join(directory, entry.state.file), session)
+        openReference(session).close()
+        keep.add(entry.name)
+        keep.add(entry.state.file)
+        files.add(entry.state.file)
 
-    try {
-      await linkSnapshot(source, session)
-      keep.add(entry.name)
-      keep.add(entry.state.file)
-      files.add(entry.state.file)
-
-      if (selected) {
+        if (selected) {
+          await removeIfPossible(session)
+        } else {
+          selected = { path: session, state: entry.state }
+          removeSessionOnExit(session)
+        }
+      } catch {
         await removeIfPossible(session)
-      } else {
-        selected = { path: session, state: entry.state }
-        removeSessionOnExit(session)
       }
-    } catch {
-      await removeIfPossible(session)
     }
-
     await select(index + 1)
   }
 
   await select(0)
-
-  await cleanup(directory, names, [...keep])
+  await cleanup(directory, names, keep)
 
   return selected
 }
 
-export async function states(directory: string): Promise<{ name: string; state: CacheState }[]> {
+export async function states(directory: string) {
   const names = (await readdir(directory)).filter((name) =>
     /^state-\d+-[0-9a-f-]+\.json$/u.test(name)
   )
@@ -167,9 +152,7 @@ export async function states(directory: string): Promise<{ name: string; state: 
     })
   )
 
-  return entries
-    .filter((entry: Readonly<CacheEntry> | null) => entry !== null)
-    .toSorted((a: Readonly<CacheEntry>, b: Readonly<CacheEntry>) => b.name.localeCompare(a.name))
+  return entries.filter((entry) => entry !== null).toSorted((a, b) => b.name.localeCompare(a.name))
 }
 
 export async function removeIfPossible(file: string): Promise<void> {
@@ -203,6 +186,11 @@ export async function publish(
 ): Promise<void> {
   const id = randomUUID()
   const partial = path.join(directory, `${process.pid}-${id}.json.partial`)
-  await writeFile(partial, JSON.stringify(state), { flag: 'wx' })
-  await rename(partial, path.join(directory, `state-${timestamp}-${id}.json`))
+
+  try {
+    await writeFile(partial, JSON.stringify(state), { flag: 'wx' })
+    await rename(partial, path.join(directory, `state-${timestamp}-${id}.json`))
+  } finally {
+    await removeIfPossible(partial)
+  }
 }

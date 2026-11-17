@@ -1,50 +1,33 @@
-import { acceptedSchemaMajor, kinds } from './schema.js'
-import { DatabaseSync, type StatementSync } from 'node:sqlite'
+import { acceptedSchemaMajor } from './schema.js'
+import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from './database.js'
+import type { SQLOutputValue } from 'node:sqlite'
 
-type SqlValue = string | number | bigint | null | { readonly toString: () => string }
-
-type SqlRow = Readonly<Record<string, SqlValue>>
-
-function isTruthy(value: SqlValue | undefined): boolean {
-  return (
-    value !== null &&
-    value !== undefined &&
-    value !== '' &&
-    value !== 0 &&
-    value !== 0n &&
-    !Number.isNaN(value)
-  )
-}
+type SqlRow = Readonly<Record<string, SQLOutputValue>>
 
 function renderFileWindow(db: Database, id: string, row: SqlRow, from: number, to: number): string {
   const path = id.slice(id.indexOf(':') + 1)
-  const lines = [id]
   const total = Number(
     db.prepare('SELECT count(*) AS total FROM ui_line WHERE path = ?').get(path)?.total
   )
   const rows = db
     .prepare('SELECT line, text FROM ui_line WHERE path = ? AND line BETWEEN ? AND ? ORDER BY line')
     .all(path, from, to)
+  const lines = [id]
 
-  if (isTruthy(row.locale)) {
+  if (row.locale) {
     lines.push(`locale: ${String(row.locale)}`)
   }
-
-  if (isTruthy(row.provenance)) {
+  if (row.provenance) {
     lines.push(`provenance: ${String(row.provenance)}`)
   }
-  lines.push(...rows.map((line: SqlRow) => `${String(line.line)}: ${String(line.text)}`))
+  lines.push(...rows.map((line) => `${String(line.line)}: ${String(line.text)}`))
 
-  let continuation = 'end'
   const start = Number(rows[0]?.line ?? 0)
   const end = Number(rows.at(-1)?.line ?? 0)
 
-  if (end && end < total) {
-    continuation = `next from: ${end + 1}`
-  }
-  lines.push(`${start}–${end} of ${total}; ${continuation}`)
+  lines.push(`${start}–${end} of ${total}; ${end && end < total ? `next from: ${end + 1}` : 'end'}`)
 
   return lines.join('\n')
 }
@@ -54,62 +37,108 @@ function renderEnumValue(
   entries: readonly Readonly<Record<string, unknown>>[],
   flags: boolean
 ): string {
-  let rendered = String(value)
-
-  if (flags) {
-    const names: string[] = []
-    let remaining = BigInt(value)
-
-    // DBC flag columns are signed int32; bit 31 makes them negative.
-    if (remaining < 0n) {
-      remaining = BigInt.asUintN(32, remaining)
-    }
-
-    if (remaining > 0n) {
-      for (const entry of entries) {
-        const bit = BigInt(Number(entry.value))
-
-        if (bit > 0n && (bit & (bit - 1n)) === 0n && (remaining & bit) === bit) {
-          names.push(String(entry.name))
-          remaining &= ~bit
-        }
-      }
-
-      if (remaining && names.length > 0) {
-        names.push(remaining.toString())
-      }
-
-      if (names.length > 0) {
-        rendered += ` (${names.join(', ')})`
-      }
-    }
-  } else {
+  if (!flags) {
     const entry = entries.find((candidate) => candidate.value === value)
 
-    if (entry) {
-      rendered += ` (${String(entry.name)})`
+    return entry ? `${value} (${String(entry.name)})` : String(value)
+  }
+
+  const names: string[] = []
+  let remaining = BigInt(value)
+
+  // DBC flag columns are signed int32; bit 31 makes them negative.
+  if (remaining < 0n) {
+    remaining = BigInt.asUintN(32, remaining)
+  }
+
+  for (const entry of entries) {
+    const bit = BigInt(Number(entry.value))
+
+    if (bit > 0n && (bit & (bit - 1n)) === 0n && (remaining & bit) === bit) {
+      names.push(String(entry.name))
+      remaining &= ~bit
     }
   }
 
-  return rendered
-}
-
-function getRecord(
-  db: Database,
-  id: string,
-  from: number,
-  to: number,
-  index: Readonly<StatementSync>,
-  mappings: Readonly<StatementSync>,
-  values: Readonly<StatementSync>
-): string {
-  const colon = id.indexOf(':')
-
-  if (colon < 1 || colon === id.length - 1 || !kinds.includes(id.slice(0, colon))) {
-    throw new Error(`invalid ID ${id}; valid kinds: ${kinds.join(', ')}`)
+  if (names.length === 0) {
+    return String(value)
+  }
+  if (remaining) {
+    names.push(remaining.toString())
   }
 
-  const record = index.get(id)
+  return `${value} (${names.join(', ')})`
+}
+
+function renderFields(db: Database, table: string, row: SqlRow, identifier: string): string[] {
+  const fields = db
+    .prepare(
+      'SELECT field, enum_name, flags, condition_field, condition_value FROM enum_field WHERE source_table = ?'
+    )
+    .all(table)
+  const values = db.prepare(
+    'SELECT value, name FROM enum_value WHERE enum_name = ? ORDER BY value, name'
+  )
+  const lines: string[] = []
+
+  for (const [key, value] of Object.entries(row)) {
+    if (
+      value === null ||
+      value === '' ||
+      value === 0 ||
+      ((key.toLowerCase() === 'id' || key.toLowerCase() === 'name' || key === 'path') &&
+        String(value) === identifier)
+    ) {
+      continue
+    }
+
+    let rendered = String(value)
+    const mapping = fields.find(
+      (field) =>
+        field.field === key &&
+        (field.condition_field === null ||
+          row[String(field.condition_field)] === field.condition_value)
+    )
+
+    if (mapping && typeof value === 'number' && Number.isSafeInteger(value) && value !== -1) {
+      rendered = renderEnumValue(
+        value,
+        values.all(String(mapping.enum_name)),
+        Boolean(mapping.flags)
+      )
+    }
+
+    lines.push(`${key}: ${rendered.replaceAll(/\r?\n/gu, '\n  ')}`)
+  }
+
+  return lines
+}
+
+function nativeFacts(db: Database, id: string): string[] {
+  if (
+    (!id.startsWith('fn:') && !id.startsWith('method:')) ||
+    !db
+      .prepare(
+        "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'lua_native_registration'"
+      )
+      .get()
+  ) {
+    return []
+  }
+
+  return db
+    .prepare(
+      'SELECT va, context, registration_table, registration_index, call_sites, widget FROM lua_native_registration WHERE record_id = ? ORDER BY registration_table, registration_index, context'
+    )
+    .all(id)
+    .map(
+      (fact) =>
+        `native: ${String(fact.va)} ${String(fact.context)} ${String(fact.registration_table)}[${String(fact.registration_index)}] call sites ${String(fact.call_sites)}${fact.widget ? ` widget ${String(fact.widget)}` : ''}`
+    )
+}
+
+function getRecord(db: Database, id: string, from: number, to: number): string {
+  const record = db.prepare('SELECT source_table, source_row FROM record WHERE id = ?').get(id)
 
   if (!record) {
     return `not found: ${id}`
@@ -132,87 +161,16 @@ function getRecord(
 
   return [
     id,
-    ...renderFields(row, mappings.all(table), values, id.slice(colon + 1)),
+    ...renderFields(db, table, row, id.slice(id.indexOf(':') + 1)),
     ...nativeFacts(db, id)
   ].join('\n')
 }
 
-function renderFields(
-  row: SqlRow,
-  fields: readonly SqlRow[],
-  values: Readonly<StatementSync>,
-  identifier: string
-): string[] {
-  const lines: string[] = []
-  for (const [key, value] of Object.entries(row)) {
-    if (
-      value === null ||
-      value === '' ||
-      value === 0 ||
-      ((key.toLowerCase() === 'id' || key.toLowerCase() === 'name' || key === 'path') &&
-        String(value) === identifier)
-    ) {
-      continue
-    }
-
-    let rendered = String(value)
-    const mapping = fields.find(
-      (field: SqlRow) =>
-        field.field === key &&
-        (field.condition_field === null ||
-          row[String(field.condition_field)] === field.condition_value)
-    )
-
-    if (mapping && typeof value === 'number' && Number.isSafeInteger(value) && value !== -1) {
-      rendered = renderEnumValue(
-        value,
-        values.all(String(mapping.enum_name)),
-        Boolean(mapping.flags)
-      )
-    }
-
-    lines.push(`${key}: ${rendered.replaceAll(/\r?\n/gu, '\n  ')}`)
-  }
-
-  return lines
-}
-
-function nativeFacts(db: Database, id: string): string[] {
-  const lines: string[] = []
-  if (
-    (id.startsWith('fn:') || id.startsWith('method:')) &&
-    db
-      .prepare(
-        "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'lua_native_registration'"
-      )
-      .get()
-  ) {
-    const native = db
-      .prepare(
-        'SELECT va, context, registration_table, registration_index, call_sites, widget FROM lua_native_registration WHERE record_id = ? ORDER BY registration_table, registration_index, context'
-      )
-      .all(id)
-
-    for (const fact of native) {
-      let line = `native: ${String(fact.va)} ${String(fact.context)} ${String(fact.registration_table)}[${String(fact.registration_index)}] call sites ${String(fact.call_sites)}`
-
-      if (isTruthy(fact.widget)) {
-        line += ` widget ${String(fact.widget)}`
-      }
-      lines.push(line)
-    }
-  }
-  return lines
-}
-
 export function openReference(path: string): DatabaseSync {
-  let db: DatabaseSync | undefined
+  const db = new DatabaseSync(path, { readOnly: true })
 
   try {
-    db = new DatabaseSync(path, { readOnly: true })
-
-    const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
-    const version = row?.value
+    const version = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value
 
     if (
       typeof version !== 'string' ||
@@ -235,7 +193,7 @@ export function openReference(path: string): DatabaseSync {
 
     return db
   } catch (error) {
-    db?.close()
+    db.close()
     throw error
   }
 }
@@ -250,13 +208,5 @@ export function getRecords(
     throw new Error('get requires to ≥ from')
   }
 
-  const index = db.prepare('SELECT name, source_table, source_row FROM record WHERE id = ?')
-  const mappings = db.prepare(
-    'SELECT field, enum_name, flags, condition_field, condition_value FROM enum_field WHERE source_table = ?'
-  )
-  const values = db.prepare(
-    'SELECT value, name FROM enum_value WHERE enum_name = ? ORDER BY value, name'
-  )
-
-  return ids.map((id) => getRecord(db, id, from, to, index, mappings, values)).join('\n\n')
+  return ids.map((id) => getRecord(db, id, from, to)).join('\n\n')
 }
