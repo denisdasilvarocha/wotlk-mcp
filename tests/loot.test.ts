@@ -11,7 +11,9 @@ import { initReference } from '../build/offsets.ts'
 import { packagedServer, unpackPackage } from './package.ts'
 
 const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-loot-'))
-afterAll(() => rmSync(dir, { recursive: true, force: true }))
+afterAll(() => {
+  rmSync(dir, { force: true, recursive: true })
+})
 
 function fixture(name: string): string {
   const file = path.join(dir, `${name}.sqlite`)
@@ -29,10 +31,18 @@ function fixture(name: string): string {
     INSERT INTO world_item_template VALUES (100),(101),(102),(103),(104);
     INSERT INTO world_conditions VALUES (1,10,1,0,9,0,77,0,0,0);`)
 
-  for (const table of ['creature', 'gameobject', 'item', 'skinning', 'pickpocketing', 'reference'])
+  for (const table of [
+    'creature',
+    'gameobject',
+    'item',
+    'skinning',
+    'pickpocketing',
+    'reference'
+  ]) {
     db.exec(
       `CREATE TABLE world_${table}_loot_template (Entry INTEGER, Item INTEGER, Reference INTEGER, Chance REAL, QuestRequired INTEGER, LootMode INTEGER, GroupId INTEGER, MinCount INTEGER, MaxCount INTEGER, Comment TEXT)`
     )
+  }
 
   db.exec(`INSERT INTO world_creature_loot_template VALUES (10,100,0,10,0,1,0,1,1,'direct'),(10,1,30,50,0,1,1,1,1,'ref'),(10,2,31,20,0,1,0,1,1,'second');
     INSERT INTO world_reference_loot_template VALUES (30,102,0,25,1,2,2,1,1,'inner'),(30,3,31,75,0,1,0,1,1,'nested'),(31,102,0,5,0,1,0,1,1,'leaf');
@@ -47,21 +57,38 @@ function fixture(name: string): string {
     ['creature', [1]],
     ['gameobject', [2, 3, 4]],
     ['item', [100, 101, 102, 103, 104]]
-  ] as const)
-    for (const id of ids)
+  ] as const) {
+    for (const id of ids) {
       add.run(`${kind}:${id}`, kind, String(id), `world_${kind}_template`, 1, '', '')
+    }
+  }
 
   db.close()
 
   return file
 }
 
-function text(result: Awaited<ReturnType<Client['callTool']>>): string {
+function text(result: { readonly content: unknown }): string {
   const { content } = result
 
-  if (!Array.isArray(content) || content[0]?.type !== 'text') throw new Error('Expected text')
+  if (!Array.isArray(content)) {
+    throw new TypeError('Expected text')
+  }
 
-  return content[0].text
+  const first: unknown = content[0]
+
+  if (
+    typeof first !== 'object' ||
+    first === null ||
+    !('type' in first) ||
+    first.type !== 'text' ||
+    !('text' in first) ||
+    typeof first.text !== 'string'
+  ) {
+    throw new Error('Expected text')
+  }
+
+  return first.text
 }
 
 test('loot paths survive artifact and packed related/sql surfaces', async () => {
@@ -76,13 +103,19 @@ test('loot paths survive artifact and packed related/sql surfaces', async () => 
     )
     .all()
 
-  expect(links.some((row) => row.source_id === 'gameobject:4')).toBe(false)
   expect(
-    links.filter((row) => row.destination_id === 'item:100').map((row) => row.source_id)
+    links.some((row: Readonly<Record<string, unknown>>) => row.source_id === 'gameobject:4')
+  ).toBe(false)
+  expect(
+    links
+      .filter((row: Readonly<Record<string, unknown>>) => row.destination_id === 'item:100')
+      .map((row: Readonly<Record<string, unknown>>) => row.source_id)
   ).toEqual(['creature:1', 'gameobject:2', 'gameobject:3', 'item:101'])
 
   const nested = String(
-    links.find((row) => row.source_id === 'creature:1' && row.destination_id === 'item:102')?.notes
+    links
+      .filter((row: Readonly<Record<string, unknown>>) => row.source_id === 'creature:1')
+      .find((row: Readonly<Record<string, unknown>>) => row.destination_id === 'item:102')?.notes
   )
 
   expect(nested).toContain('via ref:30')
@@ -91,8 +124,12 @@ test('loot paths survive artifact and packed related/sql surfaces', async () => 
   expect(nested).toContain('group 2')
   expect(nested).toContain('quest required 1')
   expect(nested).toContain('conditions')
-  expect(links.some((row) => row.destination_id === 'item:103')).toBe(true)
-  expect(links.some((row) => row.destination_id === 'item:104')).toBe(true)
+  expect(
+    links.some((row: Readonly<Record<string, unknown>>) => row.destination_id === 'item:103')
+  ).toBe(true)
+  expect(
+    links.some((row: Readonly<Record<string, unknown>>) => row.destination_id === 'item:104')
+  ).toBe(true)
   db.close()
   unpackPackage(dir)
 
@@ -103,17 +140,17 @@ test('loot paths survive artifact and packed related/sql surfaces', async () => 
   try {
     expect(
       text(
-        await client.callTool({ name: 'related', arguments: { id: 'item:102', rel: 'dropped by' } })
+        await client.callTool({ arguments: { id: 'item:102', rel: 'dropped by' }, name: 'related' })
       )
     ).toContain('creature:1')
     expect(
       text(
         await client.callTool({
-          name: 'sql',
           arguments: {
             query:
               'SELECT Entry, Item, Reference, Chance, GroupId FROM world_reference_loot_template ORDER BY Entry, Item'
-          }
+          },
+          name: 'sql'
         })
       )
     ).toContain('30\t102\t0\t25\t2')
@@ -134,10 +171,12 @@ test('broken and cyclic references fail atomically with source diagnostics', () 
       `INSERT INTO world_reference_loot_template VALUES (31,9,${ref},100,0,1,0,1,1,'invalid')`
     )
     db.close()
-    expect(() => buildLootLinks(file)).toThrow(
+    expect(() => {
+      buildLootLinks(file)
+    }).toThrow(
       new RegExp(
         `world_reference_loot_template.*${message}|${message}.*world_reference_loot_template`,
-        'i'
+        'iu'
       )
     )
 

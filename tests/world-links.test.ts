@@ -10,10 +10,15 @@ import { initReference } from '../build/offsets.ts'
 import { buildWorldLinks } from '../build/world-links.ts'
 import { packagedServer, unpackPackage } from './package.ts'
 
+const client = new Client({ name: 'world-links-test', version: '1' })
+
+async function text(name: string, args: Readonly<Record<string, unknown>>): Promise<string> {
+  return JSON.stringify(await client.callTool({ arguments: args, name }))
+}
+
 test('world keys navigate both ways while SQL retains source evidence', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-links-'))
   const database = path.join(dir, 'reference.sqlite')
-  const client = new Client({ name: 'world-links-test', version: '1' })
 
   try {
     initReference(database)
@@ -46,33 +51,31 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
     unpackPackage(dir)
     await client.connect(packagedServer(dir, database))
 
-    async function text(name: string, args: Record<string, unknown>): Promise<string> {
-      return JSON.stringify(await client.callTool({ name, arguments: args }))
-    }
-
     await Promise.all(
-      [
-        ['creature:1', 'starts', 'quest:3'],
-        ['quest:3', 'started by', 'creature:1'],
-        ['gameobject:2', 'starts', 'quest:3'],
-        ['quest:3', 'started by', 'gameobject:2'],
-        ['creature:1', 'ends', 'quest:3'],
-        ['quest:3', 'ended by', 'creature:1'],
-        ['gameobject:2', 'ends', 'quest:3'],
-        ['quest:3', 'ended by', 'gameobject:2'],
-        ['quest:3', 'rewards', 'item:4'],
-        ['item:4', 'rewarded by', 'quest:3'],
-        ['quest:3', 'rewards', 'spell:5'],
-        ['spell:5', 'rewarded by', 'quest:3'],
-        ['creature:1', 'sells', 'item:4'],
-        ['item:4', 'sold by', 'creature:1'],
-        ['creature:1', 'teaches', 'spell:5'],
-        ['spell:5', 'taught by', 'creature:1'],
-        ['item:4', 'casts', 'spell:5'],
-        ['spell:5', 'cast by', 'item:4']
-      ].map(async ([id, relation, target]) =>
+      (
+        [
+          ['creature:1', 'starts', 'quest:3'],
+          ['quest:3', 'started by', 'creature:1'],
+          ['gameobject:2', 'starts', 'quest:3'],
+          ['quest:3', 'started by', 'gameobject:2'],
+          ['creature:1', 'ends', 'quest:3'],
+          ['quest:3', 'ended by', 'creature:1'],
+          ['gameobject:2', 'ends', 'quest:3'],
+          ['quest:3', 'ended by', 'gameobject:2'],
+          ['quest:3', 'rewards', 'item:4'],
+          ['item:4', 'rewarded by', 'quest:3'],
+          ['quest:3', 'rewards', 'spell:5'],
+          ['spell:5', 'rewarded by', 'quest:3'],
+          ['creature:1', 'sells', 'item:4'],
+          ['item:4', 'sold by', 'creature:1'],
+          ['creature:1', 'teaches', 'spell:5'],
+          ['spell:5', 'taught by', 'creature:1'],
+          ['item:4', 'casts', 'spell:5'],
+          ['spell:5', 'cast by', 'item:4']
+        ] as const
+      ).map(async ([id, relation, target]) => {
         expect(await text('related', { id, rel: relation })).toContain(target)
-      )
+      })
     )
     expect(await text('related', { id: 'creature:1', rel: 'teaches' })).not.toContain('spell:6')
 
@@ -94,6 +97,6 @@ test('world keys navigate both ways while SQL retains source evidence', async ()
     expect(vendors).toContain('2\\t0\\t0\\t0')
   } finally {
     await client.close()
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 }, 120_000)

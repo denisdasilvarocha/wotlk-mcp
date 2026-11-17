@@ -4,28 +4,31 @@ export function runSql(
   path: string,
   query: string,
   limit: number,
-  signal: AbortSignal
+  signal: Readonly<AbortSignal>
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     // A process can be killed while SQLite is executing native code; a thread cannot.
     const worker = fork(new URL('./sql-worker.mjs', import.meta.url), [], {
-      stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+      killSignal: 'SIGKILL',
       signal,
-      killSignal: 'SIGKILL'
+      stdio: ['ignore', 'ignore', 'ignore', 'ipc']
     })
     const timer = setTimeout(() => {
       worker.kill('SIGKILL')
       reject(new Error('SQL query timed out after 5 seconds'))
     }, 5000)
 
-    worker.send({ path, query, limit })
-    worker.once('message', (result: { text?: string; error?: string }) => {
+    worker.send({ limit, path, query })
+    worker.once('message', (result: Readonly<{ text?: string; error?: string }>) => {
       clearTimeout(timer)
 
-      if (result.error) reject(new Error(result.error))
-      else resolve(result.text ?? '')
+      if (result.error !== undefined && result.error !== '') {
+        reject(new Error(result.error))
+      } else {
+        resolve(result.text ?? '')
+      }
     })
-    worker.once('error', (error) => {
+    worker.once('error', (error: Readonly<Error>) => {
       clearTimeout(timer)
       reject(error)
     })

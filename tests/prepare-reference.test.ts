@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -9,6 +10,35 @@ import { brotliCompressSync, brotliDecompressSync } from 'node:zlib'
 import { expect, test } from 'vite-plus/test'
 
 import { createReleaseFixture, sealReleaseFixture } from './release-fixture.ts'
+
+function readReport(file: string): {
+  uncompressed_bytes: unknown
+  compressed_bytes: unknown
+  compressed_sha256: unknown
+  compressed_250_mb_gate_passed: unknown
+  timings_seconds: { compression: unknown }
+  build_seconds: unknown
+} {
+  const report: unknown = JSON.parse(readFileSync(file, 'utf8'))
+  assert.ok(typeof report === 'object' && report !== null)
+  assert.ok(
+    'uncompressed_bytes' in report && 'compressed_bytes' in report && 'compressed_sha256' in report
+  )
+  assert.ok('compressed_250_mb_gate_passed' in report && 'build_seconds' in report)
+  assert.ok(
+    'timings_seconds' in report &&
+      typeof report.timings_seconds === 'object' &&
+      report.timings_seconds !== null
+  )
+  assert.ok('compression' in report.timings_seconds)
+  return { ...report, timings_seconds: report.timings_seconds }
+}
+
+function readGate(file: string): { version: unknown } {
+  const gate: unknown = JSON.parse(readFileSync(file, 'utf8'))
+  assert.ok(typeof gate === 'object' && gate !== null && 'version' in gate)
+  return gate
+}
 
 test('preparation versions, validates and measures the final compressed reference', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'prepare-reference-'))
@@ -49,8 +79,8 @@ test('preparation versions, validates and measures the final compressed referenc
     )
     verified.close()
 
-    const report = JSON.parse(readFileSync(path.join(dir, 'build-report.json'), 'utf8'))
-    const gate = JSON.parse(readFileSync(path.join(dir, 'gate.json'), 'utf8'))
+    const report = readReport(path.join(dir, 'build-report.json'))
+    const gate = readGate(path.join(dir, 'gate.json'))
 
     expect(gate.version).toBe('1.0.1')
     expect(report.uncompressed_bytes).toBe(statSync(database).size)
@@ -60,6 +90,6 @@ test('preparation versions, validates and measures the final compressed referenc
     expect(report.timings_seconds.compression).toBeGreaterThanOrEqual(0.1)
     expect(report.build_seconds).toBeGreaterThanOrEqual(1)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

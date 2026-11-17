@@ -14,41 +14,85 @@ function validate(directory: string): ReturnType<typeof spawnSync> {
   })
 }
 
-describe('Offsets catalog', () => {
-  it('preserves every original declaration, note and classification', () => {
-    const entries = []
-    const namespaces: string[] = []
-    const original = readFileSync('tests/fixtures/original-offsets.txt', 'utf8')
+type OffsetEntry = {
+  readonly kind: string
+  readonly note: string
+  readonly path: string
+  readonly va: string
+  readonly status?: string
+}
 
-    for (const line of original.split('\n')) {
-      const namespace = /^\s*namespace (\w+) \{/.exec(line)
-      const declaration = /^\s*constexpr uint32_t (\w+) = (0x[0-9A-F]{8}); \/\/ (.*)$/.exec(line)
+function hasPath(entry: unknown): entry is Readonly<{ path: string }> {
+  return (
+    typeof entry === 'object' && entry !== null && 'path' in entry && typeof entry.path === 'string'
+  )
+}
 
-      if (namespace) namespaces.push(namespace[1])
-      else if (/^\s*}/.test(line)) namespaces.pop()
-      else if (declaration) {
-        let kind = 'function'
-        const [, name, va, note] = declaration
-        const path = [...namespaces.slice(1), name].join('::')
+function parseEntries(json: string): readonly Readonly<{ path: string }>[] {
+  const parsed: unknown = JSON.parse(json)
 
-        if (path.startsWith('Globals::') || path.startsWith('Cache::ClientDbPointer::'))
-          kind = 'data'
+  if (!Array.isArray(parsed)) {
+    throw new TypeError('Expected offset entries')
+  }
 
-        let status
+  return parsed.map((entry: unknown) => {
+    if (!hasPath(entry)) {
+      throw new TypeError('Invalid offset entry')
+    }
 
-        if (/not present/i.test(note)) status = 'not-present'
-        else if (/unverified/i.test(note)) status = 'unverified'
+    return entry
+  })
+}
 
-        const record = { path, va, kind, note }
+function originalEntries(original: string): OffsetEntry[] {
+  const entries: OffsetEntry[] = []
+  const namespaces: string[] = []
 
-        if (status) entries.push({ ...record, status })
-        else entries.push(record)
+  for (const line of original.split('\n')) {
+    const namespace = /^\s*namespace (\w+) \{/u.exec(line)
+    const declaration = /^\s*constexpr uint32_t (\w+) = (0x[0-9A-F]{8}); \/\/ (.*)$/u.exec(line)
+
+    if (namespace) {
+      namespaces.push(namespace[1])
+    } else if (/^\s*\}/u.test(line)) {
+      namespaces.pop()
+    } else if (declaration) {
+      let kind = 'function'
+      const [, name, va, note] = declaration
+      const path = [...namespaces.slice(1), name].join('::')
+
+      if (path.startsWith('Globals::') || path.startsWith('Cache::ClientDbPointer::')) {
+        kind = 'data'
+      }
+
+      let status
+
+      if (/not present/iu.test(note)) {
+        status = 'not-present'
+      } else if (/unverified/iu.test(note)) {
+        status = 'unverified'
+      }
+
+      const record = { kind, note, path, va }
+
+      if (status !== undefined && status !== '') {
+        entries.push({ ...record, status })
+      } else {
+        entries.push(record)
       }
     }
+  }
+
+  return entries
+}
+
+describe('Offsets catalog', () => {
+  it('preserves every original declaration, note and classification', () => {
+    const entries = originalEntries(readFileSync('tests/fixtures/original-offsets.txt', 'utf8'))
 
     const files = readdirSync(catalog).filter((file) => file.endsWith('.json'))
     const actual = files.flatMap((file) =>
-      JSON.parse(readFileSync(nodePath.join(catalog, file), 'utf8'))
+      parseEntries(readFileSync(nodePath.join(catalog, file), 'utf8'))
     )
 
     expect(entries).toHaveLength(787)
@@ -62,7 +106,7 @@ describe('Offsets catalog', () => {
     const directory = mkdtempSync(nodePath.join(tmpdir(), 'offsets-'))
 
     try {
-      const entry = { path: 'Lua::Example', va: '0x00819210', kind: 'function', note: 'example' }
+      const entry = { kind: 'function', note: 'example', path: 'Lua::Example', va: '0x00819210' }
 
       writeFileSync(nodePath.join(directory, 'one.json'), JSON.stringify([entry]))
       writeFileSync(
@@ -79,7 +123,7 @@ describe('Offsets catalog', () => {
       expect(validate(directory).status).not.toBe(0)
       writeFileSync(
         nodePath.join(directory, 'two.json'),
-        JSON.stringify([{ ...entry, path: 'Lua::Other', kind: 'field' }])
+        JSON.stringify([{ ...entry, kind: 'field', path: 'Lua::Other' }])
       )
       expect(validate(directory).status).not.toBe(0)
       writeFileSync(
@@ -88,7 +132,7 @@ describe('Offsets catalog', () => {
       )
       expect(validate(directory).status).not.toBe(0)
     } finally {
-      rmSync(directory, { recursive: true, force: true })
+      rmSync(directory, { force: true, recursive: true })
     }
   })
 

@@ -1,23 +1,13 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { writeReferenceArtifact } from './artifact.ts'
-import { buildClientFactionSpawnLinks } from './client-faction-spawn-links.ts'
-import { importClientData } from './client.ts'
-import { importCodex, readCodex } from './codex.ts'
 import { writeFidelity } from './fidelity.ts'
-import { importInterface } from './interface.ts'
-import { buildLootLinks } from './loot-links.ts'
-import { importNative } from './native.ts'
-import { initReference } from './offsets.ts'
+import { runImportStages } from './main-import-stages.ts'
+import { runLinkStages } from './main-link-stages.ts'
 import { writeProvenance } from './provenance.ts'
 import { acquireSources } from './sources.ts'
-import { importSpellEnums } from './spell-enums.ts'
-import { importWorldEnums } from './world-enums.ts'
-import { buildWorldLinks } from './world-links.ts'
-import { importWorld } from './world.ts'
 
 const usage = `Usage: vp run build [new-output-directory]
 
@@ -31,21 +21,24 @@ function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`
 }
 
-export async function buildReference(directory: string): Promise<void> {
-  const output = path.resolve(directory)
-
+function createOutput(output: string): void {
   try {
     mkdirSync(output)
   } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'EEXIST')
+    if (error instanceof Error && 'code' in error && error.code === 'EEXIST') {
       throw new Error(
         `Output already exists: ${output}. Nothing was changed. Build into a new directory, for example: vp run build ./output-next.`,
         { cause: error }
       )
+    }
 
     throw error
   }
+}
 
+export async function buildReference(directory: string): Promise<void> {
+  const output = path.resolve(directory)
+  createOutput(output)
   const database = path.join(output, 'wotlk.sqlite')
   let stage = 'acquire and verify inputs'
   const started = Date.now()
@@ -69,43 +62,14 @@ export async function buildReference(directory: string): Promise<void> {
   try {
     const sources = await run(stage, () => acquireSources(path.join(output, 'inputs')))
 
-    await run('offsets', () => initReference(database))
-    await run('codex', async () =>
-      importCodex(database, sources.codex, await readCodex(sources.codex, sources.codexNodeImage))
-    )
-    await run('client data', () =>
-      importClientData(database, sources.client, sources.clientManifestHash, sources.wowdbdefs)
-    )
-    await run('interface', () =>
-      importInterface(database, sources.client, sources.clientManifestHash)
-    )
-    await run('world', () =>
-      importWorld(
-        database,
-        sources.azerothcore,
-        sources.worldImporterImage,
-        path.join(output, 'world')
-      )
-    )
-    await run('native', () =>
-      importNative(
-        database,
-        sources.client,
-        sources.clientManifestHash,
-        'data/native-widget-decisions.json'
-      )
-    )
-    await run('world links', () => buildWorldLinks(database))
-    await run('loot links', () => buildLootLinks(database))
-    await run('client and spawn links', () => buildClientFactionSpawnLinks(database))
-    await run('world enums', () => importWorldEnums(database, sources.azerothcore.directory))
-    await run('spell enums and foreign keys', () =>
-      importSpellEnums(database, sources.azerothcore.directory)
-    )
-    await run('fidelity report', () => writeFidelity(database, path.join(output, 'fidelity.json')))
-    await run('provenance and notices', () =>
+    await runImportStages(run, database, output, sources)
+    await runLinkStages(run, database, sources.azerothcore.directory)
+    await run('fidelity report', () => {
+      writeFidelity(database, path.join(output, 'fidelity.json'))
+    })
+    await run('provenance and notices', () => {
       writeProvenance(database, path.join(output, 'NOTICE.md'), sources)
-    )
+    })
     await run('compressed reference', () => writeReferenceArtifact(output, timings, started))
     await run('server and SQL worker', () => execFileSync('vp', ['pack'], { stdio: 'inherit' }))
   } catch (error) {
@@ -121,14 +85,16 @@ export async function buildReference(directory: string): Promise<void> {
   )
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {
   try {
     const args = process.argv.slice(2)
 
-    if (args.length === 1 && args[0] === '--help') console.log(usage)
-    else {
-      if (args.length > 1 || args.some((argument) => argument.startsWith('-')))
+    if (args.length === 1 && args[0] === '--help') {
+      console.log(usage)
+    } else {
+      if (args.length > 1 || args.some((argument) => argument.startsWith('-'))) {
         throw new Error(`Invalid build arguments.\n${usage}`)
+      }
 
       await buildReference(args[0] ?? 'output')
     }
@@ -136,3 +102,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error(error)
     process.exitCode ??= 1
   }
+}

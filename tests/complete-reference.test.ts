@@ -21,30 +21,33 @@ test('complete reference builder refuses an existing output without altering it'
     expect(result.stderr).toContain(`Output already exists: ${output}. Nothing was changed.`)
     expect(readFileSync(marker, 'utf8')).toBe('keep')
   } finally {
-    rmSync(output, { recursive: true, force: true })
+    rmSync(output, { force: true, recursive: true })
   }
 })
 
 test.each([
-  { name: 'help', args: ['--help'], success: true },
-  { name: 'unknown options', args: ['--unknown'], success: false },
-  { name: 'extra positional arguments', args: ['one', 'two'], success: false }
-])('build CLI handles $name before side effects', ({ args, success }) => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'build-cli-'))
+  { args: ['--help'], name: 'help', success: true },
+  { args: ['--unknown'], name: 'unknown options', success: false },
+  { args: ['one', 'two'], name: 'extra positional arguments', success: false }
+])(
+  'build CLI handles $name before side effects',
+  ({ args, success }: { readonly args: readonly string[]; readonly success: boolean }) => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'build-cli-'))
 
-  try {
-    const result = spawnSync(process.execPath, [path.resolve('build/main.ts'), ...args], {
-      cwd: directory,
-      encoding: 'utf8',
-      env: { ...process.env, PATH: '' }
-    })
+    try {
+      const result = spawnSync(process.execPath, [path.resolve('build/main.ts'), ...args], {
+        cwd: directory,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: '' }
+      })
 
-    expect(result.status === 0).toBe(success)
-    expect(`${result.stdout}${result.stderr}`).toContain(
-      'Usage: vp run build [new-output-directory]'
-    )
-    expect(readdirSync(directory)).toEqual([])
-  } finally {
-    rmSync(directory, { recursive: true, force: true })
+      expect(result.status === 0).toBe(success)
+      expect(`${result.stdout}${result.stderr}`).toContain(
+        'Usage: vp run build [new-output-directory]'
+      )
+      expect(readdirSync(directory)).toEqual([])
+    } finally {
+      rmSync(directory, { force: true, recursive: true })
+    }
   }
-})
+)

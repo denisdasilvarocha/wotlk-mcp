@@ -54,6 +54,14 @@ test('spell mappings validate fields and materialize named references without ch
     db.close()
 
     const headerNames: Record<string, string[]> = {
+      'src/server/game/Spells/Auras/SpellAuraDefines.h': ['AuraType'],
+      'src/server/game/Spells/SpellDefines.h': [
+        'SpellInterruptFlags',
+        'SpellAuraInterruptFlags',
+        'SpellChannelInterruptFlags'
+      ],
+      'src/server/game/Spells/SpellInfo.h': ['SpellCastTargetFlags'],
+      'src/server/game/Spells/SpellMgr.h': ['ProcFlags'],
       'src/server/shared/SharedDefines.h': [
         'SpellSchools',
         'SpellSchoolMask',
@@ -62,15 +70,7 @@ test('spell mappings validate fields and materialize named references without ch
         'Powers',
         'CreatureType',
         ...Array.from({ length: 8 }, (_, i) => `SpellAttr${i}`)
-      ],
-      'src/server/game/Spells/Auras/SpellAuraDefines.h': ['AuraType'],
-      'src/server/game/Spells/SpellDefines.h': [
-        'SpellInterruptFlags',
-        'SpellAuraInterruptFlags',
-        'SpellChannelInterruptFlags'
-      ],
-      'src/server/game/Spells/SpellInfo.h': ['SpellCastTargetFlags'],
-      'src/server/game/Spells/SpellMgr.h': ['ProcFlags']
+      ]
     }
 
     for (const [file, names] of Object.entries(headerNames)) {
@@ -96,10 +96,10 @@ test('spell mappings validate fields and materialize named references without ch
       output
         .prepare("SELECT value, name FROM enum_value WHERE enum_name = 'reference.dbc_Category.ID'")
         .all()
-    ).toEqual([{ value: 4, name: 'Example category' }])
+    ).toEqual([{ name: 'Example category', value: 4 }])
     expect(
       output.prepare('SELECT Effect_1, Effect_2, Effect_3, Category FROM dbc_Spell').get()
-    ).toMatchObject({ Effect_1: 1, Effect_2: 2, Effect_3: 9999, Category: 4 })
+    ).toMatchObject({ Category: 4, Effect_1: 1, Effect_2: 2, Effect_3: 9999 })
     expect(
       output
         .prepare(
@@ -130,7 +130,7 @@ test('spell mappings validate fields and materialize named references without ch
 
     try {
       const get = JSON.stringify(
-        await client.callTool({ name: 'get', arguments: { ids: ['spell:1'] } })
+        await client.callTool({ arguments: { ids: ['spell:1'] }, name: 'get' })
       )
 
       for (const expected of [
@@ -158,15 +158,16 @@ test('spell mappings validate fields and materialize named references without ch
         'PowerType: -1',
         'Category: 4 (Example category)',
         'Missing: 7'
-      ])
+      ]) {
         expect(get).toContain(expected)
+      }
 
       const sql = JSON.stringify(
         await client.callTool({
-          name: 'sql',
           arguments: {
             query: 'SELECT Effect_1, Effect_2, Effect_3, Attributes, Category FROM dbc_Spell'
-          }
+          },
+          name: 'sql'
         })
       )
 
@@ -183,9 +184,9 @@ test('spell mappings validate fields and materialize named references without ch
     const fields = invalid.prepare('SELECT * FROM enum_field ORDER BY source_table, field').all()
 
     invalid.close()
-    expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
-      'Missing mapped column dbc_Spell.Effect_3'
-    )
+    expect(() => {
+      importSpellEnums(database, path.join(dir, root))
+    }).toThrow('Missing mapped column dbc_Spell.Effect_3')
 
     const unchanged = new DatabaseSync(database, { readOnly: true })
 
@@ -208,9 +209,9 @@ test('spell mappings validate fields and materialize named references without ch
       shared,
       readFileSync(shared, 'utf8').replace('enum SpellEffects', 'enum RemovedSpellEffects')
     )
-    expect(() => importSpellEnums(database, path.join(dir, root))).toThrow(
-      'Missing pinned enum SpellEffects'
-    )
+    expect(() => {
+      importSpellEnums(database, path.join(dir, root))
+    }).toThrow('Missing pinned enum SpellEffects')
 
     const afterMissingEnum = new DatabaseSync(database, { readOnly: true })
 
@@ -222,6 +223,6 @@ test('spell mappings validate fields and materialize named references without ch
     ).toEqual(fields)
     afterMissingEnum.close()
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

@@ -10,9 +10,29 @@ import { expect, test } from 'vite-plus/test'
 import { initReference } from '../build/offsets.ts'
 import { packPackage } from './package.ts'
 
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+function readVersion(file: string): string {
+  const value: unknown = JSON.parse(readFileSync(file, 'utf8'))
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('version' in value) ||
+    typeof value.version !== 'string'
+  ) {
+    throw new Error(`Invalid package version: ${file}`)
+  }
+  return value.version
+}
 
-function run(command: string, args: string[], cwd?: string): void {
+const version = readVersion('package.json')
+
+function serverCommand(): { command: string; args: string[] } {
+  if (process.platform === 'win32') {
+    return { args: ['/d', '/s', '/c', `npx -y wotlk-mcp@${version}`], command: 'cmd' }
+  }
+  return { args: ['-y', `wotlk-mcp@${version}`], command: 'npx' }
+}
+
+function run(command: string, args: readonly string[], cwd?: string): void {
   if (process.platform === 'win32') {
     const result = spawnSync(
       'cmd',
@@ -25,9 +45,15 @@ function run(command: string, args: string[], cwd?: string): void {
       }
     )
 
-    if (result.error) throw result.error
-    if (result.status !== 0) throw new Error(result.stderr)
-  } else execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
+    if (result.error) {
+      throw result.error
+    }
+    if (result.status !== 0) {
+      throw new Error(result.stderr)
+    }
+  } else {
+    execFileSync(command, args, { cwd, stdio: 'pipe', timeout: 120_000 })
+  }
 }
 
 test('a clean installed tarball exposes an executable MCP server without a bundled database', async () => {
@@ -40,46 +66,37 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     initReference(database)
 
     const archive = packPackage(directory)
-    let command = 'npx'
+    const { args, command } = serverCommand()
     const files = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' })
 
-    expect(files).not.toMatch(/\.sqlite(?:\.br)?$/m)
+    expect(files).not.toMatch(/\.sqlite(?:\.br)?$/mu)
     expect(files).not.toContain('src/')
     writeFileSync(
       path.join(directory, 'package.json'),
       JSON.stringify({
+        dependencies: { 'wotlk-mcp': `file:${archive}` },
         name: 'clean-install',
-        private: true,
-        dependencies: { 'wotlk-mcp': `file:${archive}` }
+        private: true
       })
     )
     run('vp', ['install'], directory)
 
-    const installed = JSON.parse(
-      readFileSync(path.join(directory, 'node_modules/wotlk-mcp/package.json'), 'utf8')
-    )
+    const installed = readVersion(path.join(directory, 'node_modules/wotlk-mcp/package.json'))
 
-    expect(installed.version).toBe(version)
-
-    let args = ['-y', `wotlk-mcp@${version}`]
-
-    if (process.platform === 'win32') {
-      command = 'cmd'
-      args = ['/d', '/s', '/c', `npx -y wotlk-mcp@${version}`]
-    }
+    expect(installed).toBe(version)
 
     await client.connect(
       new StdioClientTransport({
-        command,
         args,
+        command,
         cwd: directory,
         env: { ...process.env, WOTLK_MCP_DB: database }
       })
     )
 
     const result = await client.callTool({
-      name: 'get',
-      arguments: { ids: ['offset:Globals::PlayerName'] }
+      arguments: { ids: ['offset:Globals::PlayerName'] },
+      name: 'get'
     })
 
     expect(JSON.stringify(result)).toContain('offset:Globals::PlayerName')
@@ -88,6 +105,6 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     expect(result.isError).not.toBe(true)
   } finally {
     await client.close()
-    rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
+    rmSync(directory, { force: true, maxRetries: 10, recursive: true, retryDelay: 250 })
   }
 }, 180_000)

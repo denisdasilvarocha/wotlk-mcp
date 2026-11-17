@@ -29,10 +29,10 @@ import { unpackPackage } from './package.ts'
 
 let authorization = ''
 let base: string
-const concurrent: ServerResponse[] = []
+const concurrent: ResponseWriter[] = []
 let data: Buffer
 const download = { finish: (): void => {} }
-const metadata = { hold: false, finish: (): void => {} }
+const metadata = { finish: (): void => {}, hold: false }
 let newerData: Buffer
 let olderData: Buffer
 let requests: string[] = []
@@ -41,124 +41,153 @@ const dir = mkdtempSync(path.join(tmpdir(), 'wotlk-acquire-'))
 const dbPath = path.join(dir, 'reference.sqlite')
 const preload = path.join(dir, 'redirect.mjs')
 
-const server = createServer((req, res) => {
-  requests.push(req.url ?? '')
-  authorization = req.headers.authorization ?? ''
+type ResponseWriter = Pick<ServerResponse, 'end' | 'setHeader' | 'write' | 'writeHead'>
+type ToolClient = Pick<Client, 'callTool' | 'close'>
 
-  if (scenario === 'offline') {
-    res.writeHead(503).end()
-    return
-  }
+const server = createServer(
+  (
+    req: {
+      readonly url?: string
+      readonly headers: { readonly authorization?: string; readonly accept?: string }
+    },
+    res: ResponseWriter
+  ) => {
+    requests.push(req.url ?? '')
+    authorization = req.headers.authorization ?? ''
 
-  if (scenario === '403' || scenario === '429') {
-    res.writeHead(Number(scenario)).end()
-    return
-  }
+    if (scenario === 'offline') {
+      res.writeHead(503).end()
+      return
+    }
 
-  if (req.url === '/releases' || req.url === '/page2') {
-    let digest: string | undefined = `sha256:${createHash('sha256').update(data).digest('hex')}`
+    if (scenario === '403' || scenario === '429') {
+      res.writeHead(Number(scenario)).end()
+      return
+    }
 
-    if (scenario === 'missing') digest = undefined
+    if (req.url === '/releases' || req.url === '/page2') {
+      let digest: string | undefined = `sha256:${createHash('sha256').update(data).digest('hex')}`
 
-    if (scenario === 'bad') digest = `sha256:${'0'.repeat(64)}`
+      if (scenario === 'missing') {
+        digest = undefined
+      }
 
-    const asset = { name: 'wotlk.sqlite.br', digest, url: `${base}/asset` }
+      if (scenario === 'bad') {
+        digest = `sha256:${'0'.repeat(64)}`
+      }
 
-    if (scenario === 'selection') {
-      const releases = [
-        {
-          tag_name: 'db-v1.9.0',
-          published_at: '2025-01-01T00:00:00Z',
-          prerelease: false,
-          draft: false,
-          assets: [
-            {
-              ...asset,
-              digest: `sha256:${createHash('sha256').update(olderData).digest('hex')}`,
-              url: `${base}/older`
-            }
-          ]
-        },
-        {
-          tag_name: 'db-v1.1.0',
-          published_at: '2025-02-01T00:00:00Z',
-          prerelease: false,
-          draft: false,
-          assets: [
-            {
-              ...asset,
-              digest: `sha256:${createHash('sha256').update(newerData).digest('hex')}`,
-              url: `${base}/newer`
-            }
-          ]
-        }
-      ]
+      const asset = { digest, name: 'wotlk.sqlite.br', url: `${base}/asset` }
+
+      if (scenario === 'selection') {
+        const releases = [
+          {
+            assets: [
+              {
+                ...asset,
+                digest: `sha256:${createHash('sha256').update(olderData).digest('hex')}`,
+                url: `${base}/older`
+              }
+            ],
+            draft: false,
+            prerelease: false,
+            published_at: '2025-01-01T00:00:00Z',
+            tag_name: 'db-v1.9.0'
+          },
+          {
+            assets: [
+              {
+                ...asset,
+                digest: `sha256:${createHash('sha256').update(newerData).digest('hex')}`,
+                url: `${base}/newer`
+              }
+            ],
+            draft: false,
+            prerelease: false,
+            published_at: '2025-02-01T00:00:00Z',
+            tag_name: 'db-v1.1.0'
+          }
+        ]
+
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify(releases))
+
+        return
+      }
 
       res.setHeader('content-type', 'application/json')
-      res.end(JSON.stringify(releases))
 
-      return
-    }
+      const releases = [
+        { assets: [], draft: false, prerelease: false, tag_name: 'v9.0.0' },
+        { assets: [asset], draft: false, prerelease: false, tag_name: 'db-v2.0.0' }
+      ]
+      let version = 'db-v1.2.0'
 
-    res.setHeader('content-type', 'application/json')
+      if (scenario === 'pagination' && req.url === '/releases') {
+        res.setHeader('link', `<${base}/page2>; rel="next"`)
+        res.end(JSON.stringify(releases))
 
-    const releases = [
-      { tag_name: 'v9.0.0', prerelease: false, draft: false, assets: [] },
-      { tag_name: 'db-v2.0.0', prerelease: false, draft: false, assets: [asset] }
-    ]
-    let version = 'db-v1.2.0'
+        return
+      }
 
-    if (scenario === 'pagination' && req.url === '/releases') {
-      res.setHeader('link', `<${base}/page2>; rel="next"`)
-      res.end(JSON.stringify(releases))
+      if (scenario === 'rollback') {
+        version = 'db-v1.1.0'
+      }
 
-      return
-    }
+      if (scenario !== 'higher') {
+        releases.push(
+          { assets: [], draft: false, prerelease: true, tag_name: 'db-v1.9.0' },
+          { assets: [asset], draft: false, prerelease: false, tag_name: version }
+        )
+      }
 
-    if (scenario === 'rollback') version = 'db-v1.1.0'
+      const body = JSON.stringify(releases)
 
-    if (scenario !== 'higher')
-      releases.push(
-        { tag_name: 'db-v1.9.0', prerelease: true, draft: false, assets: [] },
-        { tag_name: version, prerelease: false, draft: false, assets: [asset] }
-      )
-
-    const body = JSON.stringify(releases)
-
-    if (metadata.hold)
-      metadata.finish = (): void => {
-        metadata.finish = (): void => {}
+      if (metadata.hold) {
+        metadata.finish = (): void => {
+          metadata.finish = (): void => {}
+          res.end(body)
+        }
+      } else {
         res.end(body)
       }
-    else res.end(body)
-  } else {
-    // The GitHub asset API returns JSON metadata unless binary content is requested.
-    if (req.headers.accept !== 'application/octet-stream') {
-      res.writeHead(415).end()
-      return
-    }
-
-    if (scenario === 'selection') {
-      if (req.url === '/newer') res.end(newerData)
-      else res.end(olderData)
-
-      return
-    }
-
-    res.setHeader('content-length', data.length)
-
-    if (scenario === 'slow') {
-      res.write(data.subarray(0, 10))
-      download.finish = (): void => {
-        res.end(data.subarray(10))
+    } else {
+      // The GitHub asset API returns JSON metadata unless binary content is requested.
+      if (req.headers.accept !== 'application/octet-stream') {
+        res.writeHead(415).end()
+        return
       }
-    } else if (scenario === 'concurrent') {
-      concurrent.push(res)
 
-      if (concurrent.length === 2) for (const response of concurrent.splice(0)) response.end(data)
-    } else res.end(data)
+      if (scenario === 'selection') {
+        if (req.url === '/newer') {
+          res.end(newerData)
+        } else {
+          res.end(olderData)
+        }
+
+        return
+      }
+
+      res.setHeader('content-length', data.length)
+
+      if (scenario === 'slow') {
+        res.write(data.subarray(0, 10))
+        download.finish = (): void => {
+          res.end(data.subarray(10))
+        }
+      } else if (scenario === 'concurrent') {
+        concurrent.push(res)
+
+        if (concurrent.length === 2) {
+          for (const response of concurrent.splice(0)) {
+            response.end(data)
+          }
+        }
+      } else {
+        res.end(data)
+      }
+    }
   }
-})
+)
 
 beforeAll(async () => {
   initReference(dbPath)
@@ -175,15 +204,22 @@ beforeAll(async () => {
     db.prepare("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', ?)").run(name)
     db.close()
 
-    if (name === 'older') olderData = brotliCompressSync(readFileSync(file))
-    else newerData = brotliCompressSync(readFileSync(file))
+    if (name === 'older') {
+      olderData = brotliCompressSync(readFileSync(file))
+    } else {
+      newerData = brotliCompressSync(readFileSync(file))
+    }
   }
 
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+  await new Promise<void>((resolve) => {
+    server.listen(0, '127.0.0.1', resolve)
+  })
 
   const address = server.address()
 
-  if (!address || typeof address === 'string') throw new Error('missing server address')
+  if (address === null || typeof address === 'string') {
+    throw new Error('missing server address')
+  }
 
   base = `http://127.0.0.1:${address.port}`
   writeFileSync(
@@ -194,30 +230,41 @@ beforeAll(async () => {
 
 afterAll(() => {
   server.close()
-  rmSync(dir, { recursive: true, force: true })
+  rmSync(dir, { force: true, recursive: true })
 })
 
-async function launch(extra: Record<string, string> = {}, homeCache = false): Promise<Client> {
+async function launch(
+  extra: Readonly<Record<string, string>> = {},
+  homeCache = false
+): Promise<Client> {
   const cache = mkdtempSync(path.join(dir, 'cache-'))
   const client = new Client({ name: 'acquisition-test', version: '1' })
   const env: Record<string, string> = {
-    ...Object.fromEntries(Object.entries(process.env).filter((entry) => entry[1] !== undefined)),
+    ...Object.fromEntries(
+      Object.entries(process.env).filter(
+        (entry: readonly [string, string | undefined]) => entry[1] !== undefined
+      )
+    ),
     HOME: cache,
-    XDG_CACHE_HOME: cache,
     LOCALAPPDATA: cache,
     NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
     TEST_RELEASES: `${base}/releases`,
+    XDG_CACHE_HOME: cache,
     ...extra
   }
 
-  if (homeCache) delete env.XDG_CACHE_HOME
+  if (homeCache) {
+    delete env.XDG_CACHE_HOME
+  }
   delete env.WOTLK_MCP_DB
 
-  if (extra.WOTLK_MCP_DB) env.WOTLK_MCP_DB = extra.WOTLK_MCP_DB
+  if (extra.WOTLK_MCP_DB) {
+    env.WOTLK_MCP_DB = extra.WOTLK_MCP_DB
+  }
   await client.connect(
     new StdioClientTransport({
-      command: process.execPath,
       args: [path.join(dir, 'package/dist/index.mjs')],
+      command: process.execPath,
       env
     })
   )
@@ -225,33 +272,34 @@ async function launch(extra: Record<string, string> = {}, homeCache = false): Pr
   return client
 }
 
-function call(client: Client): ReturnType<Client['callTool']> {
-  return client.callTool({ name: 'get', arguments: { ids: ['offset:Globals::PlayerName'] } })
+function call(client: ToolClient): ReturnType<Client['callTool']> {
+  return client.callTool({ arguments: { ids: ['offset:Globals::PlayerName'] }, name: 'get' })
 }
 
-async function marker(client: Client): Promise<string> {
+async function marker(client: ToolClient): Promise<string> {
   return JSON.stringify(
     await client.callTool({
-      name: 'sql',
-      arguments: { query: "SELECT value FROM meta WHERE key = 'lifecycle_marker'" }
+      arguments: { query: "SELECT value FROM meta WHERE key = 'lifecycle_marker'" },
+      name: 'sql'
     })
   )
 }
 
 function cacheDirectory(cache: string): string {
-  if (process.platform === 'darwin')
+  if (process.platform === 'darwin') {
     return path.join(cache, 'Library', 'Caches', 'wotlk-mcp', 'schema-1')
+  }
 
   return path.join(cache, 'wotlk-mcp', 'schema-1')
 }
 
-function cacheStates(directory: string): {
+function cacheStates(directory: string): readonly Readonly<{
   name: string
   file: string
   version: string
   lastCheck: number
   warningMajor?: number
-}[] {
+}>[] {
   return readdirSync(directory)
     .filter((name) => name.startsWith('state-'))
     .toSorted()
@@ -259,17 +307,17 @@ function cacheStates(directory: string): {
       const state = z
         .object({
           file: z.string(),
-          version: z.string(),
           lastCheck: z.number(),
+          version: z.string(),
           warningMajor: z.number().optional()
         })
         .parse(JSON.parse(readFileSync(path.join(directory, name), 'utf8')))
 
       return {
-        name,
         file: state.file,
-        version: state.version,
         lastCheck: state.lastCheck,
+        name,
+        version: state.version,
         warningMajor: state.warningMajor
       }
     })
@@ -280,11 +328,66 @@ async function waitUntil(
   message: string,
   remaining = 500
 ): Promise<void> {
-  if (await check()) return
-  if (!remaining) throw new Error(message)
+  if (await check()) {
+    return
+  }
+  if (!remaining) {
+    throw new Error(message)
+  }
 
   await delay(10)
   await waitUntil(check, message, remaining - 1)
+}
+
+function required<T>(value: T | undefined, message: string): T {
+  if (value === undefined || value === '') {
+    throw new Error(message)
+  }
+  return value
+}
+
+function prepareInvalidData(mode: string): void {
+  if (mode === 'broken') {
+    data = Buffer.from('not brotli')
+  }
+  if (mode === 'schema') {
+    const newer = path.join(dir, 'schema-invalid.sqlite')
+    const db = new DatabaseSync(newer)
+
+    db.exec(
+      "CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '2.0.0')"
+    )
+    db.close()
+    data = brotliCompressSync(readFileSync(newer))
+  }
+}
+
+async function waitForGuidance(client: ToolClient, first: string): Promise<string[]> {
+  const results = [first]
+  if (!first.includes('note: newer reference data')) {
+    await waitUntil(async () => {
+      results.push(JSON.stringify(await call(client)))
+      return (
+        results
+          .at(-1)
+          ?.includes('note: newer reference data needs wotlk-mcp@2; update your config') ?? false
+      )
+    }, 'missing update guidance')
+  }
+  return results
+}
+
+function hasPartial(directory: string): boolean {
+  return (
+    existsSync(directory) && readdirSync(directory).some((name) => name.endsWith('.br.partial'))
+  )
+}
+
+function checkedAt(directory: string, clock: number): boolean {
+  return (
+    requests.includes('/releases') &&
+    cacheStates(directory).some((entry) => entry.lastCheck === clock)
+  )
 }
 
 test('acquires the newest compatible published reference and uses optional token', async () => {
@@ -294,7 +397,9 @@ test('acquires the newest compatible published reference and uses optional token
   const client = await launch({ GITHUB_TOKEN: 'example-token' })
 
   try {
-    expect((await client.listTools()).tools.map((tool) => tool.name)).toContain('get')
+    expect(
+      (await client.listTools()).tools.map((tool: Readonly<{ name: string }>) => tool.name)
+    ).toContain('get')
     expect(await marker(client)).toContain('newer')
     expect(requests).toEqual(['/releases', '/newer'])
     expect(authorization).toBe('Bearer example-token')
@@ -319,7 +424,9 @@ test('retries a failed acquisition in the same session and shares the new attemp
 
     const results = await Promise.all([call(client), call(client)])
 
-    expect(results.every((result) => !result.isError)).toBe(true)
+    expect(results.every((result: { readonly isError?: boolean }) => result.isError !== true)).toBe(
+      true
+    )
     expect((await call(client)).isError).not.toBe(true)
     expect(requests).toEqual(['/releases', '/asset'])
   } finally {
@@ -328,7 +435,7 @@ test('retries a failed acquisition in the same session and shares the new attemp
 })
 test('a failed session recovers offline after another process populates the cache', async () => {
   const cache = mkdtempSync(path.join(dir, 'recovered-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
 
   scenario = 'offline'
 
@@ -356,7 +463,7 @@ test('a failed session recovers offline after another process populates the cach
 })
 test('fresh acquisition follows release pages and persists once-per-session major guidance', async () => {
   const cache = mkdtempSync(path.join(dir, 'paginated-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
 
   scenario = 'pagination'
   requests = []
@@ -421,18 +528,20 @@ test.skipIf(process.platform !== 'linux')(
 
 test('shared cache survives concurrent first downloads and offline restarts', async () => {
   const cache = mkdtempSync(path.join(dir, 'shared-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
 
   scenario = 'concurrent'
 
   const clients = await Promise.all([launch(env), launch(env)])
 
   try {
-    const results = await Promise.all(clients.map(call))
+    const results = await Promise.all(clients.map((client: ToolClient) => call(client)))
 
-    expect(results.every((result) => !result.isError)).toBe(true)
+    expect(results.every((result: { readonly isError?: boolean }) => result.isError !== true)).toBe(
+      true
+    )
   } finally {
-    await Promise.all(clients.map((client) => client.close()))
+    await Promise.all(clients.map((client: ToolClient) => client.close()))
   }
 
   scenario = 'offline'
@@ -457,7 +566,7 @@ test('shared cache survives concurrent first downloads and offline restarts', as
 
 test('another process pruning old copies preserves a live session snapshot', async () => {
   const cache = mkdtempSync(path.join(dir, 'active-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
   const directory = cacheDirectory(cache)
 
   scenario = 'good'
@@ -468,10 +577,11 @@ test('another process pruning old copies preserves a live session snapshot', asy
     expect((await call(active)).isError).not.toBe(true)
 
     const names = readdirSync(directory)
-    const snapshot = names.find((name) => name.startsWith('session-'))
-    const state = cacheStates(directory).at(-1)
-
-    if (!snapshot || !state) throw new Error('missing active snapshot or state')
+    const snapshot = required(
+      names.find((name) => name.startsWith('session-')),
+      'missing active snapshot'
+    )
+    const state = required(cacheStates(directory).at(-1), 'missing active state')
 
     for (const suffix of [
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -508,7 +618,7 @@ test.skipIf(process.platform !== 'win32')(
   'Windows sharing violations do not prevent offline startup',
   async () => {
     const cache = mkdtempSync(path.join(dir, 'locked-'))
-    const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+    const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
 
     scenario = 'good'
 
@@ -538,7 +648,7 @@ test.skipIf(process.platform !== 'win32')(
     )
 
     try {
-      const [ready] = await once(holder.stdout, 'data')
+      const ready: unknown = (await once(holder.stdout, 'data'))[0]
 
       expect(String(ready)).toContain('ready')
       scenario = 'offline'
@@ -569,22 +679,19 @@ test.skipIf(process.platform !== 'win32')(
 
 test('an interrupted download leaves no usable partial and a later start recovers', async () => {
   const cache = mkdtempSync(path.join(dir, 'interrupted-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
   const directory = cacheDirectory(cache)
 
   scenario = 'slow'
 
   const client = await launch(env)
 
-  await waitUntil(
-    () =>
-      existsSync(directory) && readdirSync(directory).some((name) => name.endsWith('.br.partial')),
-    'download partial was not created'
+  await waitUntil(() => hasPartial(directory), 'download partial was not created')
+
+  const partial = required(
+    readdirSync(directory).find((name) => name.endsWith('.br.partial')),
+    'download partial disappeared'
   )
-
-  const partial = readdirSync(directory).find((name) => name.endsWith('.br.partial'))
-
-  if (!partial) throw new Error('download partial disappeared')
 
   await client.close()
   download.finish()
@@ -609,18 +716,7 @@ test.each(['bad', 'missing', 'offline', 'broken', 'schema'])(
 
     const original = data
 
-    if (mode === 'broken') data = Buffer.from('not brotli')
-
-    if (mode === 'schema') {
-      const newer = path.join(dir, 'schema-invalid.sqlite')
-      const db = new DatabaseSync(newer)
-
-      db.exec(
-        "CREATE TABLE meta (key TEXT, value TEXT); INSERT INTO meta VALUES ('schema_version', '2.0.0')"
-      )
-      db.close()
-      data = brotliCompressSync(readFileSync(newer))
-    }
+    prepareInvalidData(mode)
 
     const client = await launch()
 
@@ -652,7 +748,7 @@ test('higher-major-only releases name the required package major', async () => {
 
 test('cached higher-major guidance reaches one result without blocking the session', async () => {
   const cache = mkdtempSync(path.join(dir, 'update-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
 
   scenario = 'good'
 
@@ -662,9 +758,7 @@ test('cached higher-major guidance reaches one result without blocking the sessi
   await initial.close()
 
   const directory = cacheDirectory(cache)
-  const old = cacheStates(directory).at(-1)
-
-  if (!old) throw new Error('missing cache state')
+  const old = required(cacheStates(directory).at(-1), 'missing cache state')
 
   writeFileSync(path.join(directory, old.name), JSON.stringify({ ...old, lastCheck: 0 }))
   requests = []
@@ -678,21 +772,12 @@ test('cached higher-major guidance reaches one result without blocking the sessi
 
     expect(first.isError).not.toBe(true)
 
-    const results = [JSON.stringify(first)]
+    const firstResult = JSON.stringify(first)
 
     await waitUntil(() => requests.includes('/releases'), 'update request did not start')
     metadata.finish()
 
-    if (!results[0].includes('note: newer reference data'))
-      await waitUntil(async () => {
-        results.push(JSON.stringify(await call(cached)))
-
-        return (
-          results
-            .at(-1)
-            ?.includes('note: newer reference data needs wotlk-mcp@2; update your config') ?? false
-        )
-      }, 'missing update guidance')
+    const results = await waitForGuidance(cached, firstResult)
 
     expect(requests).toContain('/releases')
     results.push(JSON.stringify(await call(cached)))
@@ -725,7 +810,7 @@ test('cached higher-major guidance reaches one result without blocking the sessi
 
 test('a published rollback is activated at the next process start', async () => {
   const cache = mkdtempSync(path.join(dir, 'rollback-'))
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
   const original = data
   const replacement = path.join(dir, 'rollback.sqlite')
 
@@ -744,9 +829,7 @@ test('a published rollback is activated at the next process start', async () => 
   await first.close()
 
   const directory = cacheDirectory(cache)
-  const state = cacheStates(directory).at(-1)
-
-  if (!state) throw new Error('missing initial cache state')
+  const state = required(cacheStates(directory).at(-1), 'missing initial cache state')
 
   writeFileSync(path.join(directory, state.name), JSON.stringify({ ...state, lastCheck: 0 }))
   data = brotliCompressSync(readFileSync(replacement))
@@ -772,9 +855,7 @@ test('a published rollback is activated at the next process start', async () => 
       await next.close()
     }
 
-    const current = cacheStates(directory).at(-1)
-
-    if (!current) throw new Error('missing promoted cache state')
+    const current = required(cacheStates(directory).at(-1), 'missing promoted cache state')
 
     const clock = 2_000_000_000_000
 
@@ -784,12 +865,7 @@ test('a published rollback is activated at the next process start', async () => 
     const checker = await launch({ ...env, TEST_NOW: String(clock) })
 
     expect(await marker(checker)).toContain('rollback')
-    await waitUntil(
-      () =>
-        requests.includes('/releases') &&
-        cacheStates(directory).some((entry) => entry.lastCheck === clock),
-      'failed check was not saved'
-    )
+    await waitUntil(() => checkedAt(directory, clock), 'failed check was not saved')
     expect(requests).toEqual(['/releases'])
     await checker.close()
 
@@ -822,7 +898,7 @@ test('a published rollback is activated at the next process start', async () => 
 test('failed checks persist the full 24-hour attempt window', async () => {
   const cache = mkdtempSync(path.join(dir, 'clock-'))
   const day = 24 * 60 * 60 * 1000
-  const env = { HOME: cache, XDG_CACHE_HOME: cache, LOCALAPPDATA: cache }
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
   const start = 2_000_000_000_000
 
   scenario = 'good'
@@ -849,15 +925,14 @@ test('failed checks persist the full 24-hour attempt window', async () => {
     launch({ ...env, TEST_NOW: String(start + day) })
   ])
 
-  expect((await Promise.all(boundaries.map(call))).every((result) => !result.isError)).toBe(true)
-  await waitUntil(
-    () =>
-      requests.includes('/releases') &&
-      cacheStates(directory).some((entry) => entry.lastCheck === start + day),
-    'update check did not finish'
-  )
+  expect(
+    (await Promise.all(boundaries.map((client: ToolClient) => call(client)))).every(
+      (result: { readonly isError?: boolean }) => result.isError !== true
+    )
+  ).toBe(true)
+  await waitUntil(() => checkedAt(directory, start + day), 'update check did not finish')
   expect(requests).toEqual(['/releases'])
-  await Promise.all(boundaries.map((client) => client.close()))
+  await Promise.all(boundaries.map((client: ToolClient) => client.close()))
   requests = []
   scenario = '429'
 
@@ -871,12 +946,7 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   const retry = await launch({ ...env, TEST_NOW: String(start + 2 * day) })
 
   expect((await call(retry)).isError).not.toBe(true)
-  await waitUntil(
-    () =>
-      requests.includes('/releases') &&
-      cacheStates(directory).some((entry) => entry.lastCheck === start + 2 * day),
-    'retry check did not finish'
-  )
+  await waitUntil(() => checkedAt(directory, start + 2 * day), 'retry check did not finish')
   expect(requests).toEqual(['/releases'])
   await retry.close()
 }, 20000)
@@ -908,7 +978,7 @@ test('discovery stays available and a slow download continues after the bounded 
     const result = await call(client)
 
     expect(result.isError).toBe(true)
-    expect(JSON.stringify(result)).toMatch(/downloading.*10.*retry/i)
+    expect(JSON.stringify(result)).toMatch(/downloading.*10.*retry/iu)
     download.finish()
     expect((await call(client)).isError).not.toBe(true)
   } finally {

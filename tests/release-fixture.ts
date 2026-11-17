@@ -39,7 +39,9 @@ export function createReleaseFixture(database: string): void {
   for (const [relation] of relations) {
     let target = 'item:1'
 
-    if (relation === 'implemented by') target = 'offset:1'
+    if (relation === 'implemented by') {
+      target = 'offset:1'
+    }
     link.run('fn:1', relation, target, '')
   }
 

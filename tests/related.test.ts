@@ -27,7 +27,7 @@ const pairs = [
   ['faction', 'faction of'],
   ['spawns in', 'spawns'],
   ['implemented by', 'implements']
-]
+] as const
 
 beforeAll(async () => {
   initReference(database)
@@ -42,8 +42,9 @@ beforeAll(async () => {
       ('item:10', 'item', 'Other', 'world_evidence', 1, '', ''),
       ('quest:1', 'quest', 'Quest', 'world_evidence', 1, '', '');`)
 
-  for (const row of db.prepare('SELECT chance FROM world_evidence').all())
+  for (const row of db.prepare('SELECT chance FROM world_evidence').all()) {
     addLink(db, 'creature:1', 'drops', 'item:2', String(row.chance))
+  }
 
   addLink(db, 'creature:1', 'drops', 'item:10')
   addLink(db, 'creature:1', 'starts', 'quest:1')
@@ -66,17 +67,19 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await client.close()
-  rmSync(directory, { recursive: true, force: true })
+  rmSync(directory, { force: true, recursive: true })
 })
 
-async function related(args: Record<string, unknown>): ReturnType<typeof client.callTool> {
-  return client.callTool({ name: 'related', arguments: args })
+function related(args: Readonly<Record<string, unknown>>): ReturnType<typeof client.callTool> {
+  return client.callTool({ arguments: args, name: 'related' })
 }
 
 test('related is discoverable with all forward and inverse names', async () => {
-  const tool = (await client.listTools()).tools.find((entry) => entry.name === 'related')
+  const tool = (await client.listTools()).tools.find(
+    (entry: { readonly name: string }) => entry.name === 'related'
+  )
 
-  expect(tool?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false })
+  expect(tool?.annotations).toMatchObject({ openWorldHint: false, readOnlyHint: true })
   expect(tool?.inputSchema.properties?.rel).toMatchObject({
     enum: pairs.flat()
   })
@@ -84,31 +87,31 @@ test('related is discoverable with all forward and inverse names', async () => {
 
 test('navigates and filters both directions with distinct sorted notes', async () => {
   expect((await related({ id: 'creature:1' })).content).toEqual([
-    { type: 'text', text: 'drops item:10\ndrops item:2 (25%; 5%)\nstarts quest:1\n1–3 of 3; end' }
+    { text: 'drops item:10\ndrops item:2 (25%; 5%)\nstarts quest:1\n1–3 of 3; end', type: 'text' }
   ])
   expect((await related({ id: 'item:2' })).content).toEqual([
     {
-      type: 'text',
-      text: 'dropped by creature:1 (25%; 5%)\nrewarded by quest:1 (choice)\n1–2 of 2; end'
+      text: 'dropped by creature:1 (25%; 5%)\nrewarded by quest:1 (choice)\n1–2 of 2; end',
+      type: 'text'
     }
   ])
   expect((await related({ id: 'item:2', rel: 'dropped by' })).content).toEqual([
-    { type: 'text', text: 'dropped by creature:1 (25%; 5%)\n1–1 of 1; end' }
+    { text: 'dropped by creature:1 (25%; 5%)\n1–1 of 1; end', type: 'text' }
   ])
   expect((await related({ id: 'item:2', rel: 'drops' })).content).toEqual([
-    { type: 'text', text: '0–0 of 0; end' }
+    { text: '0–0 of 0; end', type: 'text' }
   ])
   expect((await related({ id: 'offset:missing' })).content).toEqual([
-    { type: 'text', text: '0–0 of 0; end' }
+    { text: '0–0 of 0; end', type: 'text' }
   ])
 })
 
 test('paginates the sorted neighborhood including offsets past its end', async () => {
   expect((await related({ id: 'creature:1', limit: 1, offset: 1 })).content).toEqual([
-    { type: 'text', text: 'drops item:2 (25%; 5%)\n2–2 of 3; next offset: 2' }
+    { text: 'drops item:2 (25%; 5%)\n2–2 of 3; next offset: 2', type: 'text' }
   ])
   expect((await related({ id: 'creature:1', offset: 20 })).content).toEqual([
-    { type: 'text', text: '0–0 of 3; end' }
+    { text: '0–0 of 3; end', type: 'text' }
   ])
 })
 
@@ -124,8 +127,18 @@ test('rejects malformed IDs, relation names, bounds and unknown properties', asy
       { id: 'item:1', limit: 1.5 },
       { id: 'item:1', offset: -1 },
       { id: 'item:1', offset: 1.5 },
-      { id: 'item:1', extra: true }
-    ].map(related)
+      { extra: true, id: 'item:1' }
+    ].map(
+      (
+        args: Readonly<{
+          id: string | number
+          rel?: string
+          limit?: number
+          offset?: number
+          extra?: boolean
+        }>
+      ) => related(args)
+    )
   )
 
   for (const result of results) {
@@ -138,10 +151,10 @@ test('every relation and inverse filters the correct endpoint', async () => {
   await Promise.all(
     pairs.map(async ([forward, inverse], index) => {
       expect((await related({ id: `item:source${index}`, rel: forward })).content).toEqual([
-        { type: 'text', text: `${forward} item:destination${index}\n1–1 of 1; end` }
+        { text: `${forward} item:destination${index}\n1–1 of 1; end`, type: 'text' }
       ])
       expect((await related({ id: `item:destination${index}`, rel: inverse })).content).toEqual([
-        { type: 'text', text: `${inverse} item:source${index}\n1–1 of 1; end` }
+        { text: `${inverse} item:source${index}\n1–1 of 1; end`, type: 'text' }
       ])
     })
   )

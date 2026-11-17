@@ -11,25 +11,35 @@ import type { Sources } from '../build/sources.ts'
 import { schema } from '../src/schema.ts'
 
 function fixtureSources(directory: string): Sources {
-  const archive = { directory, archive: '', revision: '', sha256: '' }
+  const archive = { archive: '', directory, revision: '', sha256: '' }
 
   writeFileSync(path.join(directory, 'LICENSE.md'), 'Fixture definitions licence')
   writeFileSync(path.join(directory, 'LICENSE'), 'Fixture world licence')
   writeFileSync(path.join(directory, 'AUTHORS'), 'Fixture world authors')
 
   return {
+    azerothcore: archive,
     client: '',
     clientManifestHash: digest(readFileSync('data/client-inputs/manifest.json')),
-    wowdbdefs: archive,
-    azerothcore: archive,
+    codex: { directory, files: {}, revision: '', sha256: '' },
+    codexNodeImage: '',
     worldImporterImage: '',
-    codex: { directory, revision: '', files: {}, sha256: '' },
-    codexNodeImage: ''
+    wowdbdefs: archive
   }
 }
 
-function digest(value: string | Buffer): string {
-  return createHash('sha256').update(value).digest('hex')
+function digest(value: string | ArrayLike<number>): string {
+  return createHash('sha256')
+    .update(typeof value === 'string' ? value : Buffer.from(value))
+    .digest('hex')
+}
+
+function metadata(result: Readonly<Pick<DatabaseSync, 'prepare'>>): Record<string, unknown> {
+  const values: Record<string, unknown> = {}
+  for (const row of result.prepare('SELECT key, value FROM meta').all()) {
+    values[String(row.key)] = row.value
+  }
+  return values
 }
 
 test('final provenance hashes typed logical tables and emits notices from the embedded manifest', () => {
@@ -79,31 +89,18 @@ test('final provenance hashes typed logical tables and emits notices from the em
 
     const inputs = fixtureSources(dir)
 
-    function run(): void {
-      writeProvenance(database, notice, inputs)
-    }
-
-    run()
+    writeProvenance(database, notice, inputs)
 
     const result = new DatabaseSync(database)
 
-    function meta(): Record<string, unknown> {
-      return Object.fromEntries(
-        result
-          .prepare('SELECT key, value FROM meta')
-          .all()
-          .map((row) => [row.key, row.value])
-      )
-    }
-
-    const initial = meta()
+    const initial = metadata(result)
 
     expect(initial['hash.sample']).toBe('original-export-proof')
     expect(initial['count.sample']).toBe('original-count')
     expect(initial['canonical_count.sample']).toBe('1')
     expect(initial['canonical_hash.sample']).toBe(digest('v14:wotlk-table-v1c5:valueri2:42'))
     expect(initial['canonical_count.typed']).toBe('5')
-    expect(initial['canonical_hash.source']).toMatch(/^[a-f0-9]{64}$/)
+    expect(initial['canonical_hash.source']).toMatch(/^[a-f0-9]{64}$/u)
     expect(initial['canonical_hash.meta']).toBeUndefined()
     expect(initial['canonical_hash.record_fts']).toBeUndefined()
     expect(initial['canonical_hash.record_fts_data']).toBeUndefined()
@@ -118,20 +115,20 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(text).toContain('client-inputs-12340-engb-1')
     expect(text).toContain('9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136')
     expect(text).toContain('aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8')
-    run()
-    expect(meta()['canonical_hash.source']).toBe(initial['canonical_hash.source'])
+    writeProvenance(database, notice, inputs)
+    expect(metadata(result)['canonical_hash.source']).toBe(initial['canonical_hash.source'])
     expect(readFileSync(notice, 'utf8')).toBe(text)
     result.exec(
       "DELETE FROM typed; INSERT INTO typed VALUES (x'3432'), ('42'), (42.5), (42), (NULL)"
     )
-    run()
-    expect(meta()['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
+    writeProvenance(database, notice, inputs)
+    expect(metadata(result)['canonical_hash.typed']).toBe(initial['canonical_hash.typed'])
     result.exec("UPDATE typed SET value = '42' WHERE typeof(value) = 'integer'")
-    run()
-    expect(meta()['canonical_hash.typed']).not.toBe(initial['canonical_hash.typed'])
+    writeProvenance(database, notice, inputs)
+    expect(metadata(result)['canonical_hash.typed']).not.toBe(initial['canonical_hash.typed'])
     result.close()
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -148,9 +145,9 @@ test('a mismatched client pin fails without altering the manifest or writing a n
       "INSERT INTO meta VALUES ('input_pins', '{}'); INSERT INTO source VALUES ('client-data', 'pin', 'hash', 'licence', 'attribution')"
     )
     db.close()
-    expect(() => writeProvenance(database, notice, fixtureSources(dir))).toThrow(
-      'Client manifest pin does not match'
-    )
+    expect(() => {
+      writeProvenance(database, notice, fixtureSources(dir))
+    }).toThrow('Client manifest pin does not match')
 
     const result = new DatabaseSync(database, { readOnly: true })
 
@@ -161,6 +158,6 @@ test('a mismatched client pin fails without altering the manifest or writing a n
     result.close()
     expect(existsSync(notice)).toBe(false)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

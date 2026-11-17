@@ -11,14 +11,7 @@ import path from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { constants, createBrotliCompress } from 'node:zlib'
 
-export async function writeReferenceArtifact(
-  output: string,
-  timings: Record<string, number>,
-  started: number,
-  previousSeconds = 0
-): Promise<void> {
-  const database = path.join(output, 'wotlk.sqlite')
-  const compressed = path.join(output, 'wotlk.sqlite.br')
+async function compressReference(database: string, compressed: string): Promise<number> {
   const temporary = `${compressed}.${randomBytes(8).toString('hex')}.tmp`
   const compressionStart = Date.now()
 
@@ -33,21 +26,40 @@ export async function writeReferenceArtifact(
     rmSync(temporary, { force: true })
   }
 
-  timings.compression = (timings.compression ?? 0) + (Date.now() - compressionStart) / 1000
+  return (Date.now() - compressionStart) / 1000
+}
 
+async function hashFile(file: string): Promise<string> {
   const hash = createHash('sha256')
+  for await (const chunk of createReadStream(file) as AsyncIterable<unknown>) {
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('Expected a Buffer from the file stream')
+    }
+    hash.update(chunk)
+  }
+  return hash.digest('hex')
+}
 
-  for await (const chunk of createReadStream(compressed)) hash.update(chunk)
+export async function writeReferenceArtifact(
+  output: string,
+  timings: Readonly<Record<string, number>>,
+  started: number,
+  previousSeconds = 0
+): Promise<void> {
+  const database = path.join(output, 'wotlk.sqlite')
+  const compressed = path.join(output, 'wotlk.sqlite.br')
+  const compression = await compressReference(database, compressed)
+  Object.assign(timings, { compression: (timings.compression ?? 0) + compression })
 
   const compressedBytes = statSync(compressed).size
   const summary = {
-    build_seconds: previousSeconds + (Date.now() - started) / 1000,
-    timings_seconds: timings,
     brotli_quality: 5,
-    uncompressed_bytes: statSync(database).size,
+    build_seconds: previousSeconds + (Date.now() - started) / 1000,
+    compressed_250_mb_gate_passed: compressedBytes <= 250_000_000,
     compressed_bytes: compressedBytes,
-    compressed_sha256: hash.digest('hex'),
-    compressed_250_mb_gate_passed: compressedBytes <= 250_000_000
+    compressed_sha256: await hashFile(compressed),
+    timings_seconds: timings,
+    uncompressed_bytes: statSync(database).size
   }
 
   writeFileSync(
@@ -55,8 +67,9 @@ export async function writeReferenceArtifact(
     `${JSON.stringify(summary, undefined, 2)}\n`
   )
 
-  if (!summary.compressed_250_mb_gate_passed)
+  if (!summary.compressed_250_mb_gate_passed) {
     console.error(
       'Compressed asset exceeds 250 MB; an explicit scope decision is required before publication.'
     )
+  }
 }

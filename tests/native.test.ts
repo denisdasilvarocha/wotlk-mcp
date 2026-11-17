@@ -27,31 +27,31 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     const db = new DatabaseSync(database)
     const registrations = [
       {
-        kind: 'global',
-        name: 'Foo',
-        va: '0x00400002',
+        call_sites: ['0x00402000'],
         context: 'game',
-        table: '0x00401000',
         index: 0,
-        call_sites: ['0x00402000']
-      },
-      {
         kind: 'global',
         name: 'Foo',
-        va: '0x00400003',
-        context: 'glue',
         table: '0x00401000',
-        index: 0,
-        call_sites: ['0x00402000']
+        va: '0x00400002'
       },
       {
+        call_sites: ['0x00402000'],
+        context: 'glue',
+        index: 0,
+        kind: 'global',
+        name: 'Foo',
+        table: '0x00401000',
+        va: '0x00400003'
+      },
+      {
+        call_sites: ['0x00402000'],
+        context: 'game',
+        index: 0,
         kind: 'method',
         name: 'SetPoint',
-        va: '0x00400004',
-        context: 'game',
         table: '0x00403000',
-        index: 0,
-        call_sites: ['0x00402000']
+        va: '0x00400004'
       }
     ]
 
@@ -64,19 +64,19 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     db.close()
 
     const dump = JSON.stringify({
-      format: 1,
       executable_sha256: 'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8',
-      image_base: '0x00400000',
       extraction: {},
+      format: 1,
+      image_base: '0x00400000',
       registrations
     })
     const manifest = JSON.stringify({
-      format: 1,
       client: {
         original_executable_sha256:
           'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
       },
-      files: [{ path: 'native-registrations.json', sha256: hash(dump) }]
+      files: [{ path: 'native-registrations.json', sha256: hash(dump) }],
+      format: 1
     })
 
     writeFileSync(path.join(dir, 'native-registrations.json'), dump)
@@ -110,14 +110,14 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     writeFileSync(
       inheritedDecision,
       JSON.stringify({
+        missing_widgets: {},
         overrides: {
           '0x00403000': {
-            widget: 'Region',
             methods_sha256: hash(JSON.stringify(['SetPoint'])),
-            reason: 'fixture type evidence'
+            reason: 'fixture type evidence',
+            widget: 'Region'
           }
-        },
-        missing_widgets: {}
+        }
       })
     )
     importNative(inheritedDatabase, dir, hash(manifest), inheritedDecision)
@@ -128,7 +128,7 @@ test('native facts retain contexts and only link verified equal curated VAs', as
       inheritedResult
         .prepare("SELECT widget,record_id FROM lua_native_registration WHERE kind='method'")
         .get()
-    ).toMatchObject({ widget: 'Region', record_id: 'method:Base:SetPoint' })
+    ).toMatchObject({ record_id: 'method:Base:SetPoint', widget: 'Region' })
     inheritedResult.close()
 
     const rawDatabase = path.join(dir, 'raw.sqlite')
@@ -145,14 +145,14 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     writeFileSync(
       rawDecision,
       JSON.stringify({
-        overrides: {},
         missing_widgets: {
           '0x00403000': {
-            widget: 'MissingWidget',
             methods_sha256: hash(JSON.stringify(['SetPoint'])),
-            reason: 'fixture type evidence'
+            reason: 'fixture type evidence',
+            widget: 'MissingWidget'
           }
-        }
+        },
+        overrides: {}
       })
     )
     importNative(rawDatabase, dir, hash(manifest), rawDecision)
@@ -171,9 +171,7 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     ).toMatchObject({ n: 0 })
     raw.close()
 
-    function command(): void {
-      importNative(database, dir, hash(manifest))
-    }
+    const command = importNative.bind(null, database, dir, hash(manifest))
 
     const update = new DatabaseSync(database)
 
@@ -197,14 +195,14 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     writeFileSync(
       override,
       JSON.stringify({
+        missing_widgets: {},
         overrides: {
           '0x00403000': {
-            widget: 'Region',
             methods_sha256: hash(JSON.stringify(['SetPoint'])),
-            reason: 'fixture establishes declaring type'
+            reason: 'fixture establishes declaring type',
+            widget: 'Region'
           }
-        },
-        missing_widgets: {}
+        }
       })
     )
     importNative(database, dir, hash(manifest), override)
@@ -218,9 +216,9 @@ test('native facts retain contexts and only link verified equal curated VAs', as
         )
         .all()
     ).toEqual([
-      { context: 'game', va: '0x00400002', record_id: 'fn:Foo' },
-      { context: 'game', va: '0x00400004', record_id: 'method:Region:SetPoint' },
-      { context: 'glue', va: '0x00400003', record_id: 'fn:Foo' }
+      { context: 'game', record_id: 'fn:Foo', va: '0x00400002' },
+      { context: 'game', record_id: 'method:Region:SetPoint', va: '0x00400004' },
+      { context: 'glue', record_id: 'fn:Foo', va: '0x00400003' }
     ])
     expect(
       result
@@ -232,14 +230,14 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     await client.connect(packagedServer(dir, database))
 
     const output = JSON.stringify(
-      await client.callTool({ name: 'get', arguments: { ids: ['fn:Foo'] } })
+      await client.callTool({ arguments: { ids: ['fn:Foo'] }, name: 'get' })
     )
 
     expect(output).toContain('0x00400002 game 0x00401000[0]')
     expect(output).toContain('0x00400003 glue 0x00401000[0]')
 
     const related = JSON.stringify(
-      await client.callTool({ name: 'related', arguments: { id: 'fn:Foo' } })
+      await client.callTool({ arguments: { id: 'fn:Foo' }, name: 'related' })
     )
 
     expect(related).toContain('offset:fixture-a')
@@ -249,7 +247,7 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     try {
       await client.close()
     } finally {
-      rmSync(dir, { recursive: true, force: true })
+      rmSync(dir, { force: true, recursive: true })
     }
   }
 })

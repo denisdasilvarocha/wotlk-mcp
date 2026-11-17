@@ -4,14 +4,6 @@
   "items": {
     "type": "object",
     "properties": {
-      "path": {
-        "type": "string",
-        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)+$"
-      },
-      "va": {
-        "type": "string",
-        "pattern": "^0x[0-9A-F]{8}$"
-      },
       "kind": {
         "type": "string",
         "enum": ["function", "data"]
@@ -19,12 +11,20 @@
       "note": {
         "type": "string"
       },
+      "path": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)+$"
+      },
       "status": {
         "type": "string",
         "enum": ["not-present", "unverified"]
+      },
+      "va": {
+        "type": "string",
+        "pattern": "^0x[0-9A-F]{8}$"
       }
     },
-    "required": ["path", "va", "kind", "note"],
+    "required": ["kind", "note", "path", "va"],
     "additionalProperties": false
   }
 }

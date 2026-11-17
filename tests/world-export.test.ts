@@ -25,6 +25,49 @@ await importWorld(process.argv[2], { directory: ${JSON.stringify(dir)}, archive:
   return file
 }
 
+function encodeRows(
+  schema: string,
+  rows: string,
+  fixtures: Readonly<Record<string, Readonly<Record<string, string | ArrayLike<number> | null>>>>
+): void {
+  const columns = new Map<string, { name: string; type: string; nullable: boolean }[]>()
+  for (const line of readFileSync(schema, 'utf8').trimEnd().split('\n')) {
+    const [table, , name, type, nullable] = line.split('\t')
+    if (!(table in fixtures)) {
+      continue
+    }
+    const entries = columns.get(table) ?? []
+    entries.push({ name, nullable: nullable === 'YES', type })
+    columns.set(table, entries)
+  }
+  for (const [table, entries] of columns) {
+    const encoded = entries.map(
+      ({ name, type, nullable }: Readonly<{ name: string; type: string; nullable: boolean }>) => {
+        const values = fixtures[table]
+        let value = values[name]
+        if (!Object.hasOwn(values, name)) {
+          value = ''
+          if (nullable) {
+            value = null
+          } else if (/^(tinyint|smallint|mediumint|int|bigint|float|double|real)\b/u.test(type)) {
+            value = '0'
+          }
+        }
+        if (value === null) {
+          return 'N'
+        }
+        const bytes = typeof value === 'string' ? Buffer.from(value) : Buffer.from(value)
+        return `V${bytes.toString('hex').toUpperCase()}`
+      }
+    )
+    writeFileSync(path.join(rows, table), `${encoded.join('\t')}\n`)
+  }
+}
+
+function sourceKey(id: unknown): string {
+  return id === 'quest:303' ? 'ID' : 'entry'
+}
+
 test('exported artifact preserves world rows and indexes only curated templates', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-export-'))
 
@@ -33,7 +76,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
     const rows = path.join(dir, 'rows')
     const database = path.join(dir, 'reference.sqlite')
     const world = path.join(dir, 'data/world')
-    const sqlNull: null = JSON.parse('null')
+    const sqlNull = null
 
     mkdirSync(bin)
     mkdirSync(rows)
@@ -49,104 +92,72 @@ test('exported artifact preserves world rows and indexes only curated templates'
     )
 
     const fixtures: Record<string, Record<string, string | Buffer | null>> = {
-      creature_template: {
-        entry: '101',
-        name: 'Frost Warden',
-        subname: 'Keeper',
-        minlevel: '12',
-        maxlevel: '14'
-      },
-      item_template: {
-        entry: '202',
-        name: 'Silver Token',
-        description: 'A snowy souvenir',
-        ItemLevel: '35',
-        Quality: '3'
-      },
-      quest_template: {
-        ID: '303',
-        LogTitle: 'Frozen Trail',
-        LogDescription: 'Follow the northern lights',
-        QuestLevel: '20',
-        QuestSortID: '-12'
-      },
-      gameobject_template: {
-        entry: '404',
-        name: 'Ancient Chest',
-        castBarCaption: 'Opening frostbound lock'
-      },
       creature: {
+        Comment: 'Snow\n雪',
+        areaId: '3',
         guid: '11',
         id: '101',
         map: '1',
-        zoneId: '2',
-        areaId: '3',
         position_x: '-123.5',
         position_y: '0.25',
         position_z: '4.5',
-        Comment: 'Snow\n雪'
+        zoneId: '2'
+      },
+      creature_template: {
+        entry: '101',
+        maxlevel: '14',
+        minlevel: '12',
+        name: 'Frost Warden',
+        subname: 'Keeper'
+      },
+      game_event: {
+        description: 'event',
+        end_time: sqlNull,
+        eventEntry: '1',
+        length: '9007199254740993',
+        occurence: '18446744073709551615',
+        start_time: '0000-00-00 00:00:00'
       },
       gameobject: {
+        areaId: '0',
         guid: '12',
         id: '404',
         map: '530',
-        zoneId: '0',
-        areaId: '0',
         position_x: '1.5',
         position_y: '-2.25',
-        position_z: '3'
+        position_z: '3',
+        zoneId: '0'
       },
-      game_event: {
-        eventEntry: '1',
-        start_time: '0000-00-00 00:00:00',
-        end_time: sqlNull,
-        occurence: '18446744073709551615',
-        length: '9007199254740993',
-        description: 'event'
+      gameobject_template: {
+        castBarCaption: 'Opening frostbound lock',
+        entry: '404',
+        name: 'Ancient Chest'
+      },
+      item_template: {
+        ItemLevel: '35',
+        Quality: '3',
+        description: 'A snowy souvenir',
+        entry: '202',
+        name: 'Silver Token'
+      },
+      quest_template: {
+        ID: '303',
+        LogDescription: 'Follow the northern lights',
+        LogTitle: 'Frozen Trail',
+        QuestLevel: '20',
+        QuestSortID: '-12'
       },
       spell_dbc: { ID: '777', ShapeshiftMask: '18446744073709551615' },
       synthetic_types: {
         amount: '12345678901234567890.1234567890',
-        payload: Buffer.from([0, 127, 128, 255]),
-        missing: sqlNull,
         created: '0000-00-00 00:00:00',
+        fraction: '0.10000000149011612',
+        missing: sqlNull,
         negative_zero: '0',
-        fraction: '0.10000000149011612'
+        payload: Buffer.from([0, 127, 128, 255])
       }
     }
-    const columns = new Map<string, { name: string; type: string; nullable: boolean }[]>()
-
-    for (const line of readFileSync(schema, 'utf8').trimEnd().split('\n')) {
-      const [table, , name, type, nullable] = line.split('\t')
-
-      if (!(table in fixtures)) continue
-
-      const entries = columns.get(table) ?? []
-
-      entries.push({ name, type, nullable: nullable === 'YES' })
-      columns.set(table, entries)
-    }
-
-    for (const [table, entries] of columns) {
-      const encoded = entries.map(({ name, type, nullable }) => {
-        const values = fixtures[table]
-        let value = values[name]
-
-        if (!Object.hasOwn(values, name)) {
-          value = ''
-
-          if (nullable) value = sqlNull
-          else if (/^(tinyint|smallint|mediumint|int|bigint|float|double|real)\b/.test(type))
-            value = '0'
-        }
-
-        if (value === sqlNull) return 'N'
-
-        return `V${Buffer.from(value).toString('hex').toUpperCase()}`
-      })
-
-      writeFileSync(path.join(rows, table), `${encoded.join('\t')}\n`)
-    }
+    encodeRows(schema, rows, fixtures)
 
     writeFileSync(
       path.join(bin, 'docker'),
@@ -188,11 +199,11 @@ esac
       expect(
         db.prepare("SELECT pin, sha256, attribution FROM source WHERE name = 'world'").get()
       ).toMatchObject({
-        pin: 'a'.repeat(40),
-        sha256: 'b'.repeat(64),
         attribution: expect.stringContaining(
           `https://github.com/azerothcore/azerothcore-wotlk/tree/${'a'.repeat(40)}`
-        )
+        ) as unknown,
+        pin: 'a'.repeat(40),
+        sha256: 'b'.repeat(64)
       })
       expect(db.prepare("SELECT value FROM meta WHERE key = 'world.importer_image'").get()).toEqual(
         {
@@ -210,39 +221,37 @@ esac
       expect(indexed).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
+            hint: expect.stringContaining('12-14') as unknown,
             id: 'creature:101',
             name: 'Frost Warden',
-            source_table: 'world_creature_template',
             search_text: 'Keeper',
-            hint: expect.stringContaining('12-14')
+            source_table: 'world_creature_template'
           }),
           expect.objectContaining({
+            hint: expect.stringContaining('35') as unknown,
             id: 'item:202',
             name: 'Silver Token',
-            source_table: 'world_item_template',
             search_text: 'A snowy souvenir',
-            hint: expect.stringContaining('35')
+            source_table: 'world_item_template'
           }),
           expect.objectContaining({
+            hint: expect.stringContaining('-12') as unknown,
             id: 'quest:303',
             name: 'Frozen Trail',
-            source_table: 'world_quest_template',
             search_text: 'Follow the northern lights',
-            hint: expect.stringContaining('-12')
+            source_table: 'world_quest_template'
           }),
           expect.objectContaining({
             id: 'gameobject:404',
             name: 'Ancient Chest',
-            source_table: 'world_gameobject_template',
-            search_text: 'Opening frostbound lock'
+            search_text: 'Opening frostbound lock',
+            source_table: 'world_gameobject_template'
           })
         ])
       )
 
       for (const row of indexed) {
-        let key = 'entry'
-
-        if (row.id === 'quest:303') key = 'ID'
+        const key = sourceKey(row.id)
 
         const source = db
           .prepare(`SELECT "${key}" AS key FROM "${String(row.source_table)}" WHERE rowid = ?`)
@@ -271,14 +280,14 @@ esac
           )
           .get()
       ).toMatchObject({
+        Comment: 'Snow\n雪',
+        areaId: 3,
         id: 101,
         map: 1,
-        zoneId: 2,
-        areaId: 3,
         position_x: -123.5,
         position_y: 0.25,
         position_z: 4.5,
-        Comment: 'Snow\n雪'
+        zoneId: 2
       })
       expect(
         db
@@ -287,21 +296,21 @@ esac
           )
           .get()
       ).toMatchObject({
+        areaId: 0,
         id: 404,
         map: 530,
-        zoneId: 0,
-        areaId: 0,
         position_x: 1.5,
         position_y: -2.25,
-        position_z: 3
+        position_z: 3,
+        zoneId: 0
       })
       expect(
         db.prepare('SELECT start_time, end_time, occurence, length FROM world_game_event').get()
       ).toMatchObject({
-        start_time: '0000-00-00 00:00:00',
         end_time: sqlNull,
+        length: '9007199254740993',
         occurence: '18446744073709551615',
-        length: '9007199254740993'
+        start_time: '0000-00-00 00:00:00'
       })
       expect(
         db
@@ -311,11 +320,11 @@ esac
           .get()
       ).toMatchObject({
         amount: '12345678901234567890.1234567890',
-        payload: new Uint8Array([0, 127, 128, 255]),
-        missing: sqlNull,
         created: '0000-00-00 00:00:00',
+        fraction: 0.10000000149011612,
+        missing: sqlNull,
         negative_zero: 0,
-        fraction: 0.10000000149011612
+        payload: new Uint8Array([0, 127, 128, 255])
       })
       expect(db.prepare('SELECT ID, ShapeshiftMask FROM world_spell_dbc').get()).toMatchObject({
         ID: 777,
@@ -333,8 +342,8 @@ esac
 
     try {
       const response = await client.callTool({
-        name: 'get',
-        arguments: { ids: ['creature:101', 'item:202', 'quest:303', 'gameobject:404'] }
+        arguments: { ids: ['creature:101', 'item:202', 'quest:303', 'gameobject:404'] },
+        name: 'get'
       })
 
       expect(response.isError).not.toBe(true)
@@ -356,9 +365,9 @@ esac
       env: {
         ...process.env,
         PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+        WORLD_MISMATCH: '1',
         WORLD_ROOT: world,
-        WORLD_ROWS: rows,
-        WORLD_MISMATCH: '1'
+        WORLD_ROWS: rows
       }
     })
 
@@ -409,7 +418,7 @@ esac
       afterLoss.close()
     }
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 }, 120_000)
 
@@ -451,6 +460,6 @@ test('exporter reports a failed MySQL command without changing the reference', (
     ).toEqual({ n: 0 })
     after.close()
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

@@ -56,8 +56,9 @@ beforeAll(async () => {
     'creature:51',
     'gameobject:70',
     'map:60'
-  ])
+  ]) {
     insert.run(id, id.split(':')[0], id, 'dbc_ItemSet', 1, '', '')
+  }
 
   db.close()
   buildClientFactionSpawnLinks(file)
@@ -67,7 +68,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await client.close()
-  rmSync(dir, { recursive: true, force: true })
+  rmSync(dir, { force: true, recursive: true })
 })
 
 test('navigates each independent key in both directions, preserving spawn rows', async () => {
@@ -87,16 +88,16 @@ test('navigates each independent key in both directions, preserving spawn rows',
       ['creature:51', 'spawns in', 'map:60 (3 stored spawn rows)'],
       ['gameobject:70', 'spawns in', 'map:60 (2 stored spawn rows)'],
       ['map:60', 'spawns', 'gameobject:70 (2 stored spawn rows)']
-    ].map(async ([id, rel, expected]) => {
-      const result = await client.callTool({ name: 'related', arguments: { id, rel } })
+    ].map(async ([id, rel, expected]: readonly string[]) => {
+      const result = await client.callTool({ arguments: { id, rel }, name: 'related' })
 
       expect(JSON.stringify(result.content)).toContain(expected)
     })
   )
 
   const result = await client.callTool({
-    name: 'related',
-    arguments: { id: 'itemset:1', rel: 'contains' }
+    arguments: { id: 'itemset:1', rel: 'contains' },
+    name: 'related'
   })
 
   expect(JSON.stringify(result.content)).not.toContain('item:999')

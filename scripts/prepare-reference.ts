@@ -8,12 +8,15 @@ import { writeReferenceArtifact } from '../build/artifact.ts'
 
 const [directory, ...options] = process.argv.slice(2).filter((arg) => arg !== '--')
 
-if (!directory)
+if (!directory) {
   throw new Error(
     'Usage: vpx scripts/prepare-reference.ts <candidate-directory> [previous.sqlite] [--allow-shrink] [--used-versions=versions.json]'
   )
+}
 
-if (options.includes('--prepare')) throw new Error('Unknown option: --prepare')
+if (options.includes('--prepare')) {
+  throw new Error('Unknown option: --prepare')
+}
 const output = path.resolve(directory)
 const database = path.join(output, 'wotlk.sqlite')
 const asset = path.join(output, 'wotlk.sqlite.br')
@@ -33,6 +36,8 @@ execFileSync(process.execPath, [...args, '--prepare'], { encoding: 'utf8' })
 await writeReferenceArtifact(output, original.timings_seconds, started, original.build_seconds)
 const gate = execFileSync(process.execPath, args, { encoding: 'utf8' })
 writeFileSync(path.join(output, 'gate.json'), gate)
-const finalReport = JSON.parse(readFileSync(report, 'utf8'))
+const finalReport = z
+  .record(z.string(), z.unknown())
+  .parse(JSON.parse(readFileSync(report, 'utf8')))
 finalReport.build_seconds = original.build_seconds + (Date.now() - started) / 1000
 writeFileSync(report, `${JSON.stringify(finalReport, undefined, 2)}\n`)

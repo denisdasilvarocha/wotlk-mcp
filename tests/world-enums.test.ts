@@ -126,10 +126,10 @@ function assertImportedEnums(database: string): void {
       )
       .all()
   ).toEqual([
-    { value: 0, name: 'FIRST' },
-    { value: 2, name: 'SHIFT' },
-    { value: 4, name: 'HEX' },
-    { value: 6, name: 'COMBINED' }
+    { name: 'FIRST', value: 0 },
+    { name: 'SHIFT', value: 2 },
+    { name: 'HEX', value: 4 },
+    { name: 'COMBINED', value: 6 }
   ])
   output.close()
 }
@@ -167,6 +167,6 @@ test('world enum import parses expressions and rejects missing mapped columns', 
     }).toThrow('Missing mapped column world_item_template.Quality')
     assertEmptyEnumTables(other)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

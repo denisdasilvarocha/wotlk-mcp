@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -8,6 +9,28 @@ import { brotliDecompressSync } from 'node:zlib'
 import { expect, test } from 'vite-plus/test'
 
 import { writeReferenceArtifact } from '../build/artifact.ts'
+
+function readReport(file: string): {
+  uncompressed_bytes: unknown
+  compressed_bytes: unknown
+  compressed_sha256: unknown
+  timings_seconds: { acquisition: unknown; compression: unknown }
+  build_seconds: unknown
+} {
+  const report: unknown = JSON.parse(readFileSync(file, 'utf8'))
+  assert.ok(typeof report === 'object' && report !== null)
+  assert.ok(
+    'uncompressed_bytes' in report && 'compressed_bytes' in report && 'compressed_sha256' in report
+  )
+  assert.ok(
+    'timings_seconds' in report &&
+      typeof report.timings_seconds === 'object' &&
+      report.timings_seconds !== null
+  )
+  assert.ok('acquisition' in report.timings_seconds && 'compression' in report.timings_seconds)
+  assert.ok('build_seconds' in report)
+  return { ...report, timings_seconds: report.timings_seconds }
+}
 
 test('compresses the database and reports the actual artifact and timings', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'artifact-'))
@@ -28,7 +51,7 @@ test('compresses the database and reports the actual artifact and timings', asyn
 
     expect(brotliDecompressSync(compressed)).toEqual(original)
 
-    const report = JSON.parse(readFileSync(path.join(dir, 'build-report.json'), 'utf8'))
+    const report = readReport(path.join(dir, 'build-report.json'))
 
     expect(report.uncompressed_bytes).toBe(original.length)
     expect(report.compressed_bytes).toBe(compressed.length)
@@ -37,7 +60,7 @@ test('compresses the database and reports the actual artifact and timings', asyn
     expect(report.timings_seconds.compression).toBeGreaterThanOrEqual(0)
     expect(report.build_seconds).toBeGreaterThanOrEqual(2)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -46,10 +69,10 @@ test('missing database leaves no artifact, report or temporary output', async ()
 
   try {
     writeFileSync(path.join(dir, 'sentinel'), 'untouched')
-    await expect(writeReferenceArtifact(dir, {}, Date.now())).rejects.toThrow(/ENOENT/)
+    await expect(writeReferenceArtifact(dir, {}, Date.now())).rejects.toThrow(/ENOENT/u)
     expect(readdirSync(dir)).toEqual(['sentinel'])
     expect(readFileSync(path.join(dir, 'sentinel'), 'utf8')).toBe('untouched')
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

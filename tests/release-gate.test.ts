@@ -18,7 +18,9 @@ import { afterAll, expect, test } from 'vite-plus/test'
 import { createReleaseFixture, sealReleaseFixture } from './release-fixture.ts'
 
 const directory = mkdtempSync(path.join(tmpdir(), 'release-gate-'))
-afterAll(() => rmSync(directory, { recursive: true, force: true }))
+afterAll(() => {
+  rmSync(directory, { force: true, recursive: true })
+})
 
 function fixture(): string {
   const dir = mkdtempSync(path.join(directory, 'candidate-'))
@@ -30,7 +32,7 @@ function fixture(): string {
   return file
 }
 
-function gate(file: string, ...args: string[]): SpawnSyncReturns<string> {
+function gate(file: string, ...args: readonly string[]): SpawnSyncReturns<string> {
   sealReleaseFixture(file)
   writeFileSync(`${file}.br`, brotliCompressSync(readFileSync(file)))
 
@@ -39,12 +41,54 @@ function gate(file: string, ...args: string[]): SpawnSyncReturns<string> {
   })
 }
 
+function version(output: string): unknown {
+  const result: unknown = JSON.parse(output)
+  if (typeof result !== 'object' || result === null || !('version' in result)) {
+    throw new Error('Release result has no version')
+  }
+  return result.version
+}
+
+function previousArgs(candidate: string, hasPrevious: boolean): string[] {
+  if (!hasPrevious) {
+    return []
+  }
+  const previous = `${candidate}.previous`
+  copyFileSync(candidate, previous)
+  return [previous]
+}
+
+function applySql(db: Readonly<Pick<DatabaseSync, 'exec'>>, sql: string): void {
+  if (sql) {
+    db.exec(sql)
+  }
+}
+
+function prepareShrink(db: Readonly<Pick<DatabaseSync, 'prepare'>>, dimension: string): void {
+  if (dimension === 'relation') {
+    for (let i = 0; i < 10; i++) {
+      db.prepare("INSERT INTO link VALUES ('event:1','starts','item:1',?)").run(String(i))
+    }
+  }
+}
+
+function addShrinkBaseline(db: Readonly<Pick<DatabaseSync, 'exec'>>, dimension: string): string {
+  if (dimension === 'kind') {
+    db.exec(
+      "INSERT INTO record SELECT 'spell:2',kind,name,source_table,source_row,search_text,hint FROM record WHERE id='spell:1'; INSERT INTO record_fts SELECT 'spell:2',name,text FROM record_fts WHERE id='spell:1'"
+    )
+    return 'kind:spell'
+  }
+  db.exec("INSERT INTO link VALUES ('event:1','drops','item:1','')")
+  return 'relation:drops'
+}
+
 test('first release checks a real complete artifact and emits version 1.0.0', () => {
   const file = fixture()
   const result = gate(file)
 
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout).version).toBe('1.0.0')
+  expect(version(result.stdout)).toBe('1.0.0')
 })
 test.each([
   ['first', '', false, ['1.0.0'], '1.0.1'],
@@ -55,22 +99,15 @@ test.each([
   ['major', 'ALTER TABLE entity DROP COLUMN ID', true, ['2.0.0'], '2.0.1']
 ])(
   'allocates a fresh %s version while preserving the published comparison baseline',
-  (change, sql, hasPrevious, used, expected) => {
-    const args = []
+  (change, sql, hasPrevious, used: readonly string[], expected) => {
     const candidate = fixture()
-
-    if (hasPrevious) {
-      const previous = `${candidate}.previous`
-
-      copyFileSync(candidate, previous)
-      args.push(previous)
-    }
+    const args = previousArgs(candidate, hasPrevious)
 
     const db = new DatabaseSync(candidate)
 
     db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
 
-    if (sql) db.exec(sql)
+    applySql(db, sql)
     db.close()
 
     const versions = `${candidate}.versions.json`
@@ -85,7 +122,7 @@ test.each([
     const checked = gate(candidate, ...args)
 
     expect(checked.status).toBe(0)
-    expect(JSON.parse(checked.stdout)).toMatchObject({ version: expected, change })
+    expect(JSON.parse(checked.stdout)).toMatchObject({ change, version: expected })
   }
 )
 test.each([{}, ['invalid'], [1]])('rejects invalid used versions %j', (used) => {
@@ -132,18 +169,18 @@ test('compares previous versions, shrink, drift and explicit override', () => {
   db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
   db.close()
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
-  expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('1.0.1')
+  expect(version(gate(candidate, previous).stdout)).toBe('1.0.1')
   db = new DatabaseSync(candidate)
   db.exec('ALTER TABLE entity ADD COLUMN extra TEXT')
   db.close()
   expect(gate(candidate, previous).status).not.toBe(0)
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
-  expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('1.1.0')
+  expect(version(gate(candidate, previous).stdout)).toBe('1.1.0')
   db = new DatabaseSync(previous)
   db.exec('CREATE TABLE removed_table(value TEXT)')
   db.close()
   expect(gate(candidate, previous, '--allow-shrink', '--prepare').status).toBe(0)
-  expect(JSON.parse(gate(candidate, previous, '--allow-shrink').stdout).version).toBe('2.0.0')
+  expect(version(gate(candidate, previous, '--allow-shrink').stdout)).toBe('2.0.0')
   db = new DatabaseSync(previous)
   db.exec('DROP TABLE removed_table; INSERT INTO entity SELECT ID + 100, name FROM entity')
   db.close()
@@ -184,7 +221,7 @@ test('changed IDs for the same source Record require a major version', () => {
   )
   db.close()
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
-  expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('2.0.0')
+  expect(version(gate(candidate, previous).stdout)).toBe('2.0.0')
 })
 test('duplicate names and reordered physical rows do not change stable source identity', () => {
   const candidate = fixture()
@@ -205,7 +242,7 @@ test('duplicate names and reordered physical rows do not change stable source id
   )
   changed.close()
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
-  expect(JSON.parse(gate(candidate, previous).stdout).version).toBe('1.0.1')
+  expect(version(gate(candidate, previous).stdout)).toBe('1.0.1')
 })
 
 test('rejects invalid declared logical hashes', () => {
@@ -222,9 +259,7 @@ test.each(['kind', 'relation'])('rejects %s shrink independently of table counts
   const candidate = fixture()
   let db = new DatabaseSync(candidate)
 
-  if (dimension === 'relation')
-    for (let i = 0; i < 10; i++)
-      db.prepare("INSERT INTO link VALUES ('event:1','starts','item:1',?)").run(String(i))
+  prepareShrink(db, dimension)
 
   db.close()
   sealReleaseFixture(candidate)
@@ -234,23 +269,17 @@ test.each(['kind', 'relation'])('rejects %s shrink independently of table counts
   copyFileSync(candidate, previous)
   db = new DatabaseSync(previous)
 
-  if (dimension === 'kind')
-    db.exec(
-      "INSERT INTO record SELECT 'spell:2',kind,name,source_table,source_row,search_text,hint FROM record WHERE id='spell:1'; INSERT INTO record_fts SELECT 'spell:2',name,text FROM record_fts WHERE id='spell:1'"
-    )
-  else db.exec("INSERT INTO link VALUES ('event:1','drops','item:1','')")
+  const expected = addShrinkBaseline(db, dimension)
 
   db.close()
   db = new DatabaseSync(candidate)
   db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
   db.close()
 
-  let expected = 'relation:drops'
   const rejected = gate(candidate, previous, '--prepare')
 
   expect(rejected.status).not.toBe(0)
 
-  if (dimension === 'kind') expected = 'kind:spell'
   expect(rejected.stderr).toContain(expected)
   expect(gate(candidate, previous, '--prepare', '--allow-shrink').status).toBe(0)
 })

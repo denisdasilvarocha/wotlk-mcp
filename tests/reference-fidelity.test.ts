@@ -13,6 +13,22 @@ const tables =
     ' '
   )
 
+function createWorldTables(db: Readonly<Pick<DatabaseSync, 'exec'>>): void {
+  const columns = new Map<string, string[]>()
+  for (const line of readFileSync('data/world/schema-columns.tsv', 'utf8').split('\n')) {
+    const [table, , column] = line.split('\t')
+    if (!tables.includes(table)) {
+      continue
+    }
+    const existing = columns.get(table) ?? []
+    existing.push(`"${column}" INTEGER`)
+    columns.set(table, existing)
+  }
+  for (const table of tables) {
+    db.exec(`CREATE TABLE "world_${table}" (${(columns.get(table) ?? []).join(',')})`)
+  }
+}
+
 test('reports cross-source discrepancies with bounded evidence without changing the reference', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'fidelity-'))
   const file = path.join(dir, 'reference.sqlite')
@@ -20,21 +36,7 @@ test('reports cross-source discrepancies with bounded evidence without changing 
 
   try {
     const db = new DatabaseSync(file)
-    const columns = new Map<string, string[]>()
-
-    for (const line of readFileSync('data/world/schema-columns.tsv', 'utf8').split('\n')) {
-      const [table, , column] = line.split('\t')
-
-      if (!tables.includes(table)) continue
-
-      const existing = columns.get(table) ?? []
-
-      existing.push(`"${column}" INTEGER`)
-      columns.set(table, existing)
-    }
-
-    for (const table of tables)
-      db.exec(`CREATE TABLE "world_${table}" (${(columns.get(table) ?? []).join(',')})`)
+    createWorldTables(db)
 
     db.exec(`
       CREATE TABLE dbc_Item (ID INTEGER, ClassID INTEGER, SubclassID INTEGER, DisplayInfoID INTEGER, InventoryType INTEGER, Material INTEGER, SheatheType INTEGER);
@@ -64,30 +66,33 @@ test('reports cross-source discrepancies with bounded evidence without changing 
 
     writeFidelity(file, report)
 
-    const result = JSON.parse(readFileSync(report, 'utf8'))
+    const result: unknown = JSON.parse(readFileSync(report, 'utf8'))
 
-    expect(result.commonItems).toBe(25)
-    expect(result.itemMismatches.class.count).toBe(25)
-    expect(result.itemMismatches.class.examples).toHaveLength(20)
-    expect(result.itemMismatches.class.examples[0]).toEqual({ id: 1, world: 1, client: 11 })
-
-    for (const field of ['subclass', 'display', 'inventory', 'material', 'sheath'])
-      expect(result.itemMismatches[field].count).toBe(1)
-
-    expect(result.missingWorldSpellReferences.count).toBe(6)
-    expect(
-      result.missingWorldSpellReferences.examples.map((example: { spell: number }) => example.spell)
-    ).toEqual([102, 103, 104, 105, 106, 107])
-    expect(result.missingItemsetItems).toEqual({
-      count: 1,
-      examples: [{ itemset: 4, slot: 17, item: 200 }]
+    expect(result).toMatchObject({
+      commonItems: 25,
+      itemMismatches: {
+        class: {
+          count: 25,
+          examples: Array.from({ length: 20 }, (_, i) => ({ client: 11, id: i + 1, world: 1 }))
+        },
+        display: { count: 1 },
+        inventory: { count: 1 },
+        material: { count: 1 },
+        sheath: { count: 1 },
+        subclass: { count: 1 }
+      },
+      missingItemsetItems: { count: 1, examples: [{ item: 200, itemset: 4, slot: 17 }] },
+      missingWorldSpellReferences: {
+        count: 6,
+        examples: [102, 103, 104, 105, 106, 107].map((spell) => ({ spell }))
+      }
     })
     expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(before)
-    expect(() => writeFidelity(file, file)).toThrow(
-      'Report path must not be the reference database'
-    )
+    expect(() => {
+      writeFidelity(file, file)
+    }).toThrow('Report path must not be the reference database')
     expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(before)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

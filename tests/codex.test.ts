@@ -23,6 +23,21 @@ import { initReference } from '../build/offsets.ts'
 import type { CodexSource } from '../build/sources.ts'
 import { packagedServer, unpackPackage } from './package.ts'
 
+async function waitForStart(started: string, getExitCode: () => number | null): Promise<void> {
+  for (let i = 0; i < 40 && !existsSync(started) && getExitCode() === null; i++) {
+    // eslint-disable-next-line no-await-in-loop -- Wait for the child to install its signal handler.
+    await delay(50)
+  }
+}
+
+function killStarted(started: string): void {
+  if (existsSync(started)) {
+    try {
+      process.kill(Number(readFileSync(started, 'utf8')), 'SIGKILL')
+    } catch {}
+  }
+}
+
 function writeFixture(dir: string): CodexSource {
   const files: Record<string, string> = {}
   const aggregate = createHash('sha256')
@@ -47,7 +62,7 @@ function writeFixture(dir: string): CodexSource {
     aggregate.update(file).update('\0').update(bytes)
   }
 
-  return { directory: dir, revision: 'fixture', files, sha256: aggregate.digest('hex') }
+  return { directory: dir, files, revision: 'fixture', sha256: aggregate.digest('hex') }
 }
 
 test('Codex importer preserves source details and rejects altered inputs', async () => {
@@ -86,52 +101,52 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
     importCodex(dbPath, source, {
       API_FUNCTIONS: [
         {
-          name: 'Foo',
-          description: 'Does foo',
           category: 'Demo',
+          description: 'Does foo',
+          memoryAddress: '0x1234',
+          name: 'Foo',
           parameters: [{ name: 'x' }],
-          returns: [{ name: 'y' }],
-          memoryAddress: '0x1234'
+          returns: [{ name: 'y' }]
         }
       ],
-      EVENTS: [{ name: 'EVENT', description: 'Event', category: 'Demo', parameters: [] }],
-      WIDGETS: [
-        {
-          name: 'Region',
-          description: 'Widget',
-          methods: [
-            {
-              name: 'Region:SetPoint(point)',
-              signature: 'Region:SetPoint(point)',
-              description: 'Anchors',
-              parameters: [{ name: 'point' }],
-              returns: []
-            }
-          ],
-          inheritedMethods: [],
-          scriptHandlers: [{ name: 'OnShow' }]
-        }
-      ],
-      CVARS: [{ name: 'testCVar', defaultValue: '1', description: '', category: 'General' }],
-      DATA_TYPES: [{ name: 'anchorPoint', description: 'Anchors', values: [{ name: 'CENTER' }] }],
-      COMBAT_LOG_PREFIXES: [{ name: 'SPELL', arguments: [{ name: 'spellId' }] }],
+      CHAPTER_PAGES: { 1: 45 },
+      COMBAT_LOG_PREFIXES: [{ arguments: [{ name: 'spellId' }], name: 'SPELL' }],
       COMBAT_LOG_SUB_EVENTS: [
         {
-          name: 'SPELL_DAMAGE',
+          arguments: [{ name: 'amount' }],
           description: 'Damage',
-          prefixes: ['SPELL'],
-          arguments: [{ name: 'amount' }]
+          name: 'SPELL_DAMAGE',
+          prefixes: ['SPELL']
         }
       ],
+      CVARS: [{ category: 'General', defaultValue: '1', description: '', name: 'testCVar' }],
+      DATA_TYPES: [{ description: 'Anchors', name: 'anchorPoint', values: [{ name: 'CENTER' }] }],
+      EVENTS: [{ category: 'Demo', description: 'Event', name: 'EVENT', parameters: [] }],
       SECURE_TEMPLATES: [
         {
-          name: 'SecureActionButtonTemplate',
-          description: 'Secure',
           attributes: [{ name: 'type' }],
-          examples: []
+          description: 'Secure',
+          examples: [],
+          name: 'SecureActionButtonTemplate'
         }
       ],
-      CHAPTER_PAGES: { 1: 45 }
+      WIDGETS: [
+        {
+          description: 'Widget',
+          inheritedMethods: [],
+          methods: [
+            {
+              description: 'Anchors',
+              name: 'Region:SetPoint(point)',
+              parameters: [{ name: 'point' }],
+              returns: [],
+              signature: 'Region:SetPoint(point)'
+            }
+          ],
+          name: 'Region',
+          scriptHandlers: [{ name: 'OnShow' }]
+        }
+      ]
     })
 
     const db = new DatabaseSync(dbPath, { readOnly: true })
@@ -144,8 +159,8 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
         search_text: 'Does foo'
       })
       expect(db.prepare('SELECT parameters, memoryAddress FROM lua_fn').get()).toMatchObject({
-        parameters: '[{"name":"x"}]',
-        memoryAddress: '0x1234'
+        memoryAddress: '0x1234',
+        parameters: '[{"name":"x"}]'
       })
       expect(
         db.prepare("SELECT name FROM record WHERE id='method:Region:SetPoint'").get()
@@ -173,8 +188,8 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
       await client.connect(packagedServer(dir, dbPath))
 
       const result = await client.callTool({
-        name: 'get',
-        arguments: { ids: ['fn:Foo', 'method:Region:SetPoint', 'widget:Region'] }
+        arguments: { ids: ['fn:Foo', 'method:Region:SetPoint', 'widget:Region'] },
+        name: 'get'
       })
 
       expect(JSON.stringify(result)).toContain('memoryAddress: 0x1234')
@@ -187,7 +202,7 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
     writeFileSync(path.join(dir, 'src/data/cvars.ts'), 'corrupted')
     await expect(readCodex(source, '')).rejects.toThrow('Codex SHA-256 mismatch')
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -221,12 +236,12 @@ try { await readCodex(${JSON.stringify(source)}, 'node@sha256:fixture') } catch 
     env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
     stdio: 'ignore'
   })
-  const exit = new Promise<number | null>((resolve) => child.once('exit', resolve))
+  const exit = new Promise<number | null>((resolve) => {
+    child.once('exit', resolve)
+  })
 
   try {
-    for (let i = 0; i < 40 && !existsSync(started) && child.exitCode === null; i++)
-      // eslint-disable-next-line no-await-in-loop -- Wait for the child to install its signal handler.
-      await delay(50)
+    await waitForStart(started, () => child.exitCode)
 
     expect(existsSync(started)).toBe(true)
     child.kill('SIGTERM')
@@ -235,11 +250,8 @@ try { await readCodex(${JSON.stringify(source)}, 'node@sha256:fixture') } catch 
   } finally {
     child.kill('SIGKILL')
 
-    if (existsSync(started))
-      try {
-        process.kill(Number(readFileSync(started, 'utf8')), 'SIGKILL')
-      } catch {}
+    killStarted(started)
 
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

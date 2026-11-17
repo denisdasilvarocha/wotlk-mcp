@@ -6,8 +6,8 @@ import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 
 export function packagedServer(directory: string, database: string): StdioClientTransport {
   return new StdioClientTransport({
-    command: process.execPath,
     args: [path.join(directory, 'package/dist/index.mjs')],
+    command: process.execPath,
     env: { ...process.env, WOTLK_MCP_DB: database }
   })
 }
@@ -34,13 +34,21 @@ export function packPackage(directory: string): string {
       }
     )
 
-    if (result.error) throw result.error
-    if (result.status !== 0) throw new Error(result.stderr)
-  } else execFileSync('vp', ['pm', 'pack', '--pack-destination', directory], { stdio: 'pipe' })
+    if (result.error) {
+      throw result.error
+    }
+    if (result.status !== 0) {
+      throw new Error(result.stderr)
+    }
+  } else {
+    execFileSync('vp', ['pm', 'pack', '--pack-destination', directory], { stdio: 'pipe' })
+  }
 
   const archive = readdirSync(directory).find((name) => name.endsWith('.tgz'))
 
-  if (!archive) throw new Error('Package archive not created')
+  if (archive === undefined || archive === '') {
+    throw new Error('Package archive not created')
+  }
 
   return path.join(directory, archive)
 }

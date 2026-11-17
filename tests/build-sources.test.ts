@@ -13,14 +13,21 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { expect, test } from 'vite-plus/test'
+import { z } from 'zod'
 
 const wowRevision = 'a'.repeat(40)
 const worldRevision = 'b'.repeat(40)
 const codexRevision = 'c'.repeat(40)
+
+function lastJsonLine(output: string): unknown {
+  return JSON.parse(output.trim().split('\n').at(-1) ?? '')
+}
 const digest = 'd'.repeat(64)
 
 function run(output: string, bin: string): SpawnSyncReturns<string> {
-  if (!existsSync(path.join(bin, 'fetch.mjs'))) writeFileSync(path.join(bin, 'fetch.mjs'), '')
+  if (!existsSync(path.join(bin, 'fetch.mjs'))) {
+    writeFileSync(path.join(bin, 'fetch.mjs'), '')
+  }
 
   return spawnSync(
     process.execPath,
@@ -41,7 +48,7 @@ function run(output: string, bin: string): SpawnSyncReturns<string> {
 
 function fixtures(
   dir: string,
-  options: { badProvenance?: boolean; mismatch?: boolean; failedDownload?: boolean } = {}
+  options: Readonly<{ badProvenance?: boolean; mismatch?: boolean; failedDownload?: boolean }> = {}
 ): void {
   let archiveResponse = "'archive bytes'"
   let checkoutRevision = codexRevision
@@ -53,8 +60,8 @@ function fixtures(
             root: {
               request: {
                 args: {
-                  'vcs:source': 'https://github.com/azerothcore/azerothcore-wotlk',
-                  'vcs:revision': worldRevision
+                  'vcs:revision': worldRevision,
+                  'vcs:source': 'https://github.com/azerothcore/azerothcore-wotlk'
                 }
               }
             }
@@ -64,11 +71,17 @@ function fixtures(
     }
   }
 
-  if (options.failedDownload) archiveResponse = 'null, { status: 503 }'
+  if (options.failedDownload === true) {
+    archiveResponse = 'null, { status: 503 }'
+  }
 
-  if (options.mismatch) checkoutRevision = 'e'.repeat(40)
+  if (options.mismatch === true) {
+    checkoutRevision = 'e'.repeat(40)
+  }
 
-  if (options.badProvenance) provenance = {}
+  if (options.badProvenance === true) {
+    provenance = {}
+  }
   writeFileSync(
     path.join(dir, 'fetch.mjs'),
     `
@@ -129,7 +142,7 @@ test('does not overwrite an existing input directory', () => {
     expect(result.status).not.toBe(0)
     expect(readFileSync(path.join(output, 'keep'), 'utf8')).toBe('existing')
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -153,7 +166,7 @@ test('rejects a corrupt private release before extraction and removes partial in
     expect(existsSync(path.join(dir, 'extracted'))).toBe(false)
     expect(existsSync(output)).toBe(false)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -167,7 +180,19 @@ test('returns immutable source identities and acquired file hashes', () => {
 
     expect(result.status).toBe(0)
 
-    const sources = JSON.parse(result.stdout.trim().split('\n').at(-1) ?? '')
+    const sources = z
+      .object({
+        azerothcore: z.object({ directory: z.string(), revision: z.string() }),
+        codex: z.object({
+          files: z.record(z.string(), z.unknown()),
+          revision: z.string(),
+          sha256: z.string()
+        }),
+        codexNodeImage: z.string(),
+        worldImporterImage: z.string(),
+        wowdbdefs: z.object({ revision: z.string(), sha256: z.string() })
+      })
+      .parse(lastJsonLine(result.stdout))
 
     expect(sources.wowdbdefs.revision).toBe(wowRevision)
     expect(sources.azerothcore.revision).toBe(worldRevision)
@@ -184,7 +209,7 @@ test('returns immutable source identities and acquired file hashes', () => {
     // The world importer container runs as another user and must traverse the source.
     expect(statSync(sources.azerothcore.directory).mode & 0o005).toBe(0o005)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -192,18 +217,24 @@ test.each([
   ['malformed provenance', { badProvenance: true }],
   ['checkout mismatch', { mismatch: true }],
   ['failed archive download', { failedDownload: true }]
-])('rejects %s and removes owned inputs', (_name, options) => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+])(
+  'rejects %s and removes owned inputs',
+  (
+    _name,
+    options: Readonly<{ badProvenance?: boolean; mismatch?: boolean; failedDownload?: boolean }>
+  ) => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
 
-  try {
-    fixtures(dir, options)
+    try {
+      fixtures(dir, options)
 
-    const output = path.join(dir, 'inputs')
-    const result = run(output, dir)
+      const output = path.join(dir, 'inputs')
+      const result = run(output, dir)
 
-    expect(result.status).not.toBe(0)
-    expect(existsSync(output)).toBe(false)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
+      expect(result.status).not.toBe(0)
+      expect(existsSync(output)).toBe(false)
+    } finally {
+      rmSync(dir, { force: true, recursive: true })
+    }
   }
-})
+)

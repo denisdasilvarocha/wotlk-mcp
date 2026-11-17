@@ -1,21 +1,22 @@
-import { spawn, spawnSync } from 'node:child_process'
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 import { expect, test } from 'vite-plus/test'
 
 import { initReference } from '../build/offsets.ts'
 
 const failures = [
-  { mode: 'updater', message: 'updater-failure' },
-  { mode: 'schema', message: 'schema columns drifted' },
-  { mode: 'export', message: 'export-failure' }
+  { message: 'updater-failure', mode: 'updater' },
+  { message: 'schema columns drifted', mode: 'schema' },
+  { message: 'export-failure', mode: 'export' }
 ]
 
 const signals: { signal: NodeJS.Signals; code: number }[] = [
-  { signal: 'SIGINT', code: 130 },
-  { signal: 'SIGTERM', code: 143 }
+  { code: 130, signal: 'SIGINT' },
+  { code: 143, signal: 'SIGTERM' }
 ]
 
 function fixture(mode: string): { dir: string; runner: string; env: NodeJS.ProcessEnv } {
@@ -69,17 +70,38 @@ catch (error) { console.error(error); process.exitCode ||= 1 }
 
   return {
     dir,
-    runner,
     env: {
       ...process.env,
       PATH: `${bin}${path.delimiter}${process.env.PATH}`,
-      WORLD_STATE: dir,
-      WORLD_MODE: mode
-    }
+      WORLD_MODE: mode,
+      WORLD_STATE: dir
+    },
+    runner
   }
 }
 
-for (const { mode, message } of failures)
+function isRemoval(line: string): boolean {
+  return line.startsWith('rm -fv ') || line.startsWith('network rm ')
+}
+
+async function waitForSignalFixture(
+  dir: string,
+  child: Readonly<Pick<ChildProcess, 'exitCode' | 'signalCode'>>
+): Promise<void> {
+  for (
+    let i = 0;
+    i < 200 &&
+    !existsSync(path.join(dir, 'waiting')) &&
+    child.exitCode === null &&
+    child.signalCode === null;
+    i++
+  ) {
+    // eslint-disable-next-line no-await-in-loop -- Polling must wait between sequential checks.
+    await sleep(50)
+  }
+}
+
+for (const { mode, message } of failures) {
   test(`World ${mode} failure attempts resource cleanup and reports failure`, () => {
     const f = fixture(mode)
 
@@ -91,16 +113,17 @@ for (const { mode, message } of failures)
 
       const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
 
-      expect(commands.match(/^rm -fv /gm)).toHaveLength(2)
-      expect(commands).toMatch(/^network rm /m)
+      expect(commands.match(/^rm -fv /gmu)).toHaveLength(2)
+      expect(commands).toMatch(/^network rm /mu)
       expect(existsSync(path.join(f.dir, 'network'))).toBe(false)
       expect(commands).toContain('AC_SOURCE_DIRECTORY=/source')
       expect(commands).toContain('AC_UPDATES_ALLOWED_MODULES=')
       expect(commands).toContain('mysql -h127.0.0.1')
     } finally {
-      rmSync(f.dir, { recursive: true, force: true })
+      rmSync(f.dir, { force: true, recursive: true })
     }
   })
+}
 
 test('cleanup failure preserves the original error and attempts every removal', () => {
   const f = fixture('cleanup')
@@ -115,18 +138,16 @@ test('cleanup failure preserves the original error and attempts every removal', 
     )
 
     const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
-    const removals = commands
-      .split('\n')
-      .filter((line) => line.startsWith('rm -fv ') || line.startsWith('network rm '))
+    const removals = commands.split('\n').filter((line) => isRemoval(line))
 
     expect(removals).toHaveLength(3)
-    expect(removals[0]).toMatch(/-importer$/)
-    expect(removals[1]).toMatch(/-mysql$/)
-    expect(removals[2]).toMatch(/^network rm /)
+    expect(removals[0]).toMatch(/-importer$/u)
+    expect(removals[1]).toMatch(/-mysql$/u)
+    expect(removals[2]).toMatch(/^network rm /u)
     expect(existsSync(path.join(f.dir, removals[1].split(' ')[2]))).toBe(true)
     expect(existsSync(path.join(f.dir, 'network'))).toBe(false)
   } finally {
-    rmSync(f.dir, { recursive: true, force: true })
+    rmSync(f.dir, { force: true, recursive: true })
   }
 })
 
@@ -142,28 +163,21 @@ test('custom SQL is rejected before Docker resources are created', () => {
     expect(result.stderr).toContain('custom or module SQL is not allowed')
     expect(existsSync(path.join(f.dir, 'commands'))).toBe(false)
   } finally {
-    rmSync(f.dir, { recursive: true, force: true })
+    rmSync(f.dir, { force: true, recursive: true })
   }
 })
 test.each(signals)(
   '$signal cleans containers and network before exit',
-  async ({ signal, code }) => {
+  async ({ signal, code }: Readonly<{ signal: NodeJS.Signals; code: number }>) => {
     const f = fixture('signal')
 
     try {
       const child = spawn(process.execPath, [f.runner], { env: f.env, stdio: 'ignore' })
-      const exited = new Promise<number | null>((resolve) => child.on('exit', resolve))
+      const exited = new Promise<number | null>((resolve) => {
+        child.on('exit', resolve)
+      })
 
-      for (
-        let i = 0;
-        i < 200 &&
-        !existsSync(path.join(f.dir, 'waiting')) &&
-        child.exitCode === null &&
-        child.signalCode === null;
-        i++
-      )
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 50))
+      await waitForSignalFixture(f.dir, child)
 
       expect(existsSync(path.join(f.dir, 'waiting'))).toBe(true)
       child.kill(signal)
@@ -174,11 +188,11 @@ test.each(signals)(
 
       const commands = readFileSync(path.join(f.dir, 'commands'), 'utf8')
 
-      expect(commands.match(/^rm -fv /gm)).toHaveLength(2)
-      expect(commands).toMatch(/^network rm /m)
+      expect(commands.match(/^rm -fv /gmu)).toHaveLength(2)
+      expect(commands).toMatch(/^network rm /mu)
       expect(existsSync(path.join(f.dir, 'network'))).toBe(false)
     } finally {
-      rmSync(f.dir, { recursive: true, force: true })
+      rmSync(f.dir, { force: true, recursive: true })
     }
   }
 )

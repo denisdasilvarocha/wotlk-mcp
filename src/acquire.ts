@@ -1,51 +1,19 @@
-import { createHash, randomUUID } from 'node:crypto'
-import { createReadStream, createWriteStream, unlinkSync } from 'node:fs'
-import { link, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
+import { randomUUID } from 'node:crypto'
+import { mkdir, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-import { Readable, Transform } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
-import { createBrotliDecompress } from 'node:zlib'
 
-import * as z from 'zod'
-
+import { cached, cacheDirectory, publish, removeIfPossible, states } from './acquire-cache.js'
+import type { CacheState } from './acquire-cache.js'
+import { selectRelease, transferAsset } from './acquire-release.js'
 import { openReference } from './reference.js'
-import { acceptedSchemaMajor } from './schema.js'
-
-const headers: Record<string, string> = {
-  'User-Agent': 'wotlk-mcp',
-  Accept: 'application/vnd.github+json'
-}
 
 let received = 0
-const releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases?per_page=100'
-const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
 let total: number | undefined
 let warningMajor: number | undefined
 let warningReported = false
-if (token) headers.Authorization = `Bearer ${token}`
-
-const releasesSchema = z.array(
-  z.object({
-    tag_name: z.string(),
-    draft: z.boolean(),
-    prerelease: z.boolean(),
-    published_at: z.string().nullish(),
-    assets: z.array(z.object({ name: z.string(), digest: z.string().nullish(), url: z.string() }))
-  })
-)
-
-const cacheStateSchema = z.object({
-  file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/),
-  version: z.string().regex(/^db-v\d+\.\d+\.\d+$/),
-  lastCheck: z.number(),
-  warningMajor: z.number().int().positive().optional()
-})
 
 let outcome: ReturnType<typeof acquire> | undefined = acquire()
-
-type CacheState = z.infer<typeof cacheStateSchema>
 
 async function acquire(): Promise<{ path?: string; error?: unknown }> {
   try {
@@ -61,31 +29,24 @@ async function selectReference(): Promise<string> {
 
   const override = process.env.WOTLK_MCP_DB
 
-  if (override !== undefined)
-    try {
-      const resolved = path.resolve(override)
-
-      openReference(resolved).close()
-
-      return resolved
-    } catch (error) {
-      throw new Error(
-        `invalid WOTLK_MCP_DB: ${String(error).replace(/[\r\n]+/g, ' ')}; select a compatible reference database`,
-        { cause: error }
-      )
-    }
+  if (override !== undefined) {
+    return validateOverride(override)
+  }
 
   const snapshot = await cached(cacheDirectory())
 
   if (snapshot) {
     ;({ warningMajor } = snapshot.state)
-    if (warningMajor)
+    if (warningMajor !== undefined && warningMajor !== 0) {
       console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
+    }
     void (async (): Promise<void> => {
       try {
         await update(cacheDirectory(), snapshot.state)
       } catch (error) {
-        console.error(`reference update check failed: ${String(error).replace(/[\r\n]+/g, ' ')}`)
+        console.error(
+          `reference update check failed: ${String(error).replaceAll(/[\r\n]+/gu, ' ')}`
+        )
       }
     })()
     return snapshot.path
@@ -94,151 +55,30 @@ async function selectReference(): Promise<string> {
   try {
     const result = await download()
 
-    if (!result) throw new Error('verified cache could not be opened')
+    if (result === undefined || result === '') {
+      throw new Error('verified cache could not be opened')
+    }
 
     return result
   } catch (error) {
     throw new Error(
-      `no reference database: download failed (${String(error).replace(/[\r\n]+/g, ' ')}); retry online or set WOTLK_MCP_DB`,
+      `no reference database: download failed (${String(error).replaceAll(/[\r\n]+/gu, ' ')}); retry online or set WOTLK_MCP_DB`,
       { cause: error }
     )
   }
 }
 
-async function cached(directory: string): Promise<{ path: string; state: CacheState } | undefined> {
-  await mkdir(directory, { recursive: true })
-
-  const names = await readdir(directory)
-  const entries = await states(directory)
-  const keep = new Set<string>()
-  const files = new Set<string>()
-  let selected: { path: string; state: CacheState } | undefined
-
-  async function select(index: number): Promise<void> {
-    const entry = entries[index]
-
-    if (!entry || files.size >= 2) return
-
-    if (files.has(entry.state.file)) {
-      await select(index + 1)
-      return
-    }
-
-    const source = path.join(directory, entry.state.file)
-    const session = path.join(directory, `session-${process.pid}-${randomUUID()}.sqlite`)
-
-    try {
-      await link(source, session)
-      openReference(session).close()
-      keep.add(entry.name)
-      keep.add(entry.state.file)
-      files.add(entry.state.file)
-
-      if (!selected) {
-        selected = { path: session, state: entry.state }
-        process.once('exit', () => {
-          try {
-            unlinkSync(session)
-          } catch {
-            /* Windows may retain an open snapshot. */
-          }
-        })
-      } else await removeIfPossible(session)
-    } catch {
-      await removeIfPossible(session)
-    }
-
-    await select(index + 1)
-  }
-
-  await select(0)
-
-  const now = Date.now()
-
-  await Promise.all(
-    names.map(async (name) => {
-      if (keep.has(name)) return
-
-      const partial = /^(\d+)-[0-9a-f-]+\.(?:br|sqlite|json)\.partial$/.exec(name)
-      const session = /^session-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
-      const promoting = /^db-v\d+\.\d+\.\d+-(\d+)-[0-9a-f-]+\.sqlite$/.exec(name)
-      const old =
-        /^state-\d+-[0-9a-f-]+\.json$/.test(name) ||
-        /^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/.test(name)
-
-      if (!partial && !session && !old) return
-      if ((partial || session) && processAlive(Number((partial ?? session)?.[1]))) return
-      if (promoting && processAlive(Number(promoting[1]))) return
-
-      const file = path.join(directory, name)
-
-      try {
-        // shortcut: retain recent orphans for a day; upgrade to coordinated cleanup if disk pressure demands it.
-        if (now - (await stat(file)).mtimeMs > 24 * 60 * 60 * 1000) await removeIfPossible(file)
-      } catch (error) {
-        if (errorCode(error) !== 'ENOENT') throw error
-      }
-    })
-  )
-
-  return selected
-}
-
-async function states(directory: string): Promise<{ name: string; state: CacheState }[]> {
-  const names = (await readdir(directory)).filter((name) =>
-    /^state-\d+-[0-9a-f-]+\.json$/.test(name)
-  )
-  const entries = await Promise.all(
-    names.map(async (name) => {
-      try {
-        const state = cacheStateSchema.parse(
-          JSON.parse(await readFile(path.join(directory, name), 'utf8'))
-        )
-
-        return { name, state }
-      } catch {
-        return undefined
-      }
-    })
-  )
-
-  return entries
-    .filter((entry) => entry !== undefined)
-    .toSorted((a, b) => b.name.localeCompare(a.name))
-}
-
-async function removeIfPossible(file: string): Promise<void> {
+function validateOverride(override: string): string {
   try {
-    await rm(file, { force: true })
+    const resolved = path.resolve(override)
+    openReference(resolved).close()
+    return resolved
   } catch (error) {
-    if (!['EPERM', 'EACCES', 'EBUSY'].some((code) => code === errorCode(error))) throw error
+    throw new Error(
+      `invalid WOTLK_MCP_DB: ${String(error).replaceAll(/[\r\n]+/gu, ' ')}; select a compatible reference database`,
+      { cause: error }
+    )
   }
-}
-
-function errorCode(error: unknown): unknown {
-  if (typeof error === 'object' && error !== null && 'code' in error) return error.code
-
-  return undefined
-}
-
-function processAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return errorCode(error) !== 'ESRCH'
-  }
-}
-
-function cacheDirectory(): string {
-  let root = process.env.XDG_CACHE_HOME ?? path.join(homedir(), '.cache')
-
-  if (process.platform === 'win32')
-    root = process.env.LOCALAPPDATA ?? path.join(homedir(), 'AppData', 'Local')
-  if (process.platform === 'darwin') root = path.join(homedir(), 'Library', 'Caches')
-
-  // Per schema major, so side-by-side package majors never prune each other's copies.
-  return path.join(root, 'wotlk-mcp', `schema-${acceptedSchemaMajor}`)
 }
 
 async function update(directory: string, current: CacheState): Promise<void> {
@@ -256,26 +96,22 @@ async function update(directory: string, current: CacheState): Promise<void> {
       const latest = (await states(directory))[0]?.state ?? current
       const now = Date.now()
 
-      if (now - latest.lastCheck < 24 * 60 * 60 * 1000) return
+      if (now - latest.lastCheck < 24 * 60 * 60 * 1000) {
+        return
+      }
 
       const attempted = { ...current, lastCheck: now }
 
-      async function publish(state: CacheState, timestamp: number): Promise<void> {
-        const id = randomUUID()
-        const partial = path.join(directory, `${process.pid}-${id}.json.partial`)
-
-        await writeFile(partial, JSON.stringify(state), { flag: 'wx' })
-        await rename(partial, path.join(directory, `state-${timestamp}-${id}.json`))
-      }
-
-      await publish(attempted, now)
+      await publish(directory, attempted, now)
 
       let promoted: string | undefined
 
       try {
         promoted = await download(attempted)
       } finally {
-        if (!promoted) await publish({ ...attempted, warningMajor }, Math.max(Date.now(), now + 1))
+        if (promoted === undefined || promoted === '') {
+          await publish(directory, { ...attempted, warningMajor }, Math.max(Date.now(), now + 1))
+        }
       }
     } finally {
       lock.exec('ROLLBACK')
@@ -285,40 +121,62 @@ async function update(directory: string, current: CacheState): Promise<void> {
   }
 }
 
-async function download(existing?: CacheState): Promise<string | undefined> {
-  const releases = await releasePages(releasesUrl)
-  const candidates = releases
-    .flatMap((release) => {
-      const match = /^db-v(\d+)\.(\d+)\.(\d+)$/.exec(release.tag_name)
+function setTotal(value: number): void {
+  total = value
+}
 
-      if (!match || release.draft || release.prerelease) return []
+function addReceived(value: number): void {
+  received += value
+}
 
-      return [{ release, version: match.slice(1).map(Number) }]
-    })
-    .toSorted((a, b) => (b.release.published_at ?? '').localeCompare(a.release.published_at ?? ''))
-  const selected = candidates.find(({ version }) => version[0] === acceptedSchemaMajor)
-  const higher = candidates.find(({ version }) => version[0] > acceptedSchemaMajor)
+async function selectedSnapshot(directory: string): Promise<string> {
+  const snapshot = await cached(directory)
 
-  warningMajor = higher?.version[0]
-
-  if (higher)
-    console.error(`newer reference data needs wotlk-mcp@${warningMajor}; update your config`)
-
-  if (!selected) {
-    if (higher)
-      throw new Error(
-        `no compatible release; newer reference data needs wotlk-mcp@${higher.version[0]}`
-      )
-
-    throw new Error('no compatible published reference release')
+  if (!snapshot) {
+    throw new Error('verified cache could not be opened')
   }
 
-  if (existing && selected.release.tag_name === existing.version) return undefined
+  return snapshot.path
+}
 
+function downloadProgress(): string {
+  let progress = ''
+  if (received) {
+    progress = ` (${received}`
+    if (total !== undefined && total !== 0) {
+      progress += ` of ${total}`
+    }
+    progress += ' bytes)'
+  }
+  return progress
+}
+
+function releaseAsset(selected: Awaited<ReturnType<typeof selectRelease>>): {
+  readonly url: string
+  readonly digest: string
+} {
   const asset = selected.release.assets.find((item) => item.name === 'wotlk.sqlite.br')
-
-  if (!asset?.digest || !/^sha256:[0-9a-f]{64}$/i.test(asset.digest))
+  if (
+    asset?.digest === undefined ||
+    asset.digest === null ||
+    asset.digest === '' ||
+    !/^sha256:[0-9a-f]{64}$/iu.test(asset.digest)
+  ) {
     throw new Error('release asset missing required SHA-256 digest')
+  }
+  return { digest: asset.digest, url: asset.url }
+}
+
+async function download(existing?: CacheState): Promise<string | undefined> {
+  const selected = await selectRelease((value) => {
+    warningMajor = value
+  })
+
+  if (existing && selected.release.tag_name === existing.version) {
+    return undefined
+  }
+
+  const asset = releaseAsset(selected)
 
   const directory = cacheDirectory()
 
@@ -331,65 +189,24 @@ async function download(existing?: CacheState): Promise<string | undefined> {
   const statePartial = path.join(directory, `${process.pid}-${id}.json.partial`)
 
   try {
-    // browser_download_url 404s for private repositories even with a token.
-    const assetResponse = await fetch(asset.url, {
-      headers: { ...headers, Accept: 'application/octet-stream' }
-    })
-
-    if (!assetResponse.ok || !assetResponse.body)
-      throw new Error(`database download returned HTTP ${assetResponse.status}`)
-
-    const length = Number(assetResponse.headers.get('content-length'))
-
-    if (Number.isSafeInteger(length) && length > 0) total = length
-
-    const hash = createHash('sha256')
-    const progress = new Transform({
-      transform(chunk: Buffer, _encoding, callback): void {
-        received += chunk.length
-        hash.update(chunk)
-        callback(undefined, chunk)
-      }
-    })
-
-    await pipeline(
-      Readable.fromWeb(assetResponse.body),
-      progress,
-      createWriteStream(compressed, { flags: 'wx' })
-    )
-
-    if (`sha256:${hash.digest('hex')}` !== asset.digest.toLowerCase())
-      throw new Error('database SHA-256 digest mismatch')
-
-    await pipeline(
-      createReadStream(compressed),
-      createBrotliDecompress(),
-      createWriteStream(partial, { flags: 'wx' })
-    )
+    await transferAsset(asset.url, asset.digest, compressed, partial, setTotal, addReceived)
     openReference(partial).close()
     await rename(partial, final)
 
-    const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
-
-    await writeFile(
+    await publishDownloadState(
+      directory,
       statePartial,
-      JSON.stringify({
-        file: path.basename(final),
-        version: selected.release.tag_name,
-        lastCheck: existing?.lastCheck ?? checked,
-        warningMajor
-      } satisfies CacheState),
-      { flag: 'wx' }
+      final,
+      id,
+      selected.release.tag_name,
+      existing
     )
-    await rename(statePartial, path.join(directory, `state-${checked}-${id}.json`))
 
-    if (existing) return final
+    if (existing) {
+      return final
+    }
 
-    const snapshot = await cached(directory)
-
-    if (!snapshot) throw new Error('verified cache could not be opened')
-
-    return snapshot.path
+    return await selectedSnapshot(directory)
   } finally {
     await Promise.all([
       removeIfPossible(compressed),
@@ -399,26 +216,32 @@ async function download(existing?: CacheState): Promise<string | undefined> {
   }
 }
 
-async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>> {
-  const response = await fetch(url, { headers })
-
-  if (!response.ok) throw new Error(`GitHub releases request returned HTTP ${response.status}`)
-
-  const page = releasesSchema.parse(await response.json())
-  const next = response.headers
-    .get('link')
-    ?.split(',')
-    .map((part) => part.trim())
-    .find((part) => /;\s*rel="next"/.test(part))
-    ?.match(/^<([^>]+)>/)?.[1]
-
-  if (next) page.push(...(await releasePages(next)))
-
-  return page
+async function publishDownloadState(
+  directory: string,
+  partial: string,
+  final: string,
+  id: string,
+  version: string,
+  existing?: CacheState
+): Promise<void> {
+  const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
+  await writeFile(
+    partial,
+    JSON.stringify({
+      file: path.basename(final),
+      lastCheck: existing?.lastCheck ?? checked,
+      version,
+      warningMajor
+    } satisfies CacheState),
+    { flag: 'wx' }
+  )
+  await rename(partial, path.join(directory, `state-${checked}-${id}.json`))
 }
 
 export function takeUpdateWarning(): string | undefined {
-  if (!warningMajor || warningReported) return undefined
+  if (warningMajor === undefined || warningMajor === 0 || warningReported) {
+    return undefined
+  }
 
   warningReported = true
 
@@ -434,29 +257,34 @@ export async function getReferencePath(): Promise<string> {
       attempt,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
-          let progress = ''
-
-          if (received) {
-            progress = ` (${received}`
-
-            if (total) progress += ` of ${total}`
-            progress += ' bytes)'
-          }
-
-          reject(new Error(`reference database downloading${progress}; retry shortly`))
+          reject(new Error(`reference database downloading${downloadProgress()}; retry shortly`))
         }, 20_000)
       })
     ])
 
-    if (result.error) {
-      if (outcome === attempt) outcome = undefined
-      throw result.error
+    if (
+      typeof result.error === 'number'
+        ? result.error !== 0 && !Number.isNaN(result.error)
+        : result.error !== undefined &&
+          result.error !== null &&
+          result.error !== false &&
+          result.error !== 0n &&
+          result.error !== ''
+    ) {
+      if (outcome === attempt) {
+        outcome = undefined
+      }
+      throw result.error instanceof Error ? result.error : new Error(String(result.error))
     }
 
-    if (!result.path) throw new Error('no reference database')
+    if (result.path === undefined || result.path === '') {
+      throw new Error('no reference database')
+    }
 
     return result.path
   } finally {
-    if (timer) clearTimeout(timer)
+    if (timer) {
+      clearTimeout(timer)
+    }
   }
 }

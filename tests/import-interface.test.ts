@@ -13,9 +13,9 @@ const source =
   'SLASH_CAST1 = "/cast";\r\nSLASH_CAST2 = "/spell";\r\nSecureCmdList["CAST"] = function() end\r\nEMOTE102_CMD1 = "/wave";\r\n--SlashCmdList["CAST"] = function() end\r\n'
 const xml = '<Ui>literal source text</Ui>\n'
 const files = [
-  { path: 'Interface/FrameXML/GlobalStrings.lua', content: source },
-  { path: 'Interface/AddOns/Blizzard_Test/Test.xml', content: xml },
-  { path: 'Interface/Other/ignored.lua', content: 'ignored' }
+  { content: source, path: 'Interface/FrameXML/GlobalStrings.lua' },
+  { content: xml, path: 'Interface/AddOns/Blizzard_Test/Test.xml' },
+  { content: 'ignored', path: 'Interface/Other/ignored.lua' }
 ] as const
 
 function hash(content: string): string {
@@ -39,17 +39,17 @@ function createFixture(): Fixture {
   }
 
   const manifest = JSON.stringify({
-    format: 1,
     client: {
       build: 12340,
       locale: 'enGB',
       original_executable_sha256: 'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
     },
     files: files.map((file) => ({
-      path: file.path,
       archive: 'enGB/patch-enGB-3.MPQ',
+      path: file.path,
       sha256: hash(file.content)
-    }))
+    })),
+    format: 1
   })
 
   writeFileSync(path.join(dir, 'manifest.json'), manifest)
@@ -60,7 +60,7 @@ function createFixture(): Fixture {
   db.exec(schema)
   db.close()
 
-  return { dir, manifest, database }
+  return { database, dir, manifest }
 }
 
 interface SlashEvidence {
@@ -77,8 +77,9 @@ function readSlashEvidence(
     typeof row.aliases !== 'string' ||
     typeof row.handlers !== 'string' ||
     typeof row.secure !== 'number'
-  )
+  ) {
     throw new Error('Missing CAST command evidence')
+  }
 
   return { aliases: row.aliases, handlers: row.handlers, secure: row.secure }
 }
@@ -111,7 +112,7 @@ test('maintainer import verifies manifest and interface hashes atomically', () =
     writeFileSync(path.join(dir, files[0].path), source)
     importInterface(database, dir, hash(manifest))
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -126,14 +127,14 @@ test('maintainer import preserves interface files, lines and full-text search', 
       result.prepare('SELECT path, manifest_path, locale FROM ui_file ORDER BY path').all()
     ).toEqual([
       {
-        path: 'AddOns/Blizzard_Test/Test.xml',
+        locale: 'enGB',
         manifest_path: 'Interface/AddOns/Blizzard_Test/Test.xml',
-        locale: 'enGB'
+        path: 'AddOns/Blizzard_Test/Test.xml'
       },
       {
-        path: 'FrameXML/GlobalStrings.lua',
+        locale: 'enGB',
         manifest_path: 'Interface/FrameXML/GlobalStrings.lua',
-        locale: 'enGB'
+        path: 'FrameXML/GlobalStrings.lua'
       }
     ])
     expect(
@@ -151,7 +152,7 @@ test('maintainer import preserves interface files, lines and full-text search', 
       result
         .prepare('SELECT path, line FROM ui_line_fts WHERE ui_line_fts MATCH ?')
         .all('"literal"')
-    ).toMatchObject([{ path: 'AddOns/Blizzard_Test/Test.xml', line: 1 }])
+    ).toMatchObject([{ line: 1, path: 'AddOns/Blizzard_Test/Test.xml' }])
     expect(
       result
         .prepare("SELECT id, name, text FROM record_fts WHERE substr(id,1,5) = 'file:' ORDER BY id")
@@ -162,7 +163,7 @@ test('maintainer import preserves interface files, lines and full-text search', 
     ])
     result.close()
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -183,7 +184,7 @@ test('maintainer import records slash command evidence', () => {
       { line: 2, value: '/spell' }
     ])
     expect(JSON.parse(cast.handlers)).toEqual([
-      { path: 'FrameXML/GlobalStrings.lua', line: 3, registry: 'SecureCmdList' }
+      { line: 3, path: 'FrameXML/GlobalStrings.lua', registry: 'SecureCmdList' }
     ])
     expect(
       result.prepare('SELECT emote FROM ui_slash WHERE command = ?').get('EMOTE102')
@@ -195,7 +196,7 @@ test('maintainer import records slash command evidence', () => {
     ).toHaveLength(2)
     result.close()
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })
 
@@ -213,6 +214,6 @@ test('maintainer import records interface attribution without rewriting the mani
     result.close()
     expect(readFileSync(path.join(dir, 'manifest.json'), 'utf8')).toBe(manifest)
   } finally {
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 })

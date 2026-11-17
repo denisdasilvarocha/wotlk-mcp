@@ -1,7 +1,7 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer } from 'node:http'
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -10,6 +10,22 @@ import { brotliCompressSync } from 'node:zlib'
 import { expect, test } from 'vite-plus/test'
 
 import { createReleaseFixture, sealReleaseFixture } from './release-fixture.ts'
+
+type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
+  ? T
+  : T extends object
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+    : T
+
+function parseObject(text: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(text)
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new TypeError('expected JSON object')
+  }
+
+  return Object.fromEntries(Object.entries(value))
+}
 
 async function releaseScenario(
   scenario: 'authorization' | 'download' | 'reserved'
@@ -28,13 +44,30 @@ async function releaseScenario(
   let protectedEnvironment = true
   let release: Record<string, unknown> | undefined
   let reservedReleases: Record<string, unknown>[] = []
-  let tags: { name: string }[] = []
+  let tags: { readonly name: string }[] = []
   const uploaded = new Map<number, Buffer>()
-  const server = createServer(async (request, response) => {
+  const server = createServer()
+
+  server.on(
+    'request',
+    (request: DeepReadonly<IncomingMessage>, response: DeepReadonly<ServerResponse>) => {
+      void handleRequest(request, response)
+    }
+  )
+
+  async function handleRequest(
+    request: DeepReadonly<IncomingMessage>,
+    response: DeepReadonly<ServerResponse>
+  ): Promise<void> {
     const chunks: Buffer[] = []
     const url = new URL(request.url ?? '/', 'http://localhost')
 
-    for await (const chunk of request) chunks.push(Buffer.from(chunk))
+    for await (const chunk of request as AsyncIterable<unknown>) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new TypeError('expected buffer')
+      }
+      chunks.push(chunk)
+    }
 
     const body = Buffer.concat(chunks)
 
@@ -46,81 +79,104 @@ async function releaseScenario(
     if (url.pathname === '/repos/test/repo/environments/database-publication') {
       const rules = []
 
-      if (protectedEnvironment)
+      if (protectedEnvironment) {
         rules.push({
-          type: 'required_reviewers',
-          reviewers: [{ type: 'User', reviewer: { login: 'test' } }]
+          reviewers: [{ reviewer: { login: 'test' }, type: 'User' }],
+          type: 'required_reviewers'
         })
+      }
 
-      return json({ protection_rules: rules })
+      json({ protection_rules: rules })
+      return
     }
 
     if (url.pathname === '/repos/test/repo/releases' && request.method === 'GET') {
       const releases = [...reservedReleases]
 
-      if (release) releases.push(release)
+      if (release) {
+        releases.push(release)
+      }
 
       const page = Number(url.searchParams.get('page'))
 
-      return json(releases.slice((page - 1) * 100, page * 100))
+      json(releases.slice((page - 1) * 100, page * 100))
+      return
     }
 
     if (url.pathname === '/repos/test/repo/tags') {
       const page = Number(url.searchParams.get('page'))
 
-      return json(tags.slice((page - 1) * 100, page * 100))
+      json(tags.slice((page - 1) * 100, page * 100))
+      return
     }
 
     if (url.pathname.startsWith('/repos/test/repo/git/ref/tags/')) {
       const name = url.pathname.split('/').at(-1)
 
-      if (tags.some((tag) => tag.name === name)) return json({ ref: `refs/tags/${name}` })
+      if (tags.some(({ name: tagName }) => tagName === name)) {
+        json({ ref: `refs/tags/${name}` })
+        return
+      }
 
-      return json({}, 404)
+      json({}, 404)
+      return
     }
 
     if (url.pathname === '/repos/test/repo/releases' && request.method === 'POST') {
       release = {
         id: 7,
-        ...JSON.parse(body.toString()),
+        ...parseObject(body.toString()),
         assets: [],
         upload_url: `${origin}/upload{?name,label}`
       }
 
-      return json(release, 201)
+      json(release, 201)
+      return
     }
 
     if (url.pathname === '/upload' && request.method === 'POST') {
       const name = url.searchParams.get('name')
       const item = {
+        digest: `sha256:${createHash('sha256').update(body).digest('hex')}`,
         id: uploaded.size + 11,
         name,
-        state: 'uploaded',
-        digest: `sha256:${createHash('sha256').update(body).digest('hex')}`
+        state: 'uploaded'
       }
 
       uploaded.set(item.id, body)
 
-      if (!Array.isArray(release?.assets)) throw new Error('missing release assets')
+      if (!Array.isArray(release?.assets)) {
+        throw new TypeError('missing release assets')
+      }
 
       release.assets.push(item)
 
-      return json(item, 201)
+      json(item, 201)
+      return
     }
 
-    if (url.pathname === '/repos/test/repo/releases/7' && request.method === 'GET')
-      return json(release)
+    if (url.pathname === '/repos/test/repo/releases/7' && request.method === 'GET') {
+      json(release)
+      return
+    }
 
     if (url.pathname.startsWith('/repos/test/repo/releases/assets/')) {
       const bytes = uploaded.get(Number(url.pathname.split('/').at(-1)))
 
-      if (!bytes) return json({}, 404)
+      if (!bytes) {
+        json({}, 404)
+        return
+      }
 
       response.writeHead(200, { 'content-type': 'application/octet-stream' })
 
-      if (corruptDownload) return response.end(Buffer.from('corrupt download'))
+      if (corruptDownload) {
+        response.end(Buffer.from('corrupt download'))
+        return
+      }
 
-      return response.end(bytes)
+      response.end(bytes)
+      return
     }
 
     if (url.pathname === '/repos/test/repo/actions/runs/10/jobs') {
@@ -128,17 +184,18 @@ async function releaseScenario(
         ['24.15.0', 'node'].map((node) => `acceptance (${os}, ${node})`)
       )
 
-      return json({
+      json({
         jobs: names.map((name, index) => ({
+          conclusion: ['success', 'failure'][Number(index === failedCell)],
           name,
-          status: 'completed',
-          conclusion: ['success', 'failure'][Number(index === failedCell)]
+          status: 'completed'
         }))
       })
+      return
     }
 
     if (url.pathname === '/repos/test/repo/releases/7' && request.method === 'PATCH') {
-      const update = JSON.parse(body.toString())
+      const update = parseObject(body.toString())
 
       if (update.draft === false) {
         promotions++
@@ -147,54 +204,63 @@ async function releaseScenario(
 
       Object.assign(release ?? {}, update)
 
-      return json(release)
+      json(release)
+      return
     }
 
     if (url.pathname === '/repos/test/repo/releases/7' && request.method === 'DELETE') {
       release = undefined
       response.writeHead(204)
 
-      return response.end()
+      response.end()
+      return
     }
 
-    return json({ message: 'not found' }, 404)
-  })
+    json({ message: 'not found' }, 404)
+  }
 
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+  await new Promise<void>((resolve) => {
+    server.listen(0, '127.0.0.1', resolve)
+  })
 
   const address = server.address()
 
-  if (!address || typeof address === 'string') throw new Error('missing server address')
+  if (address === null || typeof address === 'string') {
+    throw new Error('missing server address')
+  }
 
   const origin = `http://127.0.0.1:${address.port}`
 
   function run(
-    args: string[],
+    args: readonly string[],
     authorized = true
   ): Promise<{ status: number | null; stdout: string }> {
     return new Promise((resolve, reject) => {
       const child = spawn(process.execPath, ['scripts/database-release.mjs', ...args], {
         env: {
           ...process.env,
+          DATABASE_RELEASE_AUTHORIZATION: ['', 'owner-authorized'][Number(authorized)],
           GITHUB_API_URL: origin,
           GITHUB_REPOSITORY: 'test/repo',
-          GITHUB_TOKEN: 'isolated',
           GITHUB_RUN_ID: '10',
-          DATABASE_RELEASE_AUTHORIZATION: ['', 'owner-authorized'][Number(authorized)]
+          GITHUB_TOKEN: 'isolated'
         },
         stdio: ['ignore', 'pipe', 'pipe']
       })
       let stdout = ''
 
-      child.stdout.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString()
+      child.stdout.setEncoding('utf8')
+      child.stdout.on('data', (chunk: string) => {
+        stdout += chunk
       })
       child.on('error', reject)
-      child.on('close', (status) => resolve({ status, stdout }))
+      child.on('close', (status) => {
+        resolve({ status, stdout })
+      })
     })
   }
 
-  try {
+  async function execute(): Promise<unknown> {
     const file = path.join(dir, 'wotlk.sqlite.br')
 
     writeFileSync(file, asset)
@@ -227,7 +293,7 @@ async function releaseScenario(
       writeFileSync(file, asset)
 
       const validReport = readFileSync(report, 'utf8')
-      const invalidReport = JSON.parse(validReport)
+      const invalidReport = parseObject(validReport)
 
       invalidReport.version = '1.0.1'
       writeFileSync(report, JSON.stringify(invalidReport))
@@ -260,7 +326,9 @@ async function releaseScenario(
       corruptDownload = false
 
       async function checkFailedCell(index: number): Promise<void> {
-        if (index === 6) return
+        if (index === 6) {
+          return
+        }
 
         failedCell = index
         expect((await run(['promote', '7', 'db-v1.0.0', digest])).status).not.toBe(0)
@@ -307,13 +375,13 @@ async function releaseScenario(
           tags.push({ name: 'db-v1.0.1' })
         } else {
           reservedReleases = Array.from({ length: 100 }, (_, index) => ({
-            tag_name: `v0.0.${index}`,
-            draft: true
+            draft: true,
+            tag_name: `v0.0.${index}`
           }))
           reservedReleases.push({
-            tag_name: 'db-v1.0.1',
             draft: withdrawn === 'draft',
-            prerelease: withdrawn === 'prerelease'
+            prerelease: withdrawn === 'prerelease',
+            tag_name: 'db-v1.0.1'
           })
         }
 
@@ -346,7 +414,7 @@ async function releaseScenario(
         execFileSync('vpx', [...gateArgs, '--prepare'])
         writeFileSync(file, brotliCompressSync(readFileSync(candidate)))
         writeFileSync(report, execFileSync('vpx', gateArgs))
-        expect(JSON.parse(readFileSync(report, 'utf8')).version).toBe('1.0.2')
+        expect(parseObject(readFileSync(report, 'utf8')).version).toBe('1.0.2')
         expect((await run(['create', report, candidate, ...files])).status).toBe(0)
         expect(release?.tag_name).toBe('db-v1.0.2')
       }
@@ -358,15 +426,22 @@ async function releaseScenario(
       return release?.tag_name
     }
 
-    return await { authorization, download: downloadAndPromote, reserved }[scenario]()
+    return { authorization, download: downloadAndPromote, reserved }[scenario]()
+  }
+
+  try {
+    return await execute()
   } finally {
     await new Promise<void>((resolve, reject) => {
-      server.close((error) => {
-        if (error) reject(error)
-        else resolve()
+      server.close((error: Readonly<Error> | undefined) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
+        }
       })
     })
-    rmSync(dir, { recursive: true, force: true })
+    rmSync(dir, { force: true, recursive: true })
   }
 }
 

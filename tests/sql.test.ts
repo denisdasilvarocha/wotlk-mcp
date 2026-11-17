@@ -14,8 +14,13 @@ const database = path.join(directory, 'reference.sqlite')
 const client = new Client({ name: 'sql-test', version: '1' })
 
 beforeAll(async () => {
-  if (process.env.WOTLK_TEST_NODE && process.version !== process.env.WOTLK_TEST_NODE)
+  if (
+    process.env.WOTLK_TEST_NODE !== undefined &&
+    process.env.WOTLK_TEST_NODE !== '' &&
+    process.version !== process.env.WOTLK_TEST_NODE
+  ) {
     throw new Error(`Expected Node ${process.env.WOTLK_TEST_NODE}, found ${process.version}`)
+  }
 
   initReference(database)
 
@@ -29,25 +34,43 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await client.close()
-  rmSync(directory, { recursive: true, force: true })
+  rmSync(directory, { force: true, recursive: true })
 })
 
-function text(result: Awaited<ReturnType<typeof sql>>): string {
+function text(result: { readonly content: unknown }): string {
   const { content } = result
 
-  if (!Array.isArray(content) || content[0]?.type !== 'text') throw new Error('Expected text')
+  if (!Array.isArray(content)) {
+    throw new TypeError('Expected text')
+  }
 
-  return content[0].text
+  const first: unknown = content[0]
+
+  if (
+    typeof first !== 'object' ||
+    first === null ||
+    !('type' in first) ||
+    first.type !== 'text' ||
+    !('text' in first) ||
+    typeof first.text !== 'string'
+  ) {
+    throw new Error('Expected text')
+  }
+
+  return first.text
 }
 
 function sql(query: string, limit?: number): ReturnType<Client['callTool']> {
-  return client.callTool({ name: 'sql', arguments: { query, limit } })
+  return client.callTool({ arguments: { limit, query }, name: 'sql' })
 }
 
 test('packed SQL preserves columns, values, escaping and large integers', async () => {
   const tools = await client.listTools()
 
-  expect(tools.tools.find((tool) => tool.name === 'sql')?.annotations?.readOnlyHint).toBe(true)
+  expect(
+    tools.tools.find((tool: { readonly name: string }) => tool.name === 'sql')?.annotations
+      ?.readOnlyHint
+  ).toBe(true)
 
   const result = await sql(
     "SELECT 'a' || char(9) || 'b' || char(10) || 'c' || char(13) || char(92) AS x, NULL AS n, 9223372036854775807 AS big, 'NULL' AS literal, x'00ff' AS blob"
@@ -80,7 +103,9 @@ test('SQL permits only the specified direct and table-valued discovery pragmas',
   ]
   const allowedResults = await Promise.all(allowed.map((query) => sql(query)))
 
-  for (const result of allowedResults) expect(result.isError).not.toBe(true)
+  for (const result of allowedResults) {
+    expect(result.isError).not.toBe(true)
+  }
 
   const denied = [
     "INSERT INTO world_sql VALUES ('modified')",
@@ -110,7 +135,9 @@ test('SQL permits only the specified direct and table-valued discovery pragmas',
   ]
   const deniedResults = await Promise.all(denied.map((query) => sql(query)))
 
-  for (const result of deniedResults) expect(result.isError).toBe(true)
+  for (const result of deniedResults) {
+    expect(result.isError).toBe(true)
+  }
   expect((await sql('PRAGMA nonexistent_setting')).isError).toBe(true)
   expect((await sql('SELECT name FROM other.sqlite_schema')).isError).toBe(true)
   expect(text(await sql('SELECT value FROM world_sql'))).toBe('value\noriginal')
@@ -119,7 +146,9 @@ test('SQL permits only the specified direct and table-valued discovery pragmas',
 test('SQL validates row limits and reports complete-row truncation within output cap', async () => {
   const invalidLimits = await Promise.all([0, 1001, 1.5].map((limit) => sql('SELECT 1', limit)))
 
-  for (const result of invalidLimits) expect(result.isError).toBe(true)
+  for (const result of invalidLimits) {
+    expect(result.isError).toBe(true)
+  }
   expect(text(await sql('SELECT 1 AS n', 1))).toBe('n\n1')
 
   const defaultLimit = text(
@@ -162,7 +191,7 @@ test('SQL times out without blocking stdio and recovers', async () => {
   const discovery = await client.listTools()
 
   expect(Date.now() - started).toBeLessThan(3000)
-  expect(discovery.tools.some((tool) => tool.name === 'sql')).toBe(true)
+  expect(discovery.tools.some((tool: { readonly name: string }) => tool.name === 'sql')).toBe(true)
   expect(text(await sql('SELECT 7 AS concurrent'))).toBe('concurrent\n7')
 
   const result = await pending
@@ -170,6 +199,6 @@ test('SQL times out without blocking stdio and recovers', async () => {
   expect(Date.now() - started).toBeGreaterThanOrEqual(4900)
   expect(Date.now() - started).toBeLessThan(9000)
   expect(result.isError).toBe(true)
-  expect(text(result)).toMatch(/timed out/i)
+  expect(text(result)).toMatch(/timed out/iu)
   expect(text(await sql('SELECT 42 AS answer'))).toBe('answer\n42')
 }, 15000)
