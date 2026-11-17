@@ -222,6 +222,57 @@ test('changed IDs for the same source Record require a major version', () => {
   expect(gate(candidate, previous, '--prepare').status).toBe(0)
   expect(version(gate(candidate, previous).stdout)).toBe('2.0.0')
 })
+
+test('compares stable IDs across many records of the same kind', () => {
+  const dir = mkdtempSync(path.join(directory, 'stable-ids-'))
+  const candidate = path.join(dir, 'candidate.sqlite')
+  const previous = path.join(dir, 'previous.sqlite')
+  const db = new DatabaseSync(candidate)
+
+  db.exec(`
+    CREATE TABLE record (id TEXT, kind TEXT, source_table TEXT, source_row INTEGER);
+    CREATE INDEX record_kind ON record(kind);
+    CREATE TABLE entity (ID INTEGER);
+    WITH RECURSIVE numbers(n) AS (
+      VALUES(1) UNION ALL SELECT n + 1 FROM numbers WHERE n < 50000
+    )
+    INSERT INTO entity SELECT n FROM numbers;
+    INSERT INTO record SELECT 'spell:' || ID, 'spell', 'entity', rowid FROM entity;
+  `)
+  db.close()
+  copyFileSync(candidate, previous)
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '--eval',
+      `
+        import assert from 'node:assert/strict'
+        import { DatabaseSync } from 'node:sqlite'
+        import { schema } from './scripts/release-gate-checks.ts'
+        import { changedRecordIds } from './scripts/release-gate-comparison.ts'
+
+        const [candidate, previous] = process.argv.slice(1)
+        const db = new DatabaseSync(candidate)
+        const old = new DatabaseSync(previous)
+        const before = schema(old)
+        const after = schema(db)
+        old.close()
+        assert.equal(changedRecordIds(db, previous, before, after), false)
+        db.exec("UPDATE record SET id='spell:renamed' WHERE id='spell:50000'")
+        assert.equal(changedRecordIds(db, previous, before, after), true)
+        db.close()
+      `,
+      candidate,
+      previous
+    ],
+    { encoding: 'utf8', timeout: 20000 }
+  )
+
+  expect(result.error).toBeUndefined()
+  expect(result.status).toBe(0)
+}, 30000)
 test('duplicate names and reordered physical rows do not change stable source identity', () => {
   const candidate = fixture()
   const db = new DatabaseSync(candidate)
