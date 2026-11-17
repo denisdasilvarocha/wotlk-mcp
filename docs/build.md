@@ -103,7 +103,7 @@ The build always resolves the latest upstream sources, pins each to an exact rev
 
 | Source | Provides | How it is pinned and verified |
 | --- | --- | --- |
-| Client inputs | DBC files, Interface source, native registration dump | Release `client-inputs-12340-engb-1` of this repository, downloaded with `gh`. `build/verify-client-inputs.py` checks the bundle and manifest hashes, permitted paths, and every file hash before extraction. |
+| Client inputs | DBC files, Interface source, native registration dump | Release `client-inputs-12340-engb-1` of this repository, downloaded with `gh`. `build/sources/verify-client-inputs.py` checks the bundle and manifest hashes, permitted paths, and every file hash before extraction. |
 | [WoWDBDefs](https://github.com/wowdev/WoWDBDefs) | DBC layouts for build 12340 | `master` resolved to a commit; the archive is downloaded and hashed once. |
 | [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk) | World Data, enum headers | The `acore/ac-wotlk-db-import:master` image resolved to a digest. Its build provenance must name the AzerothCore repository and a commit, and that commit's source archive supplies the SQL and headers. Custom and module SQL is rejected. |
 | [Codex](https://github.com/Shard-MW/milkyway-codex) | Lua API data | `main` resolved to a commit and checked out detached. The eight consumed data files are hashed, then evaluated in a digest-pinned `node:24-alpine` container with no network, a read-only filesystem, no capabilities, and a 60-second limit. |

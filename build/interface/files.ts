@@ -1,0 +1,121 @@
+import { sha256Hex } from '../shared/sha256.ts'
+import { commandParser, type Command } from './commands.ts'
+import { lstatSync, readFileSync } from 'node:fs'
+import path from 'node:path'
+
+import type { Database } from '../../src/database.ts'
+import type { ClientManifestFile } from '../shared/client-manifest.ts'
+import type { StatementSync } from 'node:sqlite'
+
+function readInterfaceFile(
+  directory: string,
+  file: ClientManifestFile
+): { text: string; archive: string } {
+  if (
+    file.path.split('/').some((part) => part === '.' || part === '..') ||
+    !/^[a-f0-9]{64}$/u.test(file.sha256) ||
+    typeof file.archive !== 'string'
+  ) {
+    throw new Error(`Invalid Interface manifest entry: ${file.path}`)
+  }
+
+  const fullPath = path.join(directory, ...file.path.split('/'))
+  let current = directory
+
+  for (const part of file.path.split('/')) {
+    current = path.join(current, part)
+
+    if (lstatSync(current).isSymbolicLink()) {
+      throw new Error(`Symlink in Interface path: ${file.path}`)
+    }
+  }
+
+  const content = readFileSync(fullPath)
+
+  if (sha256Hex(content) !== file.sha256) {
+    throw new Error(`Interface SHA-256 mismatch: ${file.path}`)
+  }
+
+  return {
+    archive: file.archive,
+    text: new TextDecoder('utf-8', { fatal: true }).decode(content)
+  }
+}
+
+function insertLines(
+  statements: Readonly<Record<'line' | 'fts', Readonly<StatementSync>>>,
+  file: ClientManifestFile,
+  text: string,
+  commands: Readonly<Map<string, Command>>
+): void {
+  const relativePath = file.path.slice('Interface/'.length)
+  const lines = text.split(/\r\n|\n|\r/u)
+
+  if (lines.at(-1) === '') {
+    lines.pop()
+  }
+
+  const parse = commandParser(commands)
+
+  for (const [index, textLine] of lines.entries()) {
+    const line = index + 1
+
+    statements.line.run(relativePath, line, textLine)
+    statements.fts.run(relativePath, line, textLine)
+
+    if (/\.lua$/iu.test(file.path)) {
+      parse(textLine, relativePath, line)
+    }
+  }
+}
+
+export function insertFiles(
+  db: Database,
+  directory: string,
+  files: readonly ClientManifestFile[],
+  provenance: string,
+  commands: Readonly<Map<string, Command>>
+): void {
+  const insertFile = db.prepare('INSERT INTO ui_file VALUES (?, ?, ?, ?, ?, ?)')
+  const insertRecord = db.prepare(
+    'INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  )
+  const lineStatements = {
+    fts: db.prepare('INSERT INTO ui_line_fts VALUES (?, ?, ?)'),
+    line: db.prepare('INSERT INTO ui_line VALUES (?, ?, ?)')
+  }
+
+  for (const file of files) {
+    const { text, archive } = readInterfaceFile(directory, file)
+    const relativePath = file.path.slice('Interface/'.length)
+    let fileProvenance = provenance
+
+    if (
+      file.path === 'Interface/FrameXML/Localization.lua' ||
+      file.path === 'Interface/AddOns/Blizzard_Calendar/Localization.lua'
+    ) {
+      fileProvenance +=
+        '; known locale difference: https://github.com/denisdasilvarocha/wotlk-mcp/issues/14'
+    }
+
+    const row = insertFile.run(
+      relativePath,
+      file.path,
+      archive,
+      file.sha256,
+      'enGB',
+      fileProvenance
+    )
+
+    insertRecord.run(
+      `file:${relativePath}`,
+      'file',
+      relativePath,
+      'ui_file',
+      row.lastInsertRowid,
+      '',
+      ''
+    )
+    insertLines(lineStatements, file, text, commands)
+  }
+}

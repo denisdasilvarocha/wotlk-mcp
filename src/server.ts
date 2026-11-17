@@ -1,16 +1,15 @@
-import type { DatabaseSync } from 'node:sqlite'
-
-import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
-import { serveStdio } from '@modelcontextprotocol/server/stdio'
-import * as z from 'zod'
-
 import pkg from '../package.json' with { type: 'json' }
-import { getReferencePath, takeUpdateWarning } from './acquire.js'
+import { getReferencePath, takeUpdateWarning } from './acquire/index.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated } from './related.js'
 import { kinds, relations } from './schema.js'
 import { searchRecords } from './search.js'
 import { runSql } from './sql.js'
+import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import * as z from 'zod'
+
+import type { Database } from './database.js'
 
 const instructions = [
   'Offline reference for World of Warcraft: Wrath of the Lich King 3.3.5a, client build 12340. Use it whenever a task needs facts about that game version instead of recalling them from memory: spells, items, creatures and NPCs, quests, game objects, loot, vendors, trainers, spawns, talents, achievements, factions, maps and zones; the addon Lua API (functions, events, widgets and their methods, CVars, combat log events, secure templates, slash commands) and Blizzard FrameXML/GlueXML source; or native client addresses (offsets). Typical users build private servers (AzerothCore, TrinityCore), addons or client tools for 3.3.5a. Do not use it for retail, Classic or other expansions.',
@@ -27,13 +26,6 @@ const instructions = [
 ].join('\n')
 
 const searchInput = z.strictObject({
-  query: z
-    .string()
-    .trim()
-    .min(1)
-    .describe(
-      'Literal search terms, e.g. "Thunderfury", "blade windseeker", "UnitHealth", "19019" or "item:19019".'
-    ),
   kind: z
     .array(z.enum(kinds))
     .optional()
@@ -46,18 +38,30 @@ const searchInput = z.strictObject({
     .int()
     .min(0)
     .default(0)
-    .describe('Hits to skip; pass the next offset from the previous footer.')
+    .describe('Hits to skip; pass the next offset from the previous footer.'),
+  query: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      'Literal search terms, e.g. "Thunderfury", "blade windseeker", "UnitHealth", "19019" or "item:19019".'
+    )
 })
 
-const idPattern = `^(${kinds.join('|')}):.+$`
 const recordId = z
   .string()
   .regex(
-    new RegExp(idPattern),
+    new RegExp(`^(${kinds.join('|')}):.+$`, 'u'),
     'Use a kind-qualified ID such as item:19019, fn:UnitHealth or file:FrameXML/ChatFrame.lua; find IDs with search'
   )
 
 const getInput = z.strictObject({
+  from: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe('file: IDs only. First line of the window; defaults to 1.'),
   ids: z
     .array(recordId)
     .min(1)
@@ -65,12 +69,6 @@ const getInput = z.strictObject({
     .describe(
       'Kind-qualified Record IDs from search or related, e.g. ["item:19019", "spell:133", "fn:UnitHealth"]. For Interface source use the path without a line number, e.g. file:FrameXML/ChatFrame.lua.'
     ),
-  from: z
-    .number()
-    .int()
-    .min(1)
-    .optional()
-    .describe('file: IDs only. First line of the window; defaults to 1.'),
   to: z
     .number()
     .int()
@@ -83,27 +81,29 @@ const getInput = z.strictObject({
 
 const relatedInput = z.strictObject({
   id: recordId.describe('Record ID to start from, e.g. creature:448 or item:19019.'),
-  rel: z
-    .enum(relations.flat())
-    .optional()
-    .describe(
-      'Only follow this relation, in the direction named; e.g. "dropped by" on an item lists what drops it.'
-    ),
   limit: z.number().int().min(1).max(100).default(20).describe('Links per page.'),
   offset: z
     .number()
     .int()
     .nonnegative()
     .default(0)
-    .describe('Links to skip; pass the next offset from the previous footer.')
+    .describe('Links to skip; pass the next offset from the previous footer.'),
+  rel: z
+    .enum(relations.flat())
+    .optional()
+    .describe(
+      'Only follow this relation, in the direction named; e.g. "dropped by" on an item lists what drops it.'
+    )
 })
 
 const sqlInput = z.strictObject({
-  query: z.string().min(1).describe('One SQLite SELECT statement or an allowed PRAGMA.'),
-  limit: z.number().int().min(1).max(1000).default(100).describe('Maximum rows returned.')
+  limit: z.number().int().min(1).max(1000).default(100).describe('Maximum rows returned.'),
+  query: z.string().min(1).describe('One SQLite SELECT statement or an allowed PRAGMA.')
 })
 
-async function withReference(read: (db: DatabaseSync) => string): Promise<string> {
+const annotations: ToolAnnotations = { openWorldHint: false, readOnlyHint: true }
+
+async function withReference(read: (db: Database) => string): Promise<string> {
   const db = openReference(await getReferencePath())
 
   try {
@@ -118,31 +118,27 @@ async function respond(run: () => Promise<string>): Promise<CallToolResult> {
   let result: CallToolResult
 
   try {
-    result = { content: [{ type: 'text', text: await run() }] }
+    result = { content: [{ text: await run(), type: 'text' }] }
   } catch (error) {
-    let text = String(error)
-
-    if (error instanceof Error) text = error.message
-
-    result = { isError: true, content: [{ type: 'text', text: text.replace(/[\r\n]+/g, ' ') }] }
+    const text = error instanceof Error ? error.message : String(error)
+    result = { content: [{ text: text.replaceAll(/[\r\n]+/gu, ' '), type: 'text' }], isError: true }
   }
 
   const warning = takeUpdateWarning()
-
-  if (warning) result.content.push({ type: 'text', text: warning })
+  if (warning) {
+    result.content.push({ text: warning, type: 'text' })
+  }
 
   return result
 }
 
-const annotations: ToolAnnotations = { readOnlyHint: true, openWorldHint: false }
-
 function createServer(): McpServer {
   const server = new McpServer(
     {
+      description: pkg.description,
       name: 'wotlk',
       title: 'WotLK 3.3.5a Reference',
       version: pkg.version,
-      description: pkg.description,
       websiteUrl: pkg.homepage
     },
     { instructions }
@@ -151,7 +147,7 @@ function createServer(): McpServer {
   server.registerTool(
     'search',
     {
-      title: 'Search WotLK Reference',
+      annotations,
       description: [
         'Find World of Warcraft 3.3.5a (WotLK, build 12340) Records by name or text and return their IDs. Start here whenever you do not already know an ID.',
         'Matching is case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text. A bare number matches that key in every kind (19019 -> item:19019, creature:19019, ...); a full ID such as spell:133 ranks first. Queries under 3 characters match name prefixes only. When 4+ characters find nothing, a typo-tolerant fallback runs and the footer starts with "Fuzzy:".',
@@ -159,14 +155,14 @@ function createServer(): McpServer {
         'Output: one hit per line as "id name - hint", then a footer "start-end of total; next offset: N" or "...; end". Pass N as offset for the next page.'
       ].join('\n'),
       inputSchema: searchInput,
-      annotations
+      title: 'Search WotLK Reference'
     },
     (input) => respond(() => withReference((db) => searchRecords(db, input)))
   )
   server.registerTool(
     'get',
     {
-      title: 'Get WotLK Records',
+      annotations,
       description: [
         'Fetch full WotLK 3.3.5a Records for up to 20 IDs taken from search or related.',
         'Each Record prints its ID, then one "field: value" line per source column; zero, null and empty values are omitted, and enum or flag columns are decoded as value (NAME), e.g. "Quality: 5 (LEGENDARY)". Lua functions and methods may add "native:" lines with client addresses. An unknown ID prints "not found: <id>" without failing the others.',
@@ -174,14 +170,14 @@ function createServer(): McpServer {
         'To filter or compare many Records by column values, use sql instead.'
       ].join('\n'),
       inputSchema: getInput,
-      annotations
+      title: 'Get WotLK Records'
     },
     (input) => respond(() => withReference((db) => getRecords(db, input.ids, input.from, input.to)))
   )
   server.registerTool(
     'sql',
     {
-      title: 'Query WotLK SQL',
+      annotations,
       description: [
         'Run one read-only SQLite statement against the WotLK 3.3.5a reference database. Use it for counts, filters, joins and aggregations, for columns search does not index, and for tables with no Record kind such as world_npc_vendor, world_creature_loot_template or dbc_SpellDuration.',
         "Core tables: record(id, kind, name, source_table, source_row) indexes every Record and joins to its source row by rowid, e.g. SELECT t.* FROM record r JOIN world_item_template t ON t.rowid = r.source_row WHERE r.id = 'item:19019'. link(source_id, relation, destination_id, notes) stores forward relations only. enum_value and enum_field decode enum columns; source lists provenance and licences.",
@@ -190,7 +186,7 @@ function createServer(): McpServer {
         'Output is tab-separated with a header row. Cells escape backslash, tab, newline and carriage return; NULL is null, \\NULL is the literal text NULL and blobs are \\x followed by hex. Output stops at limit rows or 32,000 characters with a [truncated: ...] line; queries time out after 5 seconds.'
       ].join('\n'),
       inputSchema: sqlInput,
-      annotations
+      title: 'Query WotLK SQL'
     },
     (input, ctx) =>
       respond(async () =>
@@ -200,7 +196,7 @@ function createServer(): McpServer {
   server.registerTool(
     'related',
     {
-      title: 'Related WotLK Records',
+      annotations,
       description: [
         'List the Records directly linked to one WotLK 3.3.5a Record, in both directions. Use it for questions like where an item drops, who sells or teaches something, which NPC starts or ends a quest, what a quest rewards, or where a creature spawns.',
         'Each line is "relation id (notes)"; notes carry source details such as loot chance and count. Lines are sorted by relation, then ID, and paged like search.',
@@ -208,7 +204,7 @@ function createServer(): McpServer {
         'Only these Links exist; for any other relationship query the source tables with sql.'
       ].join('\n'),
       inputSchema: relatedInput,
-      annotations
+      title: 'Related WotLK Records'
     },
     (input) => respond(() => withReference((db) => getRelated(db, input)))
   )

@@ -36,6 +36,8 @@ flowchart LR
 
 A failed run leaves its draft unpublished, and its version stays reserved. After investigating, an authorized operator may delete the failed draft before retrying. Never delete or replace a published asset to make a retry work.
 
+Release metadata may contain null digests for unrelated assets. The selected database asset must still have a valid SHA-256 digest, and newly uploaded assets must match their local file hashes.
+
 ### Release gate
 
 `scripts/release-gate.ts` checks the candidate database against the previous published one. It fails on:
@@ -169,4 +171,4 @@ Deleting a release does not delete its Git tag; leave the tag in place so the ve
 
 ## Client-input release
 
-Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources.ts` pins its manifest hash. It was published once and is not part of the database or package workflows. Never replace its asset; changed inputs need a new release name. It was published before the repository enabled immutable releases, so GitHub does not lock its asset.
+Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources/index.ts` pins its manifest hash. It was published once and is not part of the database or package workflows. Never replace its asset; changed inputs need a new release name. It was published before the repository enabled immutable releases, so GitHub does not lock its asset.

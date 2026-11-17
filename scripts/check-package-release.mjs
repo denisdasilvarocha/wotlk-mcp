@@ -1,3 +1,5 @@
+import { acceptedSchemaMajor } from '../src/schema.ts'
+import { asArray, asRecord, asString } from './records.mjs'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -7,53 +9,29 @@ import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createBrotliDecompress } from 'node:zlib'
 
-import { acceptedSchemaMajor } from '../src/schema.ts'
-
+/** @type {Record<string, string>} */
 const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'wotlk-mcp-release' }
-const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/
+const semver =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/u
 
-const [
-  tag,
-  releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases',
-  registryUrl = 'https://registry.npmjs.org/wotlk-mcp'
-] = process.argv.slice(2)
+/**
+ * @typedef {{ readonly digest?: string, readonly url: string }} ReleaseAsset
+ */
 
-const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
-const version = semver.exec(pkg.version)
-
-if (!version || tag !== `v${pkg.version}`)
-  throw new Error('package version and v<semver> tag must match')
-
-if (!Number.isSafeInteger(pkg.wotlkSchemaMajor) || pkg.wotlkSchemaMajor < 1)
-  throw new Error('invalid accepted schema major')
-
-if (pkg.wotlkSchemaMajor !== acceptedSchemaMajor)
-  throw new Error('package metadata does not match accepted schema major')
-
-if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
-const registry = await fetch(registryUrl)
-
-if (registry.status === 404)
-  throw new Error(
-    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see docs/releases.md)'
-  )
-
-if (!registry.ok) throw new Error(`npm registry lookup failed: ${registry.status}`)
-
-const metadata = await registry.json()
-
-if (!metadata.versions || typeof metadata.versions !== 'object')
-  throw new Error('invalid npm registry metadata')
-
-for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
-  const parsed = semver.exec(publishedVersion)
-
-  if (!parsed) continue
-  if (publishedVersion === pkg.version) throw new Error('package version already published')
-  if (parsed[1] === version[1] && published.wotlkSchemaMajor !== pkg.wotlkSchemaMajor)
-    throw new Error('schema major changed without a package-major change')
+/**
+ * @param {unknown} value - Release to inspect.
+ * @returns {boolean} Whether the release is compatible.
+ */
+function isCompatibleRelease(value) {
+  const record = asRecord(value)
+  const match = /^db-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u.exec(String(record.tag_name))
+  const draft = Boolean(record.draft)
+  const prerelease = Boolean(record.prerelease)
+  return match !== null && Number(match[1]) === schemaMajor && !draft && !prerelease
 }
 
+/** @param {number} page - Release page number.
+ * @returns {Promise<void>} */
 async function checkReleasePage(page) {
   const url = new URL(releasesUrl)
 
@@ -62,35 +40,51 @@ async function checkReleasePage(page) {
 
   const response = await fetch(url, { headers })
 
-  if (!response.ok) throw new Error(`database release lookup failed: ${response.status}`)
-
-  const releases = await response.json()
-
-  if (!Array.isArray(releases)) throw new Error('invalid database releases response')
-
-  const release = releases.find((item) => {
-    const match = /^db-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(item.tag_name)
-
-    return match && Number(match[1]) === pkg.wotlkSchemaMajor && !item.draft && !item.prerelease
-  })
-
-  if (!release) {
-    if (releases.length === 100) return checkReleasePage(page + 1)
-
-    throw new Error(`no published compatible database for schema major ${pkg.wotlkSchemaMajor}`)
+  if (!response.ok) {
+    throw new Error(`database release lookup failed: ${response.status}`)
   }
 
-  const asset = release.assets?.find((item) => item.name === 'wotlk.sqlite.br')
+  const responseBody = await response.json()
 
-  if (!asset || !/^sha256:[a-f0-9]{64}$/.test(asset.digest ?? ''))
+  if (!Array.isArray(responseBody)) {
+    throw new TypeError('invalid database releases response')
+  }
+  const releases = asArray(responseBody)
+  const release = releases.find((item) => isCompatibleRelease(item))
+
+  if (release === undefined) {
+    if (releases.length === 100) {
+      return checkReleasePage(page + 1)
+    }
+
+    throw new Error(`no published compatible database for schema major ${schemaMajor}`)
+  }
+
+  const assets = asRecord(release).assets
+  const asset =
+    assets === null || assets === undefined
+      ? undefined
+      : asArray(assets).find((item) => asRecord(item).name === 'wotlk.sqlite.br')
+  const record = asset === undefined ? undefined : asRecord(asset)
+  if (
+    !record ||
+    typeof record.digest !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/u.test(record.digest)
+  ) {
     throw new Error('published database asset or digest missing')
+  }
+  await checkAsset({ digest: asString(record.digest), url: asString(record.url) })
+}
 
+/** @param {Readonly<ReleaseAsset>} asset - Published database asset. */
+async function checkAsset(asset) {
   const download = await fetch(asset.url, {
     headers: { ...headers, Accept: 'application/octet-stream' }
   })
 
-  if (!download.ok || !download.body)
+  if (!download.ok || !download.body) {
     throw new Error(`database download failed: ${download.status}`)
+  }
 
   const directory = mkdtempSync(path.join(tmpdir(), 'wotlk-release-'))
 
@@ -100,6 +94,9 @@ async function checkReleasePage(page) {
     const hash = createHash('sha256')
     const hashing = new Transform({
       transform(chunk, encoding, callback) {
+        if (typeof chunk !== 'string' && !Buffer.isBuffer(chunk)) {
+          throw new TypeError('invalid database download chunk')
+        }
         hash.update(chunk)
         callback(undefined, chunk)
       }
@@ -107,8 +104,9 @@ async function checkReleasePage(page) {
 
     await pipeline(Readable.fromWeb(download.body), hashing, createWriteStream(compressed))
 
-    if (`sha256:${hash.digest('hex')}` !== asset.digest)
+    if (`sha256:${hash.digest('hex')}` !== asset.digest) {
       throw new Error('database asset digest mismatch')
+    }
 
     await pipeline(
       createReadStream(compressed),
@@ -116,23 +114,89 @@ async function checkReleasePage(page) {
       createWriteStream(database)
     )
 
-    const db = new DatabaseSync(database, { readOnly: true })
+    checkSchema(database)
+  } finally {
+    rmSync(directory, { force: true, recursive: true })
+  }
+}
 
-    try {
-      const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
-
-      if (
-        typeof row?.value !== 'string' ||
-        !new RegExp(`^${pkg.wotlkSchemaMajor}\\.\\d+\\.\\d+$`).test(row.value)
-      )
-        throw new Error('published database schema does not match package')
-    } finally {
-      db.close()
+/** @param {string} database - Decompressed database path. */
+function checkSchema(database) {
+  const db = new DatabaseSync(database, { readOnly: true })
+  try {
+    const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()
+    if (
+      typeof row?.value !== 'string' ||
+      !new RegExp(`^${schemaMajor}\\.\\d+\\.\\d+$`, 'u').test(row.value)
+    ) {
+      throw new Error('published database schema does not match package')
     }
   } finally {
-    rmSync(directory, { recursive: true, force: true })
+    db.close()
+  }
+}
+
+const [
+  tag,
+  releasesUrl = 'https://api.github.com/repos/denisdasilvarocha/wotlk-mcp/releases',
+  registryUrl = 'https://registry.npmjs.org/wotlk-mcp'
+] = process.argv.slice(2)
+
+const pkg = asRecord(JSON.parse(readFileSync('package.json', 'utf8')))
+const packageVersion = String(pkg.version)
+const version = semver.exec(packageVersion)
+
+if (!version || tag !== `v${packageVersion}`) {
+  throw new Error('package version and v<semver> tag must match')
+}
+
+if (
+  typeof pkg.wotlkSchemaMajor !== 'number' ||
+  !Number.isSafeInteger(pkg.wotlkSchemaMajor) ||
+  pkg.wotlkSchemaMajor < 1
+) {
+  throw new Error('invalid accepted schema major')
+}
+const schemaMajor = pkg.wotlkSchemaMajor
+
+if (pkg.wotlkSchemaMajor !== acceptedSchemaMajor) {
+  throw new Error('package metadata does not match accepted schema major')
+}
+
+if (process.env.GITHUB_TOKEN !== undefined && process.env.GITHUB_TOKEN !== '') {
+  headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`
+}
+const registry = await fetch(registryUrl)
+
+if (registry.status === 404) {
+  throw new Error(
+    'npm package does not exist; owner must provision it and configure the trusted publisher before release (see docs/releases.md)'
+  )
+}
+
+if (!registry.ok) {
+  throw new Error(`npm registry lookup failed: ${registry.status}`)
+}
+
+const metadata = asRecord(await registry.json())
+
+if (metadata.versions === null || typeof metadata.versions !== 'object') {
+  throw new Error('invalid npm registry metadata')
+}
+
+for (const [publishedVersion, published] of Object.entries(metadata.versions)) {
+  const parsed = semver.exec(publishedVersion)
+
+  if (!parsed) {
+    continue
+  }
+  if (publishedVersion === packageVersion) {
+    throw new Error('package version already published')
+  }
+  if (parsed[1] === version[1] && asRecord(published).wotlkSchemaMajor !== pkg.wotlkSchemaMajor) {
+    throw new Error('schema major changed without a package-major change')
   }
 }
 
 await checkReleasePage(1)
-console.log(`Package ${tag} has a published compatible schema ${pkg.wotlkSchemaMajor} database`)
+console.log(`Package ${tag} has a published compatible schema ${schemaMajor} database`)
