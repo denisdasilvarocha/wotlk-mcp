@@ -101,6 +101,8 @@ If the compressed database exceeds 250 MB, the build still succeeds but warns `C
 
 The build always resolves the latest upstream sources, pins each to an exact revision, and records it in the `source` table and `meta.input_pins`. Any missing provenance, failed hash check, or incompatible layout stops the build. It never falls back to older inputs or skips a domain.
 
+GitHub API requests use `GITHUB_TOKEN`, or `GH_TOKEN` when it is unset. CI supplies this token to avoid the shared runner IP's unauthenticated rate limit. Archive downloads do not receive the token.
+
 | Source | Provides | How it is pinned and verified |
 | --- | --- | --- |
 | Client inputs | DBC files, Interface source, native registration dump | Release `client-inputs-12340-engb-1` of this repository, downloaded with `gh`. `build/sources/verify-client-inputs.py` checks the bundle and manifest hashes, permitted paths, and every file hash before extraction. |

@@ -23,11 +23,20 @@ function readVersion(file: string): string {
   return value.version
 }
 
-function serverCommand(): { command: string; args: string[] } {
-  if (process.platform === 'win32') {
-    return { args: ['/d', '/s', '/c', `npx -y wotlk-mcp@${version}`], command: 'cmd' }
+function readBin(file: string): string {
+  const value: unknown = JSON.parse(readFileSync(file, 'utf8'))
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('bin' in value) ||
+    typeof value.bin !== 'object' ||
+    value.bin === null ||
+    !('wotlk-mcp' in value.bin) ||
+    typeof value.bin['wotlk-mcp'] !== 'string'
+  ) {
+    throw new Error(`Invalid package bin: ${file}`)
   }
-  return { args: ['-y', `wotlk-mcp@${version}`], command: 'npx' }
+  return value.bin['wotlk-mcp']
 }
 
 function run(command: string, args: readonly string[], cwd?: string): void {
@@ -64,7 +73,7 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     initReference(database)
 
     const archive = packPackage(directory)
-    const { args, command } = serverCommand()
+    const packageDirectory = path.join(directory, 'node_modules/wotlk-mcp')
     const files = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' })
 
     expect(files).not.toMatch(/\.sqlite(?:\.br)?$/mu)
@@ -79,18 +88,18 @@ test('a clean installed tarball exposes an executable MCP server without a bundl
     )
     run('vp', ['install'], directory)
 
-    const installed = readVersion(path.join(directory, 'node_modules/wotlk-mcp/package.json'))
+    const packageFile = path.join(packageDirectory, 'package.json')
+    const installed = readVersion(packageFile)
 
     expect(installed).toBe(version)
 
-    await client.connect(
-      new StdioClientTransport({
-        args,
-        command,
-        cwd: directory,
-        env: { ...process.env, WOTLK_MCP_DB: database }
-      })
-    )
+    const server = new StdioClientTransport({
+      args: [path.join(packageDirectory, readBin(packageFile))],
+      command: process.execPath,
+      cwd: directory,
+      env: { ...process.env, WOTLK_MCP_DB: database }
+    })
+    await client.connect(server)
 
     const result = await client.callTool({
       arguments: { ids: ['offset:Globals::PlayerName'] },
