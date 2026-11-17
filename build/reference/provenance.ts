@@ -1,9 +1,9 @@
-import { createHash } from 'node:crypto'
 import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
+import { sha256Hex } from '../shared/sha256.ts'
 import { canonicalTableHash, canonicalTables } from '../shared/table-hash.ts'
 import type { Sources } from '../sources/index.ts'
 
@@ -43,9 +43,7 @@ function recordClientBundle(db: Database, clientManifestHash: string): void {
     throw new Error('Reference input pins are missing')
   }
   const clientInputs = 'client_inputs' in pins ? pins.client_inputs : undefined
-  const manifestHash = createHash('sha256')
-    .update(readFileSync('data/client-inputs/manifest.json'))
-    .digest('hex')
+  const manifestHash = sha256Hex(readFileSync('data/client-inputs/manifest.json'))
 
   if (clientInputs !== manifestHash || clientManifestHash !== manifestHash) {
     throw new Error('Client manifest pin does not match the published client-inputs asset manifest')

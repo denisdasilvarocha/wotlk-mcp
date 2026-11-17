@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
-import { addLink } from './insert.ts'
+import { linkWriter, type AddLink } from './insert.ts'
 
 const sources = [
   ['creature', 'creature', 'lootid', 1],
@@ -25,6 +25,7 @@ interface Row {
 }
 
 interface LootContext {
+  readonly addLink: AddLink
   readonly db: Database
   readonly conditions: Readonly<ReadonlySet<string>>
   readonly records: Readonly<ReadonlySet<string>>
@@ -125,13 +126,7 @@ function visit(
     if (path.length > 0) {
       via = ` via ${path.map((n) => `ref:${n}`).join(' -> ')}`
     }
-    addLink(
-      context.db,
-      source,
-      'drops',
-      `item:${row.Item}`,
-      `${[...evidence, note].join(' | ')}${via}`
-    )
+    context.addLink(source, 'drops', `item:${row.Item}`, `${[...evidence, note].join(' | ')}${via}`)
   }
 }
 
@@ -199,7 +194,7 @@ export function buildLootLinks(file: string): void {
       throw new Error('Missing reference loot table')
     }
 
-    linkOwners({ conditions, db, records, refs }, tables)
+    linkOwners({ addLink: linkWriter(db), conditions, db, records, refs }, tables)
     db.exec('COMMIT')
   } catch (error) {
     db.exec('ROLLBACK')

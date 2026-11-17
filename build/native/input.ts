@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
+import { clientExecutableSha256, readClientManifest } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
+import { sha256Hex } from '../shared/sha256.ts'
 import {
   isRegistration,
   parseDecisions,
@@ -9,9 +11,6 @@ import {
   type TableDecision,
   validateRegistrations
 } from './registration.ts'
-import { sha } from './widget.ts'
-
-export const expectedExecutable = 'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
 
 type Decisions = Record<string, TableDecision | undefined>
 
@@ -19,32 +18,18 @@ function readDump(
   directory: string,
   manifestHash: string
 ): { dumpText: string; rows: Registration[] } {
-  const manifestText = readFileSync(path.join(directory, 'manifest.json'), 'utf8')
-  if (!/^[a-f0-9]{64}$/u.test(manifestHash) || sha(manifestText) !== manifestHash) {
-    throw new Error('Client manifest SHA-256 mismatch')
-  }
-  const manifest: unknown = JSON.parse(manifestText)
-  if (!isRecord(manifest) || !isRecord(manifest.client) || !Array.isArray(manifest.files)) {
-    throw new Error('Untrusted native extraction or SHA-256 mismatch')
-  }
-  const dumpText = readFileSync(path.join(directory, 'native-registrations.json'), 'utf8')
-  const files: unknown[] = manifest.files.filter(
-    (file: unknown) => isRecord(file) && file.path === 'native-registrations.json'
+  const files = readClientManifest(directory, manifestHash).filter(
+    (file) => file.path === 'native-registrations.json'
   )
-  if (
-    manifest.format !== 1 ||
-    manifest.client.original_executable_sha256 !== expectedExecutable ||
-    files.length !== 1 ||
-    !isRecord(files[0]) ||
-    sha(dumpText) !== files[0].sha256
-  ) {
+  const dumpText = readFileSync(path.join(directory, 'native-registrations.json'), 'utf8')
+  if (files.length !== 1 || sha256Hex(dumpText) !== files[0].sha256) {
     throw new Error('Untrusted native extraction or SHA-256 mismatch')
   }
   const dump: unknown = JSON.parse(dumpText)
   if (
     !isRecord(dump) ||
     dump.format !== 1 ||
-    dump.executable_sha256 !== expectedExecutable ||
+    dump.executable_sha256 !== clientExecutableSha256 ||
     !Array.isArray(dump.registrations)
   ) {
     throw new Error('Invalid native registration dump')
@@ -70,7 +55,7 @@ function readDecisions(overridePath?: string): {
     throw new Error('Invalid widget decisions')
   }
   return {
-    decisionHash: sha(decisionText),
+    decisionHash: sha256Hex(decisionText),
     missingWidgets: parseDecisions(parsed.missing_widgets),
     overrides: parseDecisions(parsed.overrides)
   }

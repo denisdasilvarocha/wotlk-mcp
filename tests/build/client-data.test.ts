@@ -135,7 +135,8 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
         original_executable_sha256:
           'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
       },
-      files
+      files,
+      format: 1
     })
 
     writeFileSync(path.join(dir, 'manifest.json'), manifest)

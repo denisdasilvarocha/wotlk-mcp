@@ -5,6 +5,7 @@ import path from 'node:path'
 
 import { z } from 'zod'
 
+import { sha256Hex } from '../shared/sha256.ts'
 import { image, run, worldRevision } from './images.ts'
 
 const clientAsset = 'client-inputs-12340-engb-1.tar.gz'
@@ -168,7 +169,7 @@ export function hashCodex(
   for (const name of codexNames) {
     const file = `src/data/${name}.ts`
     const bytes = readFileSync(path.join(directory, file))
-    const digest = createHash('sha256').update(bytes).digest('hex')
+    const digest = sha256Hex(bytes)
 
     if (expected && digest !== expected[file]) {
       throw new Error(`Codex SHA-256 mismatch: ${file}`)

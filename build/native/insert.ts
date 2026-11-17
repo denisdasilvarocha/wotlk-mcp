@@ -1,5 +1,5 @@
 import type { Database } from '../../src/database.ts'
-import { addLink } from '../links/insert.ts'
+import { linkWriter } from '../links/insert.ts'
 import type { Registration, TableDecision } from './registration.ts'
 import { declaringWidget } from './widget.ts'
 
@@ -58,6 +58,7 @@ export function insertRegistrations(
   )
   const exists = db.prepare('SELECT 1 FROM record WHERE id = ?')
   const offsets = db.prepare('SELECT path FROM offsets_entry WHERE va = ? ORDER BY path')
+  const addLink = linkWriter(db)
 
   for (const row of rows) {
     const [id, widget] = registrationIdentity(row, overrides, resolution)
@@ -87,7 +88,7 @@ export function insertRegistrations(
 
     if (record) {
       for (const offset of offsets.all(row.va)) {
-        addLink(db, record, 'implemented by', `offset:${String(offset.path)}`, note)
+        addLink(record, 'implemented by', `offset:${String(offset.path)}`, note)
       }
     }
   }

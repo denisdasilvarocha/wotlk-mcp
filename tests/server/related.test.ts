@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { Client } from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, expect, test } from 'vite-plus/test'
 
-import { addLink } from '../../build/links/insert.ts'
+import { linkWriter } from '../../build/links/insert.ts'
 import { initReference } from '../../build/offsets.ts'
 import { packagedServer, unpackPackage } from '../helpers/package.ts'
 
@@ -42,13 +42,15 @@ beforeAll(async () => {
       ('item:10', 'item', 'Other', 'world_evidence', 1, '', ''),
       ('quest:1', 'quest', 'Quest', 'world_evidence', 1, '', '');`)
 
+  const addLink = linkWriter(db)
+
   for (const row of db.prepare('SELECT chance FROM world_evidence').all()) {
-    addLink(db, 'creature:1', 'drops', 'item:2', String(row.chance))
+    addLink('creature:1', 'drops', 'item:2', String(row.chance))
   }
 
-  addLink(db, 'creature:1', 'drops', 'item:10')
-  addLink(db, 'creature:1', 'starts', 'quest:1')
-  addLink(db, 'quest:1', 'rewards', 'item:2', 'choice')
+  addLink('creature:1', 'drops', 'item:10')
+  addLink('creature:1', 'starts', 'quest:1')
+  addLink('quest:1', 'rewards', 'item:2', 'choice')
 
   const insert = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
 
@@ -58,7 +60,7 @@ beforeAll(async () => {
 
     insert.run(source, 'item', source, 'world_evidence', 1, '', '')
     insert.run(destination, 'item', destination, 'world_evidence', 1, '', '')
-    addLink(db, source, relation, destination)
+    addLink(source, relation, destination)
   }
 
   db.close()

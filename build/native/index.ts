@@ -1,10 +1,11 @@
 import { DatabaseSync } from 'node:sqlite'
 
+import { clientExecutableSha256 } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
-import { expectedExecutable, readNativeInput } from './input.ts'
+import { sha256Hex } from '../shared/sha256.ts'
+import { readNativeInput } from './input.ts'
 import { insertRegistrations } from './insert.ts'
 import { resolveWidgets } from './resolution.ts'
-import { sha } from './widget.ts'
 
 export function importNative(
   database: string,
@@ -28,8 +29,8 @@ export function importNative(
 
     db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)').run(
       'native-registrations',
-      expectedExecutable,
-      sha(dumpText),
+      clientExecutableSha256,
+      sha256Hex(dumpText),
       'Client-derived; redistribution risk accepted, permission not established',
       'Fingerprint-verified client executable registration tables; enGB English stand-in'
     )
@@ -41,7 +42,7 @@ export function importNative(
       throw new Error('Invalid input pins')
     }
 
-    pins.native = sha(dumpText)
+    pins.native = sha256Hex(dumpText)
     pins.native_manifest = manifestHash
 
     if (decisionHash) {

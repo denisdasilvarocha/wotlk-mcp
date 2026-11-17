@@ -72,6 +72,8 @@ test('native facts retain contexts and only link verified equal curated VAs', as
     })
     const manifest = JSON.stringify({
       client: {
+        build: 12340,
+        locale: 'enGB',
         original_executable_sha256:
           'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
       },

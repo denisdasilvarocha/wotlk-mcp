@@ -2,16 +2,17 @@ import { lstatSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 import type { Database } from '../../src/database.ts'
+import type { ClientManifestFile } from '../shared/client-manifest.ts'
+import { sha256Hex } from '../shared/sha256.ts'
 import { commandParser, type Command } from './commands.ts'
-import { digest, type InterfaceFile } from './manifest.ts'
 
 function readInterfaceFile(
   directory: string,
-  file: Readonly<InterfaceFile>
-): { text: string; archive: string; sha256: string } {
+  file: ClientManifestFile
+): { text: string; archive: string } {
   if (
     file.path.split('/').some((part) => part === '.' || part === '..') ||
-    !/^[a-f0-9]{64}$/u.test(String(file.sha256)) ||
+    !/^[a-f0-9]{64}$/u.test(file.sha256) ||
     typeof file.archive !== 'string'
   ) {
     throw new Error(`Invalid Interface manifest entry: ${file.path}`)
@@ -30,20 +31,19 @@ function readInterfaceFile(
 
   const content = readFileSync(fullPath)
 
-  if (typeof file.sha256 !== 'string' || digest(content) !== file.sha256) {
+  if (sha256Hex(content) !== file.sha256) {
     throw new Error(`Interface SHA-256 mismatch: ${file.path}`)
   }
 
   return {
     archive: file.archive,
-    sha256: file.sha256,
     text: new TextDecoder('utf-8', { fatal: true }).decode(content)
   }
 }
 
 function insertLines(
   db: Database,
-  file: Readonly<InterfaceFile>,
+  file: ClientManifestFile,
   text: string,
   commands: Readonly<Map<string, Command>>
 ): void {
@@ -73,7 +73,7 @@ function insertLines(
 export function insertFiles(
   db: Database,
   directory: string,
-  files: readonly Readonly<InterfaceFile>[],
+  files: readonly ClientManifestFile[],
   provenance: string,
   commands: Readonly<Map<string, Command>>
 ): void {
@@ -84,7 +84,7 @@ export function insertFiles(
   const recordFts = db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)')
 
   for (const file of files) {
-    const { text, archive, sha256 } = readInterfaceFile(directory, file)
+    const { text, archive } = readInterfaceFile(directory, file)
     const relativePath = file.path.slice('Interface/'.length)
     let fileProvenance = provenance
 
@@ -96,7 +96,14 @@ export function insertFiles(
         '; known locale difference: https://github.com/denisdasilvarocha/wotlk-mcp/issues/14'
     }
 
-    const row = insertFile.run(relativePath, file.path, archive, sha256, 'enGB', fileProvenance)
+    const row = insertFile.run(
+      relativePath,
+      file.path,
+      archive,
+      file.sha256,
+      'enGB',
+      fileProvenance
+    )
 
     insertRecord.run(
       `file:${relativePath}`,

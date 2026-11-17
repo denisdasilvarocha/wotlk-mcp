@@ -1,10 +1,4 @@
-import { createHash } from 'node:crypto'
-
 type WidgetLookup = { readonly get: (key: string) => readonly string[] | undefined }
-
-export function sha(bytes: string): string {
-  return createHash('sha256').update(bytes).digest('hex')
-}
 
 export function sorted(names: readonly string[]): string {
   return JSON.stringify([...new Set(names)].toSorted())

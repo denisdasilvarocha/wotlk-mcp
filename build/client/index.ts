@@ -1,10 +1,11 @@
-import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
+import { readClientManifest, type ClientManifestFile } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
+import { sha256Hex } from '../shared/sha256.ts'
 import type { SourceArchive } from '../sources/index.ts'
 import { parseLayout } from './layout.ts'
 import { importTable } from './table.ts'
@@ -22,66 +23,12 @@ const kinds: Readonly<Record<string, string>> = {
   Talent: 'talent'
 }
 
-type ManifestFile = Readonly<{ path: string; sha256: string }>
-
-type Manifest = Readonly<{
-  client: Readonly<{ build: number; locale: string; original_executable_sha256: string }>
-  files: readonly ManifestFile[]
-}>
-
-function hash(data: Readonly<Pick<Buffer, 'subarray'>>): string {
-  return createHash('sha256').update(data.subarray()).digest('hex')
-}
-
-function isManifestFile(value: unknown): value is ManifestFile {
-  return isRecord(value) && typeof value.path === 'string' && typeof value.sha256 === 'string'
-}
-
-function readManifest(
-  root: string,
-  manifestHash: string,
-  definitions: Readonly<SourceArchive>
-): Manifest {
-  const manifestBytes = readFileSync(path.join(root, 'manifest.json'))
-  if (hash(manifestBytes) !== manifestHash) {
-    throw new Error('Client manifest hash mismatch')
-  }
-  if (hash(readFileSync(definitions.archive)) !== definitions.sha256) {
-    throw new Error('WoWDBDefs archive hash mismatch')
-  }
-  const manifest: unknown = JSON.parse(manifestBytes.toString())
-  if (
-    !isRecord(manifest) ||
-    !isRecord(manifest.client) ||
-    manifest.client.build !== 12340 ||
-    manifest.client.locale !== 'enGB' ||
-    manifest.client.original_executable_sha256 !==
-      'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
-  ) {
-    throw new Error('Client manifest has an incompatible build, locale or executable fingerprint')
-  }
-  if (
-    !Array.isArray(manifest.files) ||
-    !manifest.files.every((entry: unknown) => isManifestFile(entry))
-  ) {
-    throw new TypeError('Invalid client manifest files')
-  }
-  return {
-    client: {
-      build: manifest.client.build,
-      locale: manifest.client.locale,
-      original_executable_sha256: manifest.client.original_executable_sha256
-    },
-    files: manifest.files
-  }
-}
-
 function importFiles(
   db: Database,
   root: string,
   definitionsDirectory: string,
   definitionFiles: Readonly<Pick<ReadonlyMap<string, string>, 'get'>>,
-  files: readonly ManifestFile[]
+  files: readonly ClientManifestFile[]
 ): void {
   const statements = {
     foreign: db.prepare('INSERT INTO dbc_foreign_key VALUES (?, ?, ?, ?)'),
@@ -95,7 +42,7 @@ function importFiles(
     }
     const name = path.basename(entry.path, '.dbc')
     const data = readFileSync(path.join(root, entry.path))
-    if (hash(data) !== entry.sha256) {
+    if (sha256Hex(data) !== entry.sha256) {
       throw new Error(`Client hash mismatch: ${entry.path}`)
     }
     const file = definitionFiles.get(`${name}.dbd`.toLowerCase())
@@ -162,7 +109,10 @@ export function importClientData(
   manifestHash: string,
   definitions: Readonly<SourceArchive>
 ): void {
-  const manifest = readManifest(root, manifestHash, definitions)
+  const files = readClientManifest(root, manifestHash)
+  if (sha256Hex(readFileSync(definitions.archive)) !== definitions.sha256) {
+    throw new Error('WoWDBDefs archive hash mismatch')
+  }
   const definitionsDirectory = path.join(definitions.directory, 'definitions')
   const definitionNames = readdirSync(definitionsDirectory)
   // WoWDBDefs casing differs from client names (BannedAddons.dbd for BannedAddOns.dbc).
@@ -176,7 +126,7 @@ export function importClientData(
     db.exec(
       'CREATE TABLE dbc_foreign_key (source_table TEXT NOT NULL, field TEXT NOT NULL, target_table TEXT NOT NULL, target_field TEXT NOT NULL)'
     )
-    importFiles(db, root, definitionsDirectory, definitionFiles, manifest.files)
+    importFiles(db, root, definitionsDirectory, definitionFiles, files)
     writeMetadata(db, definitions, manifestHash)
     db.exec('COMMIT')
   } catch (error) {

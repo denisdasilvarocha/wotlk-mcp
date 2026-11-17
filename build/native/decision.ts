@@ -1,5 +1,6 @@
+import { sha256Hex } from '../shared/sha256.ts'
 import type { Registration, TableDecision } from './registration.ts'
-import { sha, sorted } from './widget.ts'
+import { sorted } from './widget.ts'
 
 type Widgets = Readonly<
   Pick<Map<string, readonly string[]>, 'get' | 'has' | typeof Symbol.iterator>
@@ -46,7 +47,7 @@ function validateMissing(
     typeof missing.widget !== 'string' ||
     !missing.widget ||
     typeof missing.methods_sha256 !== 'string' ||
-    missing.methods_sha256 !== sha(names) ||
+    missing.methods_sha256 !== sha256Hex(names) ||
     typeof missing.reason !== 'string' ||
     !missing.reason.trim() ||
     candidates.length > 0
@@ -85,7 +86,7 @@ export function resolveTable(
   if (
     !widgets.has(override.widget) ||
     typeof override.methods_sha256 !== 'string' ||
-    override.methods_sha256 !== sha(names) ||
+    override.methods_sha256 !== sha256Hex(names) ||
     typeof override.reason !== 'string' ||
     !override.reason.trim()
   ) {
