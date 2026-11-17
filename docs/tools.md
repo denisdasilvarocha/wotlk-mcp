@@ -194,7 +194,7 @@ PRAGMA table_info('world_item_template')
 ### Limits
 
 - Only `SELECT` and the `table_info`, `table_xinfo`, `table_list`, `index_list`, and `foreign_key_list` pragmas are allowed. Writes, `ATTACH`, extension loading, and other pragmas fail with `not authorized`.
-- The query must be exactly one statement.
+- The query must be exactly one statement. Only whitespace, line comments, and closed block comments may follow it.
 - Output stops at `limit` rows or 32,000 characters and ends with a `[truncated: …]` line.
 - A query that runs longer than 5 seconds is stopped with `SQL query timed out after 5 seconds`.
 

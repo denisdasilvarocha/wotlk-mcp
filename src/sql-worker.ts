@@ -37,9 +37,8 @@ function execute(path: string, query: string, limit: number): string {
     })
 
     const statement = db.prepare(query)
-    const remaining = query.slice(statement.sourceSQL.length)
 
-    if (!/^(?:\s|--[^\r\n]*(?:\r\n|\r|\n|$)|\/\*[\s\S]*?\*\/)*$/u.test(remaining)) {
+    if (!isCommentTail(query, statement.sourceSQL.length)) {
       throw new Error('SQL requires exactly one statement')
     }
 
@@ -50,6 +49,34 @@ function execute(path: string, query: string, limit: number): string {
   } finally {
     db.close()
   }
+}
+
+function isCommentTail(query: string, start: number): boolean {
+  let i = start
+
+  while (i < query.length) {
+    if (/\s/u.test(query[i])) {
+      i++
+    } else if (query[i] === '-' && query[i + 1] === '-') {
+      i += 2
+      while (i < query.length && query[i] !== '\r' && query[i] !== '\n') {
+        i++
+      }
+    } else if (query[i] === '/' && query[i + 1] === '*') {
+      i += 2
+      while (i < query.length && !(query[i] === '*' && query[i + 1] === '/')) {
+        i++
+      }
+      if (i === query.length) {
+        return false
+      }
+      i += 2
+    } else {
+      return false
+    }
+  }
+
+  return true
 }
 
 function render(statement: Readonly<StatementSync>, limit: number): string {

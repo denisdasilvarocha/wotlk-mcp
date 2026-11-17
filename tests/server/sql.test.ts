@@ -141,6 +141,25 @@ test('SQL permits only the specified direct and table-valued discovery pragmas',
   expect(text(await sql('SELECT value FROM world_sql'))).toBe('value\noriginal')
 }, 15000)
 
+test('SQL accepts only whitespace and closed comments after one statement', async () => {
+  const accepted = await sql('SELECT 1; \t\r\n\u00a0/* block */ -- line\r\n-- end')
+
+  expect(accepted.isError).not.toBe(true)
+  expect(text(accepted)).toBe('1\n1')
+
+  const tails = [
+    `--${'\r\n--'.repeat(20000)}\r\nSELECT 2`,
+    `/*${'*//*'.repeat(20000)}*/SELECT 2`,
+    '/* unterminated'
+  ]
+  const results = await Promise.all(tails.map((tail) => sql(`SELECT 1; ${tail}`)))
+
+  for (const result of results) {
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain('SQL requires exactly one statement')
+  }
+}, 15000)
+
 test('SQL validates row limits and reports complete-row truncation within output cap', async () => {
   const invalidLimits = await Promise.all([0, 1001, 1.5].map((limit) => sql('SELECT 1', limit)))
 
