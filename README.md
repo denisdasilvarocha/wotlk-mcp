@@ -191,10 +191,6 @@ See [Database and updates](docs/database.md) for the cache location, updates, of
 - [Build the reference](docs/build.md): build the database from source and run the server against it.
 - [Release operations](docs/releases.md): database and npm releases, acceptance, and rollback.
 
-## Rights and provenance
-
-The package code is MIT licensed. The reference database is not: it contains Blizzard-derived client data, AzerothCore world data (GPL-2.0-or-later), WoWDBDefs definitions (CC BY-SA 4.0), and unlicensed Codex data. Each database lists its sources, pinned revisions, and licences in the `source` table, and each database release includes a `NOTICE.md`. The client data comes from an enGB client used as an English stand-in for enUS; some locale text can differ.
-
 ## License
 
 MIT
