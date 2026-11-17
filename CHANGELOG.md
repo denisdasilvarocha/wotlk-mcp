@@ -2,12 +2,10 @@
 
 ## [1.0.1](https://github.com/denisdasilvarocha/wotlk-mcp/compare/v1.0.0...v1.0.1) (2026-11-17)
 
-
 ### Bug Fixes
 
-* **ci:** authenticate source acquisition and close installed server ([82dd987](https://github.com/denisdasilvarocha/wotlk-mcp/commit/82dd98735dbfcb0cbeb19a6a020e60f0f1586c09))
-
+- **ci:** authenticate source acquisition and close installed server ([82dd987](https://github.com/denisdasilvarocha/wotlk-mcp/commit/82dd98735dbfcb0cbeb19a6a020e60f0f1586c09))
 
 ### Code Refactoring
 
-* **repo:** organize build, server, and release modules ([#68](https://github.com/denisdasilvarocha/wotlk-mcp/issues/68)) ([4c3175c](https://github.com/denisdasilvarocha/wotlk-mcp/commit/4c3175c7c36c4dea6d14233dcd7bda00bbc75920))
+- **repo:** organize build, server, and release modules ([#68](https://github.com/denisdasilvarocha/wotlk-mcp/issues/68)) ([4c3175c](https://github.com/denisdasilvarocha/wotlk-mcp/commit/4c3175c7c36c4dea6d14233dcd7bda00bbc75920))
