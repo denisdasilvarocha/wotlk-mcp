@@ -1,3 +1,5 @@
+import { isRecord } from '../shared/record.ts'
+
 export interface Registration {
   readonly kind: string
   readonly name: string
@@ -13,10 +15,6 @@ export interface TableDecision {
   readonly methods_sha256: string
   readonly reason: string
   readonly exact_inheritance?: boolean
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export function parseStrings(text: string): readonly string[] {

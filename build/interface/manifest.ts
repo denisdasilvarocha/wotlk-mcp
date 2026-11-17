@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
+import { isRecord } from '../shared/record.ts'
+
 const eligible = /^Interface\/(?:FrameXML|GlueXML|AddOns\/Blizzard_[^/]+)\/.+\.(?:lua|xml|toc)$/iu
 
 const executable = 'aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8'
@@ -12,16 +14,12 @@ export interface InterfaceFile {
   sha256: unknown
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 function isInterfaceFile(value: unknown): value is InterfaceFile {
   if (value === null) {
     throw new TypeError("Cannot read properties of null (reading 'path')")
   }
 
-  if (!isObject(value)) {
+  if (!isRecord(value)) {
     return false
   }
 
@@ -54,9 +52,9 @@ export function interfaceFiles(directory: string, manifestHash: string): Interfa
   const manifest: unknown = JSON.parse(bytes.toString('utf8'))
 
   if (
-    !isObject(manifest) ||
+    !isRecord(manifest) ||
     manifest.format !== 1 ||
-    !isObject(manifest.client) ||
+    !isRecord(manifest.client) ||
     manifest.client.build !== 12340 ||
     manifest.client.locale !== 'enGB' ||
     manifest.client.original_executable_sha256 !== executable ||

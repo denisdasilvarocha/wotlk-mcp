@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
+import { isRecord } from '../shared/record.ts'
 import {
-  isRecord,
   isRegistration,
   parseDecisions,
   type Registration,

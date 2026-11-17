@@ -1,18 +1,18 @@
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
+import type { Database } from '../../src/database.ts'
 import { addLinkRows } from './insert.ts'
 
-type AddRows = (query: string, relation: string) => void
-
-function addQuestLinks(addRows: AddRows): void {
+function addQuestLinks(db: Database): void {
   for (const kind of ['creature', 'gameobject']) {
     for (const [suffix, relation] of [
       ['starter', 'starts'],
       ['ender', 'ends']
     ]) {
       const table = `world_${kind}_quest${suffix}`
-      addRows(
+      addLinkRows(
+        db,
         `SELECT '${kind}:' || e.id AS source, 'quest:' || e.quest AS destination,
         '${table}' AS note FROM ${table} e
         JOIN record s ON s.id = '${kind}:' || e.id
@@ -29,7 +29,8 @@ function addQuestLinks(addRows: AddRows): void {
       `RewardChoiceItemQuantity${i + 1}`
     ])
   ]) {
-    addRows(
+    addLinkRows(
+      db,
       `SELECT 'quest:' || q.ID AS source, 'item:' || q.${column} AS destination,
       '${column} quantity=' || q.${amount} AS note FROM world_quest_template q
       JOIN record s ON s.id = 'quest:' || q.ID
@@ -39,7 +40,8 @@ function addQuestLinks(addRows: AddRows): void {
   }
 
   for (const column of ['RewardSpell', 'RewardDisplaySpell']) {
-    addRows(
+    addLinkRows(
+      db,
       `SELECT 'quest:' || q.ID AS source, 'spell:' || q.${column} AS destination,
       '${column}' AS note FROM world_quest_template q
       JOIN record s ON s.id = 'quest:' || q.ID
@@ -49,15 +51,17 @@ function addQuestLinks(addRows: AddRows): void {
   }
 }
 
-function addOtherLinks(addRows: AddRows): void {
-  addRows(
+function addOtherLinks(db: Database): void {
+  addLinkRows(
+    db,
     `SELECT 'creature:' || v.entry AS source, 'item:' || v.item AS destination,
     'slot=' || v.slot || ', maxcount=' || v.maxcount || ', incrtime=' || v.incrtime || ', ExtendedCost=' || v.ExtendedCost AS note
     FROM world_npc_vendor v JOIN record s ON s.id = 'creature:' || v.entry
     JOIN record d ON d.id = 'item:' || v.item WHERE v.item > 0`,
     'sells'
   )
-  addRows(
+  addLinkRows(
+    db,
     `SELECT 'creature:' || t.CreatureId AS source, 'spell:' || p.SpellId AS destination,
     'TrainerId=' || t.TrainerId || ', cost=' || p.MoneyCost || ', skill=' || p.ReqSkillLine ||
     ', rank=' || p.ReqSkillRank || ', level=' || p.ReqLevel AS note
@@ -67,7 +71,8 @@ function addOtherLinks(addRows: AddRows): void {
     'teaches'
   )
   for (let slot = 1; slot <= 5; slot++) {
-    addRows(
+    addLinkRows(
+      db,
       `SELECT 'item:' || i.entry AS source, 'spell:' || i.spellid_${slot} AS destination,
       'spellid_${slot}, trigger=' || i.spelltrigger_${slot} AS note FROM world_item_template i
       JOIN record s ON s.id = 'item:' || i.entry
@@ -84,15 +89,11 @@ export function buildWorldLinks(file: string): void {
 
   const db = new DatabaseSync(file)
 
-  function addRows(query: string, relation: string): void {
-    addLinkRows(db, query, relation)
-  }
-
   db.exec('PRAGMA foreign_keys = ON; BEGIN')
 
   try {
-    addQuestLinks(addRows)
-    addOtherLinks(addRows)
+    addQuestLinks(db)
+    addOtherLinks(db)
 
     db.exec('COMMIT')
   } catch (error) {

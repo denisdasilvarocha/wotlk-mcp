@@ -4,6 +4,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import type { Database } from '../../src/database.ts'
+import { isRecord } from '../shared/record.ts'
 import type { SourceArchive } from '../sources/index.ts'
 import { parseLayout } from './layout.ts'
 import { importTable } from './table.ts'
@@ -32,12 +33,8 @@ function hash(data: Readonly<Pick<Buffer, 'subarray'>>): string {
   return createHash('sha256').update(data.subarray()).digest('hex')
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 function isManifestFile(value: unknown): value is ManifestFile {
-  return isObject(value) && typeof value.path === 'string' && typeof value.sha256 === 'string'
+  return isRecord(value) && typeof value.path === 'string' && typeof value.sha256 === 'string'
 }
 
 function readManifest(
@@ -54,8 +51,8 @@ function readManifest(
   }
   const manifest: unknown = JSON.parse(manifestBytes.toString())
   if (
-    !isObject(manifest) ||
-    !isObject(manifest.client) ||
+    !isRecord(manifest) ||
+    !isRecord(manifest.client) ||
     manifest.client.build !== 12340 ||
     manifest.client.locale !== 'enGB' ||
     manifest.client.original_executable_sha256 !==
@@ -137,7 +134,7 @@ function writeMetadata(
   const pins: unknown = JSON.parse(
     String(db.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()?.value ?? '{}')
   )
-  if (!isObject(pins)) {
+  if (!isRecord(pins)) {
     throw new TypeError('Invalid input pins')
   }
   pins.wowdbdefs = definitions.revision

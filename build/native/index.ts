@@ -1,8 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
 
+import { isRecord } from '../shared/record.ts'
 import { expectedExecutable, readNativeInput } from './input.ts'
 import { insertRegistrations } from './insert.ts'
-import { isRecord } from './registration.ts'
 import { resolveWidgets } from './resolution.ts'
 import { sha } from './widget.ts'
 
