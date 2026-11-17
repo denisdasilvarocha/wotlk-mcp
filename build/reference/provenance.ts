@@ -4,16 +4,11 @@ import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
+import type { DeepReadonly } from '../../src/acquire/release.ts'
 import type { Database } from '../../src/database.ts'
 import type { Sources } from '../sources/index.ts'
 
-type ProvenanceSources = Readonly<Omit<Sources, 'azerothcore' | 'codex' | 'wowdbdefs'>> & {
-  readonly azerothcore: Readonly<Sources['azerothcore']>
-  readonly codex: Readonly<Omit<Sources['codex'], 'files'>> & {
-    readonly files: Readonly<Record<string, string>>
-  }
-  readonly wowdbdefs: Readonly<Sources['wowdbdefs']>
-}
+type ProvenanceSources = DeepReadonly<Sources>
 
 function recordClientBundle(db: Database, clientManifestHash: string): void {
   if (!db.prepare("SELECT 1 FROM source WHERE name = 'client-data'").get()) {

@@ -5,6 +5,7 @@ import path from 'node:path'
 
 import type { Database } from '../../src/database.ts'
 import type { ClientManifestFile } from '../shared/client-manifest.ts'
+import type { StatementSync } from 'node:sqlite'
 
 function readInterfaceFile(
   directory: string,
@@ -42,13 +43,11 @@ function readInterfaceFile(
 }
 
 function insertLines(
-  db: Database,
+  statements: Readonly<Record<'line' | 'fts', Readonly<StatementSync>>>,
   file: ClientManifestFile,
   text: string,
   commands: Readonly<Map<string, Command>>
 ): void {
-  const insertLine = db.prepare('INSERT INTO ui_line VALUES (?, ?, ?)')
-  const lineFts = db.prepare('INSERT INTO ui_line_fts VALUES (?, ?, ?)')
   const relativePath = file.path.slice('Interface/'.length)
   const lines = text.split(/\r\n|\n|\r/u)
 
@@ -61,8 +60,8 @@ function insertLines(
   for (const [index, textLine] of lines.entries()) {
     const line = index + 1
 
-    insertLine.run(relativePath, line, textLine)
-    lineFts.run(relativePath, line, textLine)
+    statements.line.run(relativePath, line, textLine)
+    statements.fts.run(relativePath, line, textLine)
 
     if (/\.lua$/iu.test(file.path)) {
       parse(textLine, relativePath, line)
@@ -81,7 +80,10 @@ export function insertFiles(
   const insertRecord = db.prepare(
     'INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint) VALUES (?, ?, ?, ?, ?, ?, ?)'
   )
-  const recordFts = db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)')
+  const lineStatements = {
+    fts: db.prepare('INSERT INTO ui_line_fts VALUES (?, ?, ?)'),
+    line: db.prepare('INSERT INTO ui_line VALUES (?, ?, ?)')
+  }
 
   for (const file of files) {
     const { text, archive } = readInterfaceFile(directory, file)
@@ -114,7 +116,6 @@ export function insertFiles(
       '',
       ''
     )
-    recordFts.run(`file:${relativePath}`, relativePath, '')
-    insertLines(db, file, text, commands)
+    insertLines(lineStatements, file, text, commands)
   }
 }

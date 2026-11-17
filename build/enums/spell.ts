@@ -1,5 +1,5 @@
 import { quoteIdentifier } from '../shared/table-hash.ts'
-import { parseEnum } from './parser.ts'
+import { enumValues, parseEnum } from './parser.ts'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -28,44 +28,20 @@ function insertSpellValues(
   const insertValue = db.prepare(
     'INSERT OR IGNORE INTO enum_value (enum_name, value, name) VALUES (?, ?, ?)'
   )
-  const names = new Set<string>()
-  for (const mapping of mappings) {
-    names.add(mapping.name)
-  }
+  const names = new Set(mappings.map((mapping) => mapping.name))
 
   for (const name of names) {
-    let enumName = name
-    if (name === 'CreatureTypeMask') {
-      enumName = 'CreatureType'
-    }
+    const enumName = name === 'CreatureTypeMask' ? 'CreatureType' : name
     const header = headers.find((text) =>
       new RegExp(`\\benum\\s+${enumName}\\b[^;{}]*\\{`, 'u').test(text)
     )
     if (header === undefined) {
       throw new Error(`Missing pinned enum ${enumName}`)
     }
-    let external: { value: number; name: string }[] = []
-    if (name === 'SpellSchoolMask') {
-      external = parseEnum(headers[0], 'SpellSchools')
-    }
-    let entries = parseEnum(header, enumName, external)
-    if (name === 'CreatureTypeMask') {
-      entries = entries.filter(
-        (entry: Readonly<{ value: number; name: string }>) => entry.value > 0
-      )
-      for (const entry of entries) {
-        entry.value = 2 ** (entry.value - 1)
-      }
-    }
-    let prefix = entries[0].name
-    for (const entry of entries) {
-      while (!entry.name.startsWith(prefix)) {
-        prefix = prefix.slice(0, -1)
-      }
-    }
-    prefix = prefix.slice(0, prefix.lastIndexOf('_') + 1)
-    for (const entry of entries) {
-      insertValue.run(name, entry.value, entry.name.slice(prefix.length) || entry.name)
+    const external = name === 'SpellSchoolMask' ? parseEnum(headers[0], 'SpellSchools') : []
+    const entries = parseEnum(header, enumName, external)
+    for (const entry of enumValues(entries, name === 'CreatureTypeMask')) {
+      insertValue.run(name, entry.value, entry.name)
     }
   }
 }

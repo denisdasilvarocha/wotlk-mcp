@@ -203,3 +203,23 @@ export function parseEnum(
     value: Number(value)
   }))
 }
+
+// Strips the members' common `PREFIX_`; an ordinal enum (1-based) becomes its bitmask values.
+export function enumValues(entries: readonly EnumEntry[], ordinalMask = false): EnumEntry[] {
+  const values = ordinalMask
+    ? entries
+        .filter((entry) => entry.value > 0)
+        .map((entry) => ({ name: entry.name, value: 2 ** (entry.value - 1) }))
+    : entries
+  let prefix = values[0].name
+  for (const entry of values) {
+    while (!entry.name.startsWith(prefix)) {
+      prefix = prefix.slice(0, -1)
+    }
+  }
+  prefix = prefix.slice(0, prefix.lastIndexOf('_') + 1)
+  return values.map((entry) => ({
+    name: entry.name.slice(prefix.length) || entry.name,
+    value: entry.value
+  }))
+}

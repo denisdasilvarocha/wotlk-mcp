@@ -49,7 +49,7 @@ function loadTables(db: Database): Map<string, Map<number, Row[]>> {
       .prepare(
         `SELECT Entry, Item, Reference, Chance, QuestRequired, LootMode, GroupId, MinCount, MaxCount FROM world_${table}_loot_template ORDER BY Entry, Item, Reference`
       )
-      .all()) {
+      .iterate()) {
       const row: Row = {
         Chance: Number(raw.Chance),
         Entry: Number(raw.Entry),
@@ -143,7 +143,7 @@ function linkOwners(
 
     const owners = context.db
       .prepare(`SELECT entry, ${key} AS loot FROM world_${kind}_template ${filter} ORDER BY entry`)
-      .all()
+      .iterate()
     const entries = tables.get(table)
 
     if (!entries) {
@@ -176,7 +176,7 @@ export function buildLootLinks(file: string): void {
     const conditions = new Set<string>()
     for (const row of db
       .prepare('SELECT SourceTypeOrReferenceId, SourceGroup, SourceEntry FROM world_conditions')
-      .all()) {
+      .iterate()) {
       conditions.add(
         `${String(row.SourceTypeOrReferenceId)}:${String(row.SourceGroup)}:${String(row.SourceEntry)}`
       )
@@ -184,7 +184,7 @@ export function buildLootLinks(file: string): void {
     const records = new Set<string>()
     for (const row of db
       .prepare("SELECT id FROM record WHERE kind IN ('item','creature','gameobject')")
-      .all()) {
+      .iterate()) {
       records.add(String(row.id))
     }
     const tables = loadTables(db)

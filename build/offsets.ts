@@ -1,4 +1,5 @@
 import { schema } from '../src/schema.ts'
+import { indexRecords } from './shared/search-index.ts'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
@@ -39,13 +40,17 @@ function insertOffsets(db: Database, entries: readonly Readonly<OffsetEntry>[]):
   const record = db.prepare(
     'INSERT INTO record (id, kind, name, source_table, source_row, search_text) VALUES (?, ?, ?, ?, ?, ?)'
   )
-  const fts = db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)')
 
   for (const entry of entries) {
     const result = source.run(entry.path, entry.va, entry.kind, entry.note, entry.status ?? '')
-    const id = `offset:${entry.path}`
-    record.run(id, 'offset', entry.path, 'offsets_entry', result.lastInsertRowid, entry.note)
-    fts.run(id, entry.path, entry.note)
+    record.run(
+      `offset:${entry.path}`,
+      'offset',
+      entry.path,
+      'offsets_entry',
+      result.lastInsertRowid,
+      entry.note
+    )
   }
 }
 
@@ -84,6 +89,7 @@ export function initReference(output: string): void {
     )
 
     insertOffsets(db, entries)
+    indexRecords(db)
 
     db.exec('COMMIT')
   } catch (error) {

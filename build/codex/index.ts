@@ -1,9 +1,12 @@
 import { run } from '../shared/exec.ts'
+import { installSignalHandlers } from '../shared/signals.ts'
 import { hashCodex, type CodexSource } from '../sources/index.ts'
 import { evaluateCodex } from './evaluation.ts'
 import { importCodexRows } from './rows.ts'
 import { randomBytes } from 'node:crypto'
 import { DatabaseSync } from 'node:sqlite'
+
+import type { DeepReadonly } from '../../src/acquire/release.ts'
 
 export type CodexValue =
   | string
@@ -14,44 +17,16 @@ export type CodexValue =
   | { readonly [key: string]: CodexValue | undefined }
 
 export interface CodexRow {
-  [key: string]: CodexValue | undefined
-  name: string
-  description?: string
-  category?: string
-  bookPage?: number
+  readonly [key: string]: CodexValue | undefined
+  readonly name: string
+  readonly description?: string
+  readonly category?: string
+  readonly bookPage?: number
 }
 
-interface CodexWidget extends CodexRow {
-  methods: CodexRow[]
-  inheritedMethods: CodexRow[]
-}
-
-interface CombatLogRow extends CodexRow {
-  arguments: CodexValue[]
-  prefixes?: string[]
-}
-
-interface CombatLogPrefix extends CodexRow {
-  arguments: CodexValue[]
-}
+export type ReadonlyCodexSource = DeepReadonly<CodexSource>
 
 export interface CodexData {
-  API_FUNCTIONS: CodexRow[]
-  EVENTS: CodexRow[]
-  WIDGETS: CodexWidget[]
-  CVARS: CodexRow[]
-  DATA_TYPES: CodexRow[]
-  COMBAT_LOG_SUB_EVENTS: CombatLogRow[]
-  COMBAT_LOG_PREFIXES: CombatLogPrefix[]
-  SECURE_TEMPLATES: CodexRow[]
-  CHAPTER_PAGES: Record<string, number>
-}
-
-export type ReadonlyCodexSource = Readonly<Omit<CodexSource, 'files'>> & {
-  readonly files: Readonly<Record<string, string>>
-}
-
-export interface ReadonlyCodexData {
   readonly API_FUNCTIONS: readonly Readonly<CodexRow>[]
   readonly EVENTS: readonly Readonly<CodexRow>[]
   readonly WIDGETS: readonly (Readonly<CodexRow> & {
@@ -71,11 +46,6 @@ export interface ReadonlyCodexData {
   readonly CHAPTER_PAGES: Readonly<Record<string, number>>
 }
 
-function interrupt(abort: () => void, code: number): void {
-  process.exitCode = code
-  abort()
-}
-
 function verifyCodexSource(source: ReadonlyCodexSource): void {
   if (hashCodex(source.directory, source.files).sha256 !== source.sha256) {
     throw new Error('Codex aggregate SHA-256 mismatch')
@@ -90,12 +60,7 @@ export async function readCodex(
 
   const container = `wotlk-codex-${randomBytes(12).toString('hex')}`
   const controller = new AbortController()
-
-  const onInterrupt = interrupt.bind(undefined, controller.abort.bind(controller), 130)
-  const onTerminate = interrupt.bind(undefined, controller.abort.bind(controller), 143)
-
-  process.on('SIGINT', onInterrupt)
-  process.on('SIGTERM', onTerminate)
+  const removeSignalHandlers = installSignalHandlers(controller.abort.bind(controller))
 
   let failed = false
   let failure: unknown
@@ -115,8 +80,7 @@ export async function readCodex(
         failure = error
       }
     } finally {
-      process.off('SIGINT', onInterrupt)
-      process.off('SIGTERM', onTerminate)
+      removeSignalHandlers()
     }
   }
 
@@ -133,11 +97,7 @@ export async function readCodex(
   return result
 }
 
-export function importCodex(
-  database: string,
-  source: ReadonlyCodexSource,
-  data: ReadonlyCodexData
-): void {
+export function importCodex(database: string, source: ReadonlyCodexSource, data: CodexData): void {
   const db = new DatabaseSync(database)
 
   db.exec('BEGIN')

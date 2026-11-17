@@ -1,4 +1,3 @@
-import { hashRow } from './data.ts'
 import { populateWorldMetadata } from './metadata.ts'
 import { createWorldScanner } from './scan.ts'
 import { readWorldSchema, verifyWorldSchema } from './schema.ts'
@@ -58,7 +57,7 @@ export async function exportWorld(
     )
     for (const [table, columns] of tables) {
       // eslint-disable-next-line no-await-in-loop -- Tables are exported in source order within one transaction.
-      await exportTable({ db, hashRow, metadata, mysql, scan }, table, columns)
+      await exportTable({ db, metadata, mysql, scan }, table, columns)
     }
     populateWorldMetadata(db, metadata, source, mysqlImage, importerImage)
     db.exec('COMMIT')

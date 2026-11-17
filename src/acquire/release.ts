@@ -25,7 +25,7 @@ const releasesSchema = z.array(
     tag_name: z.string()
   })
 )
-type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
+export type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
   ? T
   : T extends object
     ? { readonly [K in keyof T]: DeepReadonly<T[K]> }

@@ -1,5 +1,7 @@
+import { indexRecords } from '../shared/search-index.ts'
+
 import type { Database } from '../../src/database.ts'
-import type { CodexRow, ReadonlyCodexData, ReadonlyCodexSource } from './index.ts'
+import type { CodexData, CodexRow, ReadonlyCodexSource } from './index.ts'
 
 const fields: Record<string, string[]> = {
   cle: ['name', 'description', 'type', 'prefixes', 'arguments', 'bookPage', 'bookChapter'],
@@ -90,7 +92,7 @@ function createTables(db: Database): Map<string, ReturnType<Database['prepare']>
 function rowValues(
   kind: string,
   row: Readonly<CodexRow>,
-  data: ReadonlyCodexData
+  data: CodexData
 ): (string | number | null)[] {
   const unknown = Object.keys(row).filter((field) => !fields[kind].includes(field))
   if (unknown.length > 0) {
@@ -120,14 +122,12 @@ function rowValues(
 
 function createAdder(
   db: Database,
-  data: ReadonlyCodexData
+  data: CodexData
 ): (kind: string, row: Readonly<CodexRow>, key?: string, indexName?: string) => void {
   const record = db.prepare(
     'INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint) VALUES (?, ?, ?, ?, ?, ?, ?)'
   )
-  const fts = db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)')
   const statements = createTables(db)
-  db.prepare('SELECT NULL AS value').get()
 
   return function add(
     kind: string,
@@ -140,23 +140,20 @@ function createAdder(
     if (!statement) {
       throw new Error(`Unknown Codex kind: ${kind}`)
     }
-    const description = row.description ?? ''
-    const id = `${kind}:${key}`
     const result = statement.run(...values)
     record.run(
-      id,
+      `${kind}:${key}`,
       kind,
       indexName,
       `lua_${kind}`,
       result.lastInsertRowid,
-      description,
+      row.description ?? '',
       row.category ?? ''
     )
-    fts.run(id, indexName, description)
   }
 }
 
-function importWidgets(data: ReadonlyCodexData, add: ReturnType<typeof createAdder>): void {
+function importWidgets(data: CodexData, add: ReturnType<typeof createAdder>): void {
   for (const widget of data.WIDGETS) {
     for (const method of widget.methods) {
       const name = methodName(method)
@@ -170,11 +167,7 @@ function importWidgets(data: ReadonlyCodexData, add: ReturnType<typeof createAdd
   }
 }
 
-export function importCodexRows(
-  db: Database,
-  source: ReadonlyCodexSource,
-  data: ReadonlyCodexData
-): void {
+export function importCodexRows(db: Database, source: ReadonlyCodexSource, data: CodexData): void {
   const add = createAdder(db, data)
   for (const row of data.API_FUNCTIONS) {
     add('fn', row)
@@ -200,6 +193,7 @@ export function importCodexRows(
   for (const row of data.SECURE_TEMPLATES) {
     add('template', row)
   }
+  indexRecords(db)
   db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)').run(
     'codex',
     source.revision,

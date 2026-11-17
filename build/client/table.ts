@@ -10,7 +10,6 @@ import type { StatementSync } from 'node:sqlite'
 type Statements = Readonly<{
   foreign: Readonly<Pick<StatementSync, 'run'>>
   record: Readonly<Pick<StatementSync, 'run'>>
-  fts: Readonly<Pick<StatementSync, 'run'>>
 }>
 type Header = Readonly<{ rows: number; strings: number; width: number }>
 
@@ -102,7 +101,6 @@ function insertRecord(
   rowId: number | bigint
 ): void {
   const obj = Object.fromEntries(fields.map((f, i) => [f.name, values[i]]))
-  const id = `${kind}:${obj.ID}`
   const label = String(
     obj.Name_lang ??
       obj.MapName_lang ??
@@ -112,10 +110,15 @@ function insertRecord(
       obj.Name ??
       obj.ID
   )
-  const description = String(obj.Description_lang ?? '')
-  const hint = String(obj.NameSubtext_lang ?? '')
-  statements.record.run(id, kind, label, table, rowId, description, hint)
-  statements.fts.run(id, label, description)
+  statements.record.run(
+    `${kind}:${obj.ID}`,
+    kind,
+    label,
+    table,
+    rowId,
+    String(obj.Description_lang ?? ''),
+    String(obj.NameSubtext_lang ?? '')
+  )
 }
 
 function insertRows(

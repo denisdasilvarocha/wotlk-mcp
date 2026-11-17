@@ -1,17 +1,13 @@
 import { quoteIdentifier } from '../shared/table-hash.ts'
+import { hashRow } from './data.ts'
 import { createHash, type Hash } from 'node:crypto'
 
 import type { Database } from '../../src/database.ts'
-import type { Column, Value } from './data.ts'
+import type { Column } from './data.ts'
 import type { StatementSync } from 'node:sqlite'
 
 interface ExportContext {
   readonly db: Database
-  readonly hashRow: (
-    hash: Readonly<Pick<Hash, 'update'>>,
-    columns: readonly Column[],
-    values: readonly unknown[]
-  ) => asserts values is readonly Value[]
   readonly metadata: Readonly<Pick<StatementSync, 'run'>>
   readonly mysql: (query: string) => Promise<string>
   readonly scan: (
@@ -73,7 +69,7 @@ async function scanTable(
   const hash = createHash('sha256')
 
   await context.scan(query, table, columns, (values) => {
-    context.hashRow(hash, columns, values)
+    hashRow(hash, columns, values)
     insert?.run(...values)
     count++
   })
@@ -92,15 +88,16 @@ function hashSqlite(
   let count = 0n
 
   select.setReadBigInts(true)
+  select.setReturnArrays(true)
 
   const hash = createHash('sha256')
 
   for (const row of select.iterate()) {
-    context.hashRow(
-      hash,
-      columns,
-      columns.map(({ name }) => row[name])
-    )
+    if (!Array.isArray(row)) {
+      throw new TypeError(`Expected array rows in ${destination}`)
+    }
+
+    hashRow(hash, columns, row as unknown[])
     count++
   }
 

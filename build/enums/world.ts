@@ -1,4 +1,4 @@
-import { parseEnum } from './parser.ts'
+import { enumValues, parseEnum } from './parser.ts'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -142,6 +142,12 @@ function validateMappings(
   }
 }
 
+// Mask enums stored as the 1-based ordinal enum they are derived from.
+const ordinalMasks = new Map([
+  ['ClassMask', 'Classes'],
+  ['RaceMask', 'Races']
+])
+
 function insertEnums(
   db: Readonly<Pick<DatabaseSync, 'prepare'>>,
   mappings: readonly Mapping[],
@@ -154,16 +160,8 @@ function insertEnums(
       continue
     }
 
-    let source = name
-
-    if (name === 'ClassMask') {
-      source = 'Classes'
-    }
-
-    if (name === 'RaceMask') {
-      source = 'Races'
-    }
-
+    const ordinal = ordinalMasks.get(name)
+    const source = ordinal ?? name
     const header = headers.find((text) =>
       new RegExp(`\\benum\\s+${source}\\b[^;{}]*\\{`, 'u').test(
         text.replaceAll(/\/\*[\s\S]*?\*\//gu, '').replaceAll(/\/\/[^\n]*/gu, '')
@@ -174,32 +172,10 @@ function insertEnums(
       throw new Error(`Missing pinned enum ${source}`)
     }
 
-    let entries = parseEnum(header, source)
-
-    if (name === 'ClassMask' || name === 'RaceMask') {
-      entries = entries.filter((entry: Readonly<(typeof entries)[number]>) => entry.value > 0)
-
-      for (const entry of entries) {
-        entry.value = 2 ** (entry.value - 1)
-      }
-    }
-
-    const prefix = enumPrefix(entries)
-
-    for (const entry of entries) {
-      insertValue.run(name, entry.value, entry.name.slice(prefix.length) || entry.name)
+    for (const entry of enumValues(parseEnum(header, source), ordinal !== undefined)) {
+      insertValue.run(name, entry.value, entry.name)
     }
   }
-}
-
-function enumPrefix(entries: readonly Readonly<ReturnType<typeof parseEnum>[number]>[]): string {
-  let prefix = entries[0].name
-  for (const entry of entries) {
-    while (!entry.name.startsWith(prefix)) {
-      prefix = prefix.slice(0, -1)
-    }
-  }
-  return prefix.slice(0, prefix.lastIndexOf('_') + 1)
 }
 
 function insertReferences(db: Readonly<Pick<DatabaseSync, 'prepare'>>): void {

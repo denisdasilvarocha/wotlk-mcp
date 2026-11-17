@@ -1,3 +1,5 @@
+import { indexRecords } from '../shared/search-index.ts'
+
 import type { Database } from '../../src/database.ts'
 import type { SourceArchive } from '../sources/index.ts'
 import type { StatementSync } from 'node:sqlite'
@@ -25,11 +27,8 @@ function populateWorldRecords(db: Database): void {
     SELECT 'gameobject:' || entry, 'gameobject', name, 'world_gameobject_template', rowid,
       COALESCE(castBarCaption, ''), ''
     FROM world_gameobject_template;
-
-    INSERT INTO record_fts (id, name, text)
-    SELECT id, name, search_text FROM record
-    WHERE kind IN ('creature', 'item', 'quest', 'gameobject');
   `)
+  indexRecords(db)
 }
 
 export function populateWorldMetadata(

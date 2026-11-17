@@ -6,23 +6,16 @@ import { initReference } from './offsets.ts'
 import { importWorld } from './world/index.ts'
 import path from 'node:path'
 
+import type { DeepReadonly } from '../src/acquire/release.ts'
 import type { Sources } from './sources/index.ts'
 
 type Run = <T>(label: string, action: () => T | Promise<T>) => Promise<T>
-
-type BuildSources = Readonly<Omit<Sources, 'azerothcore' | 'codex' | 'wowdbdefs'>> & {
-  readonly azerothcore: Readonly<Sources['azerothcore']>
-  readonly codex: Readonly<Omit<Sources['codex'], 'files'>> & {
-    readonly files: Readonly<Record<string, string>>
-  }
-  readonly wowdbdefs: Readonly<Sources['wowdbdefs']>
-}
 
 export async function runImportStages(
   run: Run,
   database: string,
   output: string,
-  sources: BuildSources
+  sources: DeepReadonly<Sources>
 ): Promise<void> {
   await run('offsets', () => {
     initReference(database)

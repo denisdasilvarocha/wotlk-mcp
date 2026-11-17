@@ -1,7 +1,6 @@
 import type { Hash } from 'node:crypto'
 
 const decoder = new TextDecoder('utf-8', { fatal: true })
-const sqlNull: unknown = JSON.parse('null')
 
 export type Kind = 'integer' | 'unsigned' | 'real' | 'text' | 'blob'
 
@@ -49,11 +48,7 @@ export function decode(field: string, column: Readonly<Column>, table: string): 
   const { kind } = column
 
   if (field === 'N') {
-    if (sqlNull !== null) {
-      throw new Error('Invalid SQL null')
-    }
-
-    return sqlNull
+    return null
   }
 
   if (!/^V(?:[0-9A-F]{2})*$/u.test(field)) {

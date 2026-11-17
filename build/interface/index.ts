@@ -1,3 +1,4 @@
+import { indexRecords } from '../shared/search-index.ts'
 import { insertFiles } from './files.ts'
 import { interfaceFiles } from './manifest.ts'
 import { createHash } from 'node:crypto'
@@ -14,7 +15,6 @@ function insertSlashCommands(db: Database, commands: Readonly<Map<string, Comman
   const insertRecord = db.prepare(
     'INSERT INTO record (id, kind, name, source_table, source_row, search_text, hint) VALUES (?, ?, ?, ?, ?, ?, ?)'
   )
-  const recordFts = db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)')
   const insertSlash = db.prepare('INSERT INTO ui_slash VALUES (?, ?, NULLIF(?, -1), ?, ?, ?, ?)')
 
   for (const [key, value] of [...commands].toSorted(
@@ -53,11 +53,15 @@ function insertSlashCommands(db: Database, commands: Readonly<Map<string, Comman
       'enGB',
       provenance
     )
-    const id = `slash:${key}`
-    const search = aliases.join(' ')
-
-    insertRecord.run(id, 'slash', name, 'ui_slash', row.lastInsertRowid, search, hint)
-    recordFts.run(id, name, search)
+    insertRecord.run(
+      `slash:${key}`,
+      'slash',
+      name,
+      'ui_slash',
+      row.lastInsertRowid,
+      aliases.join(' '),
+      hint
+    )
   }
 }
 
@@ -72,6 +76,7 @@ function insertInterface(db: Database, directory: string, manifestHash: string):
 
   insertFiles(db, directory, files, provenance, commands)
   insertSlashCommands(db, commands)
+  indexRecords(db)
   db.prepare('INSERT INTO source VALUES (?, ?, ?, ?, ?)').run(
     'interface',
     'build 12340 enGB',

@@ -1,5 +1,6 @@
 import { readClientManifest, type ClientManifestFile } from '../shared/client-manifest.ts'
 import { isRecord } from '../shared/record.ts'
+import { indexRecords } from '../shared/search-index.ts'
 import { sha256Hex } from '../shared/sha256.ts'
 import { parseLayout } from './layout.ts'
 import { importTable } from './table.ts'
@@ -32,7 +33,6 @@ function importFiles(
 ): void {
   const statements = {
     foreign: db.prepare('INSERT INTO dbc_foreign_key VALUES (?, ?, ?, ?)'),
-    fts: db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)'),
     record: db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
   }
   const imported = new Set<string>()
@@ -75,9 +75,8 @@ function writeMetadata(
         name = COALESCE((SELECT s.Name_lang FROM dbc_Talent t JOIN dbc_Spell s ON s.ID = t.SpellRank_1 WHERE t.rowid = record.source_row), name),
         search_text = COALESCE((SELECT s.Description_lang FROM dbc_Talent t JOIN dbc_Spell s ON s.ID = t.SpellRank_1 WHERE t.rowid = record.source_row), ''),
         hint = COALESCE((SELECT TalentTab_Name_lang FROM dbc_Talent WHERE rowid = record.source_row), '')
-      WHERE kind = 'talent';
-      DELETE FROM record_fts WHERE id IN (SELECT id FROM record WHERE kind = 'talent');
-      INSERT INTO record_fts SELECT id, name, search_text FROM record WHERE kind = 'talent'`)
+      WHERE kind = 'talent'`)
+  indexRecords(db)
   const pins: unknown = JSON.parse(
     String(db.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()?.value ?? '{}')
   )
