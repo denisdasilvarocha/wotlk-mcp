@@ -1,4 +1,4 @@
-# Wrath of the Lich King - MCP Server
+# Wotlk MCP
 
 [![CI](https://img.shields.io/github/actions/workflow/status/denisdasilvarocha/wotlk-mcp/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&labelColor=0D1117&color=238636)](https://github.com/denisdasilvarocha/wotlk-mcp/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/wotlk-mcp?style=for-the-badge&logo=npm&logoColor=white&labelColor=0D1117&color=CB3837)](https://www.npmjs.com/package/wotlk-mcp) [![Monthly npm downloads](https://img.shields.io/npm/dm/wotlk-mcp?style=for-the-badge&logo=npm&logoColor=white&labelColor=0D1117&color=BF8700)](https://www.npmjs.com/package/wotlk-mcp) [![License](https://img.shields.io/github/license/denisdasilvarocha/wotlk-mcp?style=for-the-badge&labelColor=0D1117&color=D29922)](LICENSE)
 
