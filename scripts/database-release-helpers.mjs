@@ -20,7 +20,7 @@ export const headers = {
 }
 export const versionPattern = /^db-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u
 
-/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
+/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string | null }} Asset */
 /** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
 /** @typedef {{ readonly name: string }} Tag */
 /** @typedef {Readonly<{ body?: string | (() => ReadableStream), duplex?: 'half', headers?: Readonly<Record<string, string>>, method?: string }>} RequestOptions */
@@ -172,17 +172,18 @@ function validRelease(release, id, tag, digest) {
 /**
  * @param {Release} release - Release containing the asset.
  * @param {string} name - Asset name.
- * @returns {Asset} Matching asset.
+ * @returns {Asset & { readonly digest: string }} Matching asset.
  */
 function assetOf(release, name) {
   const matches =
     release.assets?.filter((item) => item.name === name && item.state === 'uploaded') ?? []
 
-  if (matches.length !== 1 || !digestPattern.test(matches[0].digest ?? '')) {
+  const digest = matches[0]?.digest
+  if (matches.length !== 1 || typeof digest !== 'string' || !digestPattern.test(digest)) {
     throw new Error(`missing or invalid ${name} asset`)
   }
 
-  return matches[0]
+  return { ...matches[0], digest }
 }
 
 /**

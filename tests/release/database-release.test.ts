@@ -41,7 +41,15 @@ async function releaseScenario(
   let promotions = 0
   let protectedEnvironment = true
   let release: Record<string, unknown> | undefined
-  let reservedReleases: Record<string, unknown>[] = []
+  let reservedReleases: Record<string, unknown>[] = [
+    {
+      assets: [{ digest: null, id: 1, name: 'historical.tgz', state: 'uploaded' }],
+      draft: false,
+      prerelease: false,
+      published_at: '2025-01-01T00:00:00Z',
+      tag_name: 'v0.0.0'
+    }
+  ]
   let tags: { readonly name: string }[] = []
   const uploaded = new Map<number, Buffer>()
   const server = createServer()

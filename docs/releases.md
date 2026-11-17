@@ -36,6 +36,8 @@ flowchart LR
 
 A failed run leaves its draft unpublished, and its version stays reserved. After investigating, an authorized operator may delete the failed draft before retrying. Never delete or replace a published asset to make a retry work.
 
+Release metadata may contain null digests for unrelated assets. The selected database asset must still have a valid SHA-256 digest, and newly uploaded assets must match their local file hashes.
+
 ### Release gate
 
 `scripts/release-gate.ts` checks the candidate database against the previous published one. It fails on:

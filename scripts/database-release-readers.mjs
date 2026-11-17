@@ -2,7 +2,7 @@ import { asArray, asRecord } from './records.mjs'
 import { execFile } from 'node:child_process'
 import { appendFileSync } from 'node:fs'
 
-/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string }} Asset */
+/** @typedef {{ readonly id: number, readonly name: string, readonly state: string, readonly digest: string | null }} Asset */
 /** @typedef {{ readonly id: number, readonly tag_name: string, readonly draft: boolean, readonly prerelease: boolean, readonly published_at: string | null, readonly upload_url: string, readonly assets?: readonly Asset[] }} Release */
 
 /**
@@ -52,7 +52,7 @@ export function readAsset(value) {
     typeof item.id !== 'number' ||
     typeof item.name !== 'string' ||
     typeof item.state !== 'string' ||
-    typeof item.digest !== 'string'
+    (item.digest !== null && typeof item.digest !== 'string')
   ) {
     throw new TypeError('invalid GitHub release asset')
   }
