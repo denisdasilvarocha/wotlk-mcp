@@ -65,7 +65,14 @@ async function revision(repository: string, branch: string): Promise<string> {
 }
 
 async function response(url: string): Promise<Response> {
-  const result = await fetch(url, { headers: { 'User-Agent': 'wotlk-mcp-build' } })
+  const headers: Record<string, string> = { 'User-Agent': 'wotlk-mcp-build' }
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
+
+  if (new URL(url).origin === 'https://api.github.com' && token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const result = await fetch(url, { headers })
 
   if (!result.ok) {
     throw new Error(`Download failed: ${url}: HTTP ${result.status}`)

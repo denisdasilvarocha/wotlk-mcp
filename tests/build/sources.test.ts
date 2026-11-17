@@ -47,7 +47,12 @@ function run(output: string, bin: string): SpawnSyncReturns<string> {
 
 function fixtures(
   dir: string,
-  options: Readonly<{ badProvenance?: boolean; mismatch?: boolean; failedDownload?: boolean }> = {}
+  options: Readonly<{
+    badProvenance?: boolean
+    mismatch?: boolean
+    failedDownload?: boolean
+    token?: 'GITHUB_TOKEN' | 'GH_TOKEN'
+  }> = {}
 ): void {
   let archiveResponse = "'archive bytes'"
   let checkoutRevision = codexRevision
@@ -84,8 +89,18 @@ function fixtures(
   writeFileSync(
     path.join(dir, 'fetch.mjs'),
     `
-    globalThis.fetch = async (input) => {
+    process.env.GITHUB_TOKEN = ''
+    process.env.GH_TOKEN = ''
+    ${options.token ? `process.env.${options.token} = 'source-token'` : ''}
+    globalThis.fetch = async (input, init) => {
       const url = String(input)
+      const authorization = new Headers(init?.headers).get('Authorization')
+      if (url.startsWith('https://api.github.com/') && ${Boolean(options.token)} && authorization !== 'Bearer source-token') {
+        return new Response(null, { status: 403 })
+      }
+      if (url.startsWith('https://codeload.github.com/') && authorization !== null) {
+        throw new Error('Credentials leaked to archive host')
+      }
       if (url.includes('WoWDBDefs/commits/')) return Response.json({ sha: '${wowRevision}' })
       if (url.includes('milkyway-codex/commits/')) return Response.json({ sha: '${codexRevision}' })
       if (url.includes('codeload.github.com/')) return new Response(${archiveResponse})
@@ -169,48 +184,51 @@ test('rejects a corrupt private release before extraction and removes partial in
   }
 })
 
-test('returns immutable source identities and acquired file hashes', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+test.each([undefined, 'GITHUB_TOKEN', 'GH_TOKEN'] as const)(
+  'returns immutable source identities and acquired file hashes with token %s',
+  (token) => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
 
-  try {
-    fixtures(dir)
+    try {
+      fixtures(dir, { token })
 
-    const result = run(path.join(dir, 'inputs'), dir)
+      const result = run(path.join(dir, 'inputs'), dir)
 
-    expect(result.status).toBe(0)
+      expect(result.status).toBe(0)
 
-    const sources = z
-      .object({
-        azerothcore: z.object({ directory: z.string(), revision: z.string() }),
-        codex: z.object({
-          files: z.record(z.string(), z.unknown()),
-          revision: z.string(),
-          sha256: z.string()
-        }),
-        codexNodeImage: z.string(),
-        worldImporterImage: z.string(),
-        wowdbdefs: z.object({ revision: z.string(), sha256: z.string() })
-      })
-      .parse(lastJsonLine(result.stdout))
+      const sources = z
+        .object({
+          azerothcore: z.object({ directory: z.string(), revision: z.string() }),
+          codex: z.object({
+            files: z.record(z.string(), z.unknown()),
+            revision: z.string(),
+            sha256: z.string()
+          }),
+          codexNodeImage: z.string(),
+          worldImporterImage: z.string(),
+          wowdbdefs: z.object({ revision: z.string(), sha256: z.string() })
+        })
+        .parse(lastJsonLine(result.stdout))
 
-    expect(sources.wowdbdefs.revision).toBe(wowRevision)
-    expect(sources.azerothcore.revision).toBe(worldRevision)
-    expect(sources.codex.revision).toBe(codexRevision)
-    expect(sources.worldImporterImage).toBe(`acore/ac-wotlk-db-import@sha256:${digest}`)
-    expect(sources.codexNodeImage).toBe(`node@sha256:${digest}`)
-    expect(sources.wowdbdefs.sha256).toBe(
-      'cc9c340301ad4ba5e54aa24b442ff938d1ed84f7f32c4c5a73773c58af37bd1b'
-    )
-    expect(sources.codex.sha256).toBe(
-      '7c45cdb5f1843f9166f13cce1ab0840dccb83571934732b17c71f19d683a3e8b'
-    )
-    expect(Object.keys(sources.codex.files)).toHaveLength(8)
-    // The world importer container runs as another user and must traverse the source.
-    expect(statSync(sources.azerothcore.directory).mode & 0o005).toBe(0o005)
-  } finally {
-    rmSync(dir, { force: true, recursive: true })
+      expect(sources.wowdbdefs.revision).toBe(wowRevision)
+      expect(sources.azerothcore.revision).toBe(worldRevision)
+      expect(sources.codex.revision).toBe(codexRevision)
+      expect(sources.worldImporterImage).toBe(`acore/ac-wotlk-db-import@sha256:${digest}`)
+      expect(sources.codexNodeImage).toBe(`node@sha256:${digest}`)
+      expect(sources.wowdbdefs.sha256).toBe(
+        'cc9c340301ad4ba5e54aa24b442ff938d1ed84f7f32c4c5a73773c58af37bd1b'
+      )
+      expect(sources.codex.sha256).toBe(
+        '7c45cdb5f1843f9166f13cce1ab0840dccb83571934732b17c71f19d683a3e8b'
+      )
+      expect(Object.keys(sources.codex.files)).toHaveLength(8)
+      // The world importer container runs as another user and must traverse the source.
+      expect(statSync(sources.azerothcore.directory).mode & 0o005).toBe(0o005)
+    } finally {
+      rmSync(dir, { force: true, recursive: true })
+    }
   }
-})
+)
 
 test.each([
   ['malformed provenance', { badProvenance: true }],
