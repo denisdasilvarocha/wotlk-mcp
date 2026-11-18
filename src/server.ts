@@ -114,7 +114,10 @@ async function withReference(read: (db: Database) => string): Promise<string> {
 }
 
 // Tool errors stay one line; a pending update warning rides on the next result.
-async function respond(run: () => Promise<string>): Promise<CallToolResult> {
+async function respond(
+  signal: Readonly<AbortSignal>,
+  run: () => Promise<string>
+): Promise<CallToolResult> {
   let result: CallToolResult
 
   try {
@@ -124,7 +127,7 @@ async function respond(run: () => Promise<string>): Promise<CallToolResult> {
     result = { content: [{ text: text.replaceAll(/[\r\n]+/gu, ' '), type: 'text' }], isError: true }
   }
 
-  const warning = takeUpdateWarning()
+  const warning = signal.aborted ? undefined : takeUpdateWarning()
   if (warning) {
     result.content.push({ text: warning, type: 'text' })
   }
@@ -157,7 +160,8 @@ function createServer(): McpServer {
       inputSchema: searchInput,
       title: 'Search WotLK Reference'
     },
-    (input) => respond(() => withReference((db) => searchRecords(db, input)))
+    (input, ctx) =>
+      respond(ctx.mcpReq.signal, () => withReference((db) => searchRecords(db, input)))
   )
   server.registerTool(
     'get',
@@ -172,7 +176,10 @@ function createServer(): McpServer {
       inputSchema: getInput,
       title: 'Get WotLK Records'
     },
-    (input) => respond(() => withReference((db) => getRecords(db, input.ids, input.from, input.to)))
+    (input, ctx) =>
+      respond(ctx.mcpReq.signal, () =>
+        withReference((db) => getRecords(db, input.ids, input.from, input.to))
+      )
   )
   server.registerTool(
     'sql',
@@ -189,7 +196,7 @@ function createServer(): McpServer {
       title: 'Query WotLK SQL'
     },
     (input, ctx) =>
-      respond(async () =>
+      respond(ctx.mcpReq.signal, async () =>
         runSql(await getReferencePath(), input.query, input.limit, ctx.mcpReq.signal)
       )
   )
@@ -206,7 +213,7 @@ function createServer(): McpServer {
       inputSchema: relatedInput,
       title: 'Related WotLK Records'
     },
-    (input) => respond(() => withReference((db) => getRelated(db, input)))
+    (input, ctx) => respond(ctx.mcpReq.signal, () => withReference((db) => getRelated(db, input)))
   )
 
   return server
