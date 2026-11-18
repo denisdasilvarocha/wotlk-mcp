@@ -1,5 +1,6 @@
 import { validateReference } from './reference.js'
 import { DatabaseSync, constants } from 'node:sqlite'
+import { Worker, isMainThread, parentPort } from 'node:worker_threads'
 
 import type { SQLOutputValue, StatementSync } from 'node:sqlite'
 
@@ -156,14 +157,50 @@ function escape(value: Cell, header = false): string {
   return text
 }
 
-process.once('message', (data: Readonly<{ path: string; query: string; limit: number }>) => {
-  let result: { text?: string; error?: string }
+type Request = Readonly<{ deadline: number; path: string; query: string; limit: number }>
+type Result = Readonly<{ text: string } | { error: string }>
 
+function executeRequest(data: Request): Result {
   try {
-    result = { text: execute(data.path, data.query, data.limit) }
+    return { text: execute(data.path, data.query, data.limit) }
   } catch (error) {
-    result = { error: String(error).replaceAll(/[\r\n]+/gu, ' ') }
+    return { error: String(error).replaceAll(/[\r\n]+/gu, ' ') }
   }
+}
 
-  process.send?.(result, () => process.disconnect?.())
-})
+function killWorkerProcess(): void {
+  process.kill(process.pid, 'SIGKILL')
+}
+
+function supervise(data: Request): void {
+  const timer = setTimeout(killWorkerProcess, Math.max(0, data.deadline - Date.now()))
+  const thread = new Worker(new URL(import.meta.url))
+  let result: Result | undefined
+
+  thread.once('message', (message: Result) => {
+    result = message
+  })
+  thread.once('error', (error) => {
+    result = { error: String(error).replaceAll(/[\r\n]+/gu, ' ') }
+  })
+  thread.once('exit', (code) => {
+    const response = result ?? { error: `SQL worker thread exited unexpectedly (${code})` }
+    process.send?.(response, () => {
+      clearTimeout(timer)
+      process.off('disconnect', killWorkerProcess)
+      if (process.connected) {
+        process.disconnect?.()
+      }
+    })
+  })
+  thread.postMessage(data, undefined)
+}
+
+if (isMainThread) {
+  process.once('disconnect', killWorkerProcess)
+  process.once('message', supervise)
+} else {
+  parentPort?.once('message', (data: Request) => {
+    parentPort?.postMessage(executeRequest(data), undefined)
+  })
+}
