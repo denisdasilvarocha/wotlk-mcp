@@ -1,5 +1,6 @@
 import { validateReference } from './reference.js'
-import { DatabaseSync, constants } from 'node:sqlite'
+import { installSqlAuthorizer } from './sql-authorization.js'
+import { DatabaseSync } from 'node:sqlite'
 import { Worker, isMainThread, parentPort } from 'node:worker_threads'
 
 import type { SQLOutputValue, StatementSync } from 'node:sqlite'
@@ -16,21 +17,6 @@ const escapedCharacters = new Map([
   ['\r', '\\r']
 ])
 
-const pragmas = new Set([
-  'table_info',
-  'table_xinfo',
-  'table_list',
-  'index_list',
-  'foreign_key_list'
-])
-
-const actions = new Set([
-  constants.SQLITE_SELECT,
-  constants.SQLITE_READ,
-  constants.SQLITE_FUNCTION,
-  constants.SQLITE_RECURSIVE
-])
-
 type Cell = Exclude<SQLOutputValue, Uint8Array> | Readonly<Pick<Uint8Array, 'toString'>>
 
 function execute(path: string, query: string, limit: number): string {
@@ -40,16 +26,7 @@ function execute(path: string, query: string, limit: number): string {
     db.limits.length = maxSqliteValueBytes
     validateReference(db)
 
-    db.setAuthorizer((action, arg1) => {
-      if (actions.has(action)) {
-        return constants.SQLITE_OK
-      }
-      if (action === constants.SQLITE_PRAGMA && pragmas.has((arg1 ?? '').toLowerCase())) {
-        return constants.SQLITE_OK
-      }
-
-      return constants.SQLITE_DENY
-    })
+    const withSqlExecution = installSqlAuthorizer(db)
 
     const statement = db.prepare(query)
 
@@ -60,7 +37,7 @@ function execute(path: string, query: string, limit: number): string {
     statement.setReadBigInts(true)
     statement.setReturnArrays(true)
 
-    return render(statement, limit)
+    return withSqlExecution(() => render(statement, limit))
   } finally {
     db.close()
   }
