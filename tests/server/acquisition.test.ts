@@ -228,7 +228,13 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${address.port}`
   writeFileSync(
     preload,
-    `const original = globalThis.fetch; globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options); if (process.env.TEST_NOW) Date.now = () => Number(process.env.TEST_NOW)`
+    `const original = globalThis.fetch;
+globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options);
+if (process.env.TEST_NOW) Date.now = () => Number(process.env.TEST_NOW);
+if (process.env.TEST_ACQUIRE_TIMEOUT) {
+  const timeout = AbortSignal.timeout;
+  AbortSignal.timeout = (ms) => timeout(ms === 120_000 ? Number(process.env.TEST_ACQUIRE_TIMEOUT) : ms);
+}`
   )
 })
 
@@ -1035,6 +1041,100 @@ test('invalid override never contacts the network', async () => {
     await client.close()
   }
 })
+
+test.each(['listing', 'transfer'])(
+  'a stalled %s expires the shared attempt and allows a clean retry',
+  async (phase) => {
+    const cache = mkdtempSync(path.join(dir, 'timeout-'))
+    const env = {
+      HOME: cache,
+      LOCALAPPDATA: cache,
+      XDG_CACHE_HOME: cache,
+      TEST_ACQUIRE_TIMEOUT: '1500'
+    }
+    const directory = cacheDirectory(cache)
+    scenario = phase === 'transfer' ? 'slow' : 'good'
+    metadata.hold = phase === 'listing'
+    requests = []
+    download.finish = (): void => {}
+
+    const client = await launch(env)
+
+    try {
+      if (phase === 'transfer') {
+        await waitUntil(() => hasPartial(directory), 'transfer did not start')
+      }
+      const results = await Promise.all([call(client), call(client)])
+
+      for (const result of results) {
+        expect(result.isError).toBe(true)
+        expect(JSON.stringify(result)).toContain('reference acquisition timed out')
+      }
+      expect(readdirSync(directory).filter((name) => name.endsWith('.partial'))).toEqual([])
+      expect(cacheStates(directory)).toEqual([])
+      expect(requests).toEqual(phase === 'listing' ? ['/releases'] : ['/releases', '/asset'])
+
+      metadata.hold = false
+      scenario = 'good'
+      expect((await call(client)).isError).not.toBe(true)
+    } finally {
+      metadata.hold = false
+      metadata.finish()
+      download.finish()
+      await client.close()
+    }
+  },
+  10000
+)
+
+test('a stalled background check expires without holding the update lock', async () => {
+  const cache = mkdtempSync(path.join(dir, 'update-timeout-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const directory = cacheDirectory(cache)
+  const clock = 2_000_000_000_000
+  scenario = 'good'
+
+  const initial = await launch(env)
+  try {
+    expect((await call(initial)).isError).not.toBe(true)
+  } finally {
+    await initial.close()
+  }
+
+  requests = []
+  metadata.hold = true
+  const stalled = await launch({
+    ...env,
+    TEST_ACQUIRE_TIMEOUT: '1500',
+    TEST_NOW: String(clock)
+  })
+
+  try {
+    expect((await call(stalled)).isError).not.toBe(true)
+    await waitUntil(
+      () => cacheStates(directory).filter((entry) => entry.lastCheck === clock).length === 2,
+      'stalled check did not finish'
+    )
+
+    metadata.hold = false
+    metadata.finish()
+    const nextDay = clock + 24 * 60 * 60 * 1000
+    requests = []
+    const retry = await launch({ ...env, TEST_NOW: String(nextDay) })
+
+    try {
+      expect((await call(retry)).isError).not.toBe(true)
+      await waitUntil(() => checkedAt(directory, nextDay), 'next check could not acquire the lock')
+      expect(requests).toEqual(['/releases'])
+    } finally {
+      await retry.close()
+    }
+  } finally {
+    metadata.hold = false
+    metadata.finish()
+    await stalled.close()
+  }
+}, 10000)
 
 test('discovery stays available and a slow download continues after the bounded wait', async () => {
   scenario = 'slow'

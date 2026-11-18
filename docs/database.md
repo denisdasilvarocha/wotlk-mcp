@@ -22,6 +22,8 @@ Without `WOTLK_MCP_DB`, the server starts loading a database as soon as it start
 
 A tool call waits up to 20 seconds for the first download. If the download is still running, the call fails with `reference database downloading (N of M bytes); retry shortly`. Retry the call; the download continues in the background.
 
+The acquisition itself has a two-minute deadline covering release discovery, transfer, and decompression. After a failed initial acquisition, a later tool call can retry.
+
 The cache lives in a directory per schema major, so package majors installed side by side never remove each other's files:
 
 | Platform         | Cache directory                                                        |

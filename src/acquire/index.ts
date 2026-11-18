@@ -124,9 +124,23 @@ function downloadProgress(): string {
 }
 
 async function download(existing?: CacheState): Promise<boolean> {
-  const release = await selectRelease((value) => {
+  const signal = AbortSignal.timeout(120_000)
+
+  try {
+    return await downloadReference(signal, existing)
+  } catch (error) {
+    if (signal.aborted) {
+      throw new Error('reference acquisition timed out', { cause: error })
+    }
+    throw error
+  }
+}
+
+async function downloadReference(signal: AbortSignal, existing?: CacheState): Promise<boolean> {
+  const release = await selectRelease(signal, (value) => {
     warningMajor = value
   })
+  signal.throwIfAborted()
   const observedAt = performance.timeOrigin + performance.now()
 
   if (existing && release.tag_name === existing.version) {
@@ -159,6 +173,7 @@ async function download(existing?: CacheState): Promise<boolean> {
       asset.digest,
       compressed,
       partial,
+      signal,
       (value) => {
         total = value
       },
@@ -167,6 +182,7 @@ async function download(existing?: CacheState): Promise<boolean> {
       }
     )
     validateRelease(partial, release.tag_name)
+    signal.throwIfAborted()
     await rename(partial, final)
 
     const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)

@@ -32,8 +32,11 @@ export type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
     : T
 type Release = DeepReadonly<z.infer<typeof releasesSchema>[number]>
 
-async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>> {
-  const response = await fetch(url, { headers })
+async function releasePages(
+  url: string,
+  signal: AbortSignal
+): Promise<z.infer<typeof releasesSchema>> {
+  const response = await fetch(url, { headers, signal })
 
   if (!response.ok) {
     throw new Error(`GitHub releases request returned HTTP ${response.status}`)
@@ -48,16 +51,17 @@ async function releasePages(url: string): Promise<z.infer<typeof releasesSchema>
     ?.match(/^<([^>]+)>/u)?.[1]
 
   if (next) {
-    page.push(...(await releasePages(next)))
+    page.push(...(await releasePages(next, signal)))
   }
 
   return page
 }
 
 export async function selectRelease(
+  signal: AbortSignal,
   setWarning: (value: number | undefined) => void
 ): Promise<Release> {
-  const releases = await releasePages(releasesUrl)
+  const releases = await releasePages(releasesUrl, signal)
   const candidates = releases
     .flatMap((release) => {
       const match = /^db-v(\d+)\.\d+\.\d+$/u.exec(release.tag_name)
@@ -93,12 +97,14 @@ export async function transferAsset(
   digest: string,
   compressed: string,
   partial: string,
+  signal: AbortSignal,
   setTotal: (value: number) => void,
   addReceived: (value: number) => void
 ): Promise<void> {
   // browser_download_url 404s for private repositories even with a token.
   const response = await fetch(url, {
-    headers: { ...headers, Accept: 'application/octet-stream' }
+    headers: { ...headers, Accept: 'application/octet-stream' },
+    signal
   })
   if (!response.ok || !response.body) {
     throw new Error(`database download returned HTTP ${response.status}`)
@@ -118,7 +124,8 @@ export async function transferAsset(
   await pipeline(
     Readable.fromWeb(response.body),
     progress,
-    createWriteStream(compressed, { flags: 'wx' })
+    createWriteStream(compressed, { flags: 'wx' }),
+    { signal }
   )
   if (`sha256:${hash.digest('hex')}` !== digest.toLowerCase()) {
     throw new Error('database SHA-256 digest mismatch')
@@ -126,6 +133,7 @@ export async function transferAsset(
   await pipeline(
     createReadStream(compressed),
     createBrotliDecompress(),
-    createWriteStream(partial, { flags: 'wx' })
+    createWriteStream(partial, { flags: 'wx' }),
+    { signal }
   )
 }
