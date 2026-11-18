@@ -50,7 +50,10 @@ def verify(path):
 
     with tarfile.open(path, 'r:gz') as archive:
         for member in archive:
-            name = member.name.removeprefix('./').rstrip('/') or '.'
+            name = member.name
+            if name.startswith('./'):
+                name = name[2:]
+            name = name.rstrip('/') or '.'
 
             if name.startswith('/') or any(part in ('', '.', '..') for part in name.split('/')) and name != '.':
                 raise ValueError('unsafe archive path: ' + name)
