@@ -219,6 +219,19 @@ test('file names and exact IDs are searchable only with the file filter', async 
   )
 })
 
+test('mixed file and Record searches fall back to fuzzy Records only', async () => {
+  const output = await text({ kind: ['file', 'item'], query: 'otheX' })
+
+  expect(ids(output)).toEqual(['item:42'])
+  expect(output).toContain('Fuzzy: 1–1 of 1; end')
+})
+
+test('file-only searches never fall back to fuzzy file names', async () => {
+  const output = await text({ kind: ['file'], query: 'otheX' })
+
+  expect(output).toBe('0–0 of 0; end')
+})
+
 test('description snippets include a match beyond the prefix', async () => {
   expect(await text({ kind: ['item'], query: 'needle' })).toContain('needle here')
 })

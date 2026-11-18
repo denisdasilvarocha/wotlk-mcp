@@ -222,10 +222,12 @@ export function searchRecords(db: Database, input: Readonly<SearchInput>): strin
 
   let { params, sql } = matchSql(query, terms, files, kindFilter, kindParams)
   let count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(params)?.total)
-  const fuzzy = count === 0 && characters(query).length >= 4 && !files
+  const recordKinds = !files || input.kind?.some((kind) => kind !== 'file')
+  const fuzzy = count === 0 && characters(query).length >= 4 && recordKinds
 
   if (fuzzy) {
-    ;({ params, sql } = fuzzySql(query, kindFilter, kindParams))
+    const recordFilter = files ? `${kindFilter} AND r.kind <> 'file'` : kindFilter
+    ;({ params, sql } = fuzzySql(query, recordFilter, kindParams))
     count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(params)?.total)
   }
 

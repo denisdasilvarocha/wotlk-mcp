@@ -53,7 +53,7 @@ Matching is Unicode case-insensitive and literal: every whitespace-separated ter
 - Queries may contain up to 4,096 UTF-16 code units and 64 distinct terms.
 - A full ID such as `spell:133` ranks first.
 - Queries under three characters match name prefixes only.
-- When a query of four or more characters finds nothing, a typo-tolerant search runs and the footer starts with `Fuzzy:`.
+- When a query of four or more characters finds no literal hits, a typo-tolerant search runs for the selected non-file kinds and the footer starts with `Fuzzy:`. Interface source lines are always matched literally.
 
 Each hit is one line, `id name — hint`, followed by a footer with the range, the total, and either `next offset: N` or `end`:
 
