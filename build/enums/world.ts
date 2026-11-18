@@ -249,7 +249,9 @@ export function importWorldEnums(database: string, sourceDirectory: string): voi
     insertMappings(db, mappings)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

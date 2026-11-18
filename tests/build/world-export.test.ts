@@ -384,6 +384,42 @@ esac
       rolledBack.close()
     }
 
+    const automaticRollbackDatabase = path.join(dir, 'automatic-rollback.sqlite')
+
+    initReference(automaticRollbackDatabase)
+
+    const triggerDb = new DatabaseSync(automaticRollbackDatabase)
+
+    try {
+      triggerDb.exec(`
+        CREATE TRIGGER abort_world_import BEFORE INSERT ON meta
+        WHEN NEW.key LIKE 'hash.world_%'
+        BEGIN
+          SELECT RAISE(ROLLBACK, 'fixture automatic rollback');
+        END;
+      `)
+    } finally {
+      triggerDb.close()
+    }
+
+    const automaticRollback = spawnSync(
+      'vpx',
+      [exporter, automaticRollbackDatabase, path.join(dir, 'automatic-rollback-work')],
+      {
+        cwd: dir,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+          WORLD_ROOT: world,
+          WORLD_ROWS: rows
+        }
+      }
+    )
+
+    expect(automaticRollback.status).not.toBe(0)
+    expect(automaticRollback.stderr).toContain('fixture automatic rollback')
+
     const edgeFile = path.join(rows, 'synthetic_types')
     const edgeFields = readFileSync(edgeFile, 'utf8').trimEnd().split('\t')
 

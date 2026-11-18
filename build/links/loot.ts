@@ -254,7 +254,9 @@ export function buildLootLinks(file: string): void {
     linkOwners(context, tables)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

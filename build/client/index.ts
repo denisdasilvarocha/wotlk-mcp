@@ -126,7 +126,9 @@ export function importClientData(
     writeMetadata(db, definitions, manifestHash)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

@@ -190,7 +190,9 @@ export function importSpellEnums(database: string, sourceDirectory: string): voi
 
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

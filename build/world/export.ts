@@ -62,7 +62,9 @@ export async function exportWorld(
     populateWorldMetadata(db, metadata, source, mysqlImage, importerImage)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()
