@@ -9,6 +9,8 @@ import * as z from 'zod'
 
 import type { Database } from '../src/database.ts'
 
+const offsetDirectory = 'data/offsets'
+
 export const offsetTopicSchema = z.array(
   z.strictObject({
     kind: z.enum(['function', 'data']),
@@ -21,18 +23,27 @@ export const offsetTopicSchema = z.array(
 
 export type OffsetEntry = z.infer<typeof offsetTopicSchema>[number]
 
-function hashOffsets(directory: string): string {
+export function loadCommittedOffsets(commit: string): { entries: OffsetEntry[]; digest: string } {
+  const tree = `${commit}:${offsetDirectory}`
+  const files = execFileSync(
+    'git',
+    ['--no-replace-objects', 'ls-tree', '--full-tree', '--name-only', '-z', tree],
+    { encoding: 'utf8' }
+  ).split('\0')
   const hash = createHash('sha256')
 
-  for (const file of readdirSync(directory)
-    .filter((name) => name.endsWith('.json'))
-    .toSorted()) {
-    hash
-      .update(file)
-      .update('\0')
-      .update(readFileSync(path.join(directory, file)))
-  }
-  return hash.digest('hex')
+  const entries = parseOffsets(offsetDirectory, files, (file) => {
+    const bytes = execFileSync('git', [
+      '--no-replace-objects',
+      'cat-file',
+      'blob',
+      `${tree}/${file}`
+    ])
+    hash.update(file).update('\0').update(bytes)
+    return bytes.toString('utf8')
+  })
+
+  return { entries, digest: hash.digest('hex') }
 }
 
 function insertOffsets(db: Database, entries: readonly Readonly<OffsetEntry>[]): void {
@@ -55,10 +66,8 @@ function insertOffsets(db: Database, entries: readonly Readonly<OffsetEntry>[]):
 }
 
 export function initReference(output: string): void {
-  const directory = 'data/offsets'
-  const entries = loadOffsets(directory)
-  const digest = hashOffsets(directory)
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  const { entries, digest } = loadCommittedOffsets(commit)
   const db = new DatabaseSync(output)
 
   db.exec('BEGIN')
@@ -101,21 +110,27 @@ export function initReference(output: string): void {
 }
 
 export function loadOffsets(directory: string): OffsetEntry[] {
-  const files = readdirSync(directory)
-    .filter((file) => file.endsWith('.json'))
-    .toSorted()
+  return parseOffsets(directory, readdirSync(directory), (file) =>
+    readFileSync(path.join(directory, file), 'utf8')
+  )
+}
 
-  if (files.length === 0) {
+function parseOffsets(
+  directory: string,
+  files: readonly string[],
+  readTopic: (file: string) => string
+): OffsetEntry[] {
+  const topics = files.filter((file) => file.endsWith('.json')).toSorted()
+
+  if (topics.length === 0) {
     throw new Error(`No topic JSON documents in ${directory}`)
   }
 
   const offsets: OffsetEntry[] = []
   const paths = new Set<string>()
 
-  for (const file of files) {
-    const entries = offsetTopicSchema.parse(
-      JSON.parse(readFileSync(path.join(directory, file), 'utf8'))
-    )
+  for (const file of topics) {
+    const entries = offsetTopicSchema.parse(JSON.parse(readTopic(file)))
 
     for (const offset of entries) {
       if (paths.has(offset.path)) {

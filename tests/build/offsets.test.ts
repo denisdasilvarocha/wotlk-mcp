@@ -1,11 +1,20 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import nodePath from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vite-plus/test'
 
 const catalog = 'data/offsets'
 const command = 'scripts/validate-offsets.ts'
+
+function git(cwd: string, ...args: string[]): string {
+  return execFileSync('git', ['-c', 'core.autocrlf=false', '-c', 'commit.gpgsign=false', ...args], {
+    cwd,
+    encoding: 'utf8'
+  }).trim()
+}
 
 type OffsetEntry = {
   readonly kind: string
@@ -84,6 +93,72 @@ function originalEntries(original: string): OffsetEntry[] {
 
   return entries
 }
+
+describe('Offset import', () => {
+  it('stores and hashes committed topics even when the index and worktree differ', () => {
+    const directory = mkdtempSync(nodePath.join(tmpdir(), 'offset-snapshot-'))
+
+    try {
+      const topics = nodePath.join(directory, catalog)
+      const tracked = nodePath.join(topics, 'topic.json')
+      const entry = { kind: 'function', note: 'committed', path: 'Lua::Example', va: '0x00819210' }
+      const committed = `${JSON.stringify([entry])}\n`
+      const database = nodePath.join(directory, 'reference.sqlite')
+      const moduleUrl = new URL('../../build/offsets.ts', import.meta.url).href
+      git(directory, 'init', '--template=')
+      mkdirSync(topics, { recursive: true })
+      writeFileSync(nodePath.join(directory, '.gitignore'), '/data/offsets/ignored.json\n')
+      writeFileSync(tracked, committed)
+      git(directory, 'add', '-f', '.gitignore', `${catalog}/topic.json`)
+      git(
+        directory,
+        '-c',
+        'user.name=Offsets Test',
+        '-c',
+        'user.email=offsets@example.test',
+        'commit',
+        '-m',
+        'Fixture'
+      )
+      const pin = git(directory, 'rev-parse', 'HEAD')
+      writeFileSync(tracked, JSON.stringify([{ ...entry, note: 'staged' }]))
+      git(directory, 'add', `${catalog}/topic.json`)
+      writeFileSync(tracked, JSON.stringify([{ ...entry, note: 'unstaged' }]))
+      writeFileSync(
+        nodePath.join(topics, 'untracked.json'),
+        JSON.stringify([{ ...entry, path: 'Lua::Untracked' }])
+      )
+      writeFileSync(
+        nodePath.join(topics, 'ignored.json'),
+        JSON.stringify([{ ...entry, path: 'Lua::Ignored' }])
+      )
+
+      execFileSync(
+        process.execPath,
+        [
+          '--experimental-strip-types',
+          '--input-type=module',
+          '--eval',
+          `import { initReference } from ${JSON.stringify(moduleUrl)}; initReference(process.argv[1])`,
+          database
+        ],
+        { cwd: directory }
+      )
+
+      using db = new DatabaseSync(database, { readOnly: true })
+      expect(db.prepare('SELECT path, va, kind, note FROM offsets_entry').all()).toEqual([entry])
+      expect(db.prepare("SELECT pin, sha256 FROM source WHERE name = 'offsets'").get()).toEqual({
+        pin,
+        sha256: createHash('sha256').update(`topic.json\0${committed}`).digest('hex')
+      })
+      expect(db.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()).toEqual({
+        value: JSON.stringify({ offsets: pin })
+      })
+    } finally {
+      rmSync(directory, { force: true, recursive: true })
+    }
+  })
+})
 
 describe('Offsets catalog', () => {
   it('preserves every original declaration, note and classification', () => {
