@@ -50,6 +50,7 @@ Find Records by name or text and return their IDs.
 Matching is Unicode case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text.
 
 - A bare number matches that key in every kind, so `19019` finds `item:19019` and `creature:19019`.
+- Queries may contain up to 4,096 UTF-16 code units and 64 distinct terms.
 - A full ID such as `spell:133` ranks first.
 - Queries under three characters match name prefixes only.
 - When a query of four or more characters finds nothing, a typo-tolerant search runs and the footer starts with `Fuzzy:`.

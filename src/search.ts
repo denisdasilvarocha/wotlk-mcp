@@ -10,6 +10,10 @@ interface SearchInput {
 
 type Params = Record<string, string | number>
 
+const maxQueryLength = 4096
+const maxTerms = 64
+const maxFuzzyTrigrams = 64
+
 function quoteFts(value: string): string {
   return `"${value.replaceAll('"', '""')}"`
 }
@@ -107,8 +111,14 @@ function fuzzySql(
   kindParams: Readonly<Params>
 ): { params: Params; sql: string } {
   const chars = characters(query.toLowerCase())
-  const trigrams = [...new Set(chars.slice(0, -2).map((_, i) => chars.slice(i, i + 3).join('')))]
-  const params: Params = { ...kindParams, fts: trigrams.map((tri) => quoteFts(tri)).join(' OR ') }
+  const distinctTrigrams = new Set<string>()
+
+  for (let i = 0; i + 2 < chars.length && distinctTrigrams.size < maxFuzzyTrigrams; i++) {
+    distinctTrigrams.add(chars[i] + chars[i + 1] + chars[i + 2])
+  }
+
+  const trigrams = [...distinctTrigrams]
+  const params: Params = { ...kindParams, fts: trigrams.map(quoteFts).join(' OR ') }
   const score = trigrams
     .map((tri, i) => {
       params[`tri${i}`] = tri
@@ -155,9 +165,37 @@ export function pageFooter(offset: number, length: number, total: number): strin
   return `${range} of ${total}; ${end < total ? `next offset: ${end}` : 'end'}`
 }
 
+function validatedTerms(query: string): string[] {
+  if (query.length > maxQueryLength) {
+    throw new Error(`Search query needs at most ${maxQueryLength} UTF-16 code units`)
+  }
+
+  if (query.includes('\0')) {
+    throw new Error('Search query must not contain NUL')
+  }
+
+  const terms: string[] = []
+  const patterns: RegExp[] = []
+
+  for (const term of new Set(query.split(/\s+/u))) {
+    if (patterns.some((pattern) => pattern.test(term))) {
+      continue
+    }
+
+    if (terms.length === maxTerms) {
+      throw new Error(`Search query needs at most ${maxTerms} distinct terms`)
+    }
+
+    terms.push(term)
+    patterns.push(literalPattern(term, 'exact'))
+  }
+
+  return terms
+}
+
 export function searchRecords(db: Database, input: Readonly<SearchInput>): string {
   const { query } = input
-  const terms = query.split(/\s+/u)
+  const terms = validatedTerms(query)
   const files = input.kind?.includes('file') ?? false
 
   if (files && characters(query).length < 3) {
@@ -169,7 +207,7 @@ export function searchRecords(db: Database, input: Readonly<SearchInput>): strin
 
   if (input.kind) {
     kindFilter += ` AND r.kind IN (${
-      input.kind
+      [...new Set(input.kind)]
         .map((kind, i) => {
           kindParams[`kind${i}`] = kind
           return `$kind${i}`

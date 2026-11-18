@@ -175,6 +175,39 @@ test('punctuation, short queries and fuzzy fallback stay literal', async () => {
   }
 })
 
+test('repeated case-insensitive terms do not exhaust the expression budget', async () => {
+  const output = await text({ kind: ['spell'], query: 'e E '.repeat(1000).trim() })
+
+  expect(ids(output)).toEqual(['spell:42'])
+})
+
+test('queries with too many distinct terms report a validation error', async () => {
+  const query = Array.from({ length: 1001 }, (_, i) => `q${i.toString(36)}`).join(' ')
+
+  const result = await search({ query })
+
+  expect(result.isError).toBe(true)
+  expect(JSON.stringify(result.content)).toContain('Search query needs at most 64 distinct terms')
+})
+
+test('overlong queries report a validation error', async () => {
+  const result = await search({ query: 'a'.repeat(4097) })
+
+  expect(result.isError).toBe(true)
+  expect(JSON.stringify(result.content)).toContain(
+    'Search query needs at most 4096 UTF-16 code units'
+  )
+})
+
+test('long typo queries retain fuzzy results without exhausting the expression budget', async () => {
+  const suffix = Array.from({ length: 1024 }, (_, i) => String.fromCodePoint(0x4e00 + i)).join('')
+
+  const output = await text({ kind: ['item'], query: `dragn${suffix}` })
+
+  expect(ids(output)).toEqual(['item:8', 'item:10', 'item:9'])
+  expect(output).toContain('Fuzzy: 1–3 of 3; end')
+})
+
 test('file names and exact IDs are searchable only with the file filter', async () => {
   expect(await text({ kind: ['file'], query: 'file:FrameXML/Test.lua' })).toContain(
     'file:FrameXML/Test.lua'
