@@ -1,10 +1,11 @@
 import { validateReference } from './reference.js'
 import { installSqlAuthorizer } from './sql-authorization.js'
 import { extractSqlStatement } from './sql-statement.js'
+import { prepareTextRows } from './sql-text.js'
 import { DatabaseSync } from 'node:sqlite'
 import { Worker, isMainThread, parentPort } from 'node:worker_threads'
 
-import type { SQLOutputValue, StatementSync } from 'node:sqlite'
+import type { SQLOutputValue, StatementColumnMetadata, StatementSync } from 'node:sqlite'
 
 const maxOutput = 32000
 const maxSqliteValueBytes = 32 * 1024 * 1024
@@ -31,26 +32,32 @@ function execute(path: string, query: string, limit: number): string {
 
     const statement = db.prepare(query)
 
-    if (extractSqlStatement(query, statement.sourceSQL) === undefined) {
+    const sql = extractSqlStatement(query, statement.sourceSQL)
+    if (sql === undefined) {
       throw new Error('SQL requires exactly one statement')
     }
 
-    statement.setReadBigInts(true)
-    statement.setReturnArrays(true)
+    const columns = statement.columns()
+    if (columns.length === 0) {
+      throw new Error('SQL statement must return columns')
+    }
 
-    return withSqlExecution(() => render(statement, limit))
+    const rows = prepareTextRows(db, statement, sql, columns.length)
+    rows.statement.setReadBigInts(true)
+    rows.statement.setReturnArrays(true)
+
+    return withSqlExecution(() => render(rows.statement, columns, limit, rows.decodeRow))
   } finally {
     db.close()
   }
 }
 
-function render(statement: Readonly<StatementSync>, limit: number): string {
-  const columns = statement.columns()
-
-  if (columns.length === 0) {
-    throw new Error('SQL statement must return columns')
-  }
-
+function render(
+  statement: Readonly<StatementSync>,
+  columns: readonly Readonly<StatementColumnMetadata>[],
+  limit: number,
+  decodeRow?: (row: SQLOutputValue[]) => void
+): string {
   const header = renderLine(
     columns.map((column) => column.name),
     maxOutput,
@@ -71,7 +78,9 @@ function render(statement: Readonly<StatementSync>, limit: number): string {
       break
     }
 
-    const line = renderLine(Object.values(row), maxOutput - length - 1)
+    const values = Object.values(row)
+    decodeRow?.(values)
+    const line = renderLine(values, maxOutput - length - 1)
 
     if (line === undefined) {
       reason = 'output limit'
