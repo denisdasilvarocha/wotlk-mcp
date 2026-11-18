@@ -1,10 +1,11 @@
+import type { Field } from './layout.ts'
+
 export type DbcBuffer = Readonly<
   Pick<
     Buffer,
     'length' | 'indexOf' | 'toString' | 'readFloatLE' | 'readUInt32LE' | 'readUIntLE' | 'readIntLE'
   >
 >
-type Field = Readonly<{ type: string; unsigned: boolean; size: number }>
 
 function text(
   data: DbcBuffer,
@@ -35,7 +36,14 @@ export function readValue(
   name: string
 ): number | string {
   if (field.type === 'float') {
-    return data.readFloatLE(cursor)
+    const value = data.readFloatLE(cursor)
+    const negativeZero = Object.is(value, -0)
+    if (Number.isNaN(value) || negativeZero) {
+      throw new Error(
+        `DBC floating conversion loss in dbc_${name}.${field.name}: ${negativeZero ? '-0' : value}`
+      )
+    }
+    return value
   }
   if (field.type.includes('string')) {
     return text(data, data.readUInt32LE(cursor), strings, stringStart, name)
