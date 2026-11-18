@@ -134,7 +134,6 @@ function recordClientBundle(db: Database, pins: Record<string, unknown>): void {
   )
 
   Object.assign(pins, { client_inputs_asset: { sha256: bundleHash, tag } })
-  db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify(pins))
 }
 
 function addNotice(
@@ -247,6 +246,14 @@ export function writeProvenance(database: string, notice: string, inputs: Proven
     )
 
     metadata.run('codex.node_image', inputs.codexNodeImage)
+    metadata.run(
+      'input_pins',
+      JSON.stringify({
+        ...pins,
+        codex_node_image: inputs.codexNodeImage,
+        world_importer_image: inputs.worldImporterImage
+      })
+    )
 
     for (const name of canonicalTables(db)) {
       const { hash, count } = canonicalTableHash(db, name)

@@ -121,6 +121,10 @@ test('final provenance hashes typed logical tables and emits notices from the em
     expect(initial['canonical_hash.meta']).toBeUndefined()
     expect(initial['canonical_hash.record_fts']).toBeUndefined()
     expect(initial['canonical_hash.record_fts_data']).toBeUndefined()
+    expect(JSON.parse(String(initial.input_pins))).toMatchObject({
+      codex_node_image: `node@sha256:${'d'.repeat(64)}`,
+      world_importer_image: `acore/ac-wotlk-db-import@sha256:${'e'.repeat(64)}`
+    })
 
     const text = readFileSync(notice, 'utf8')
 
