@@ -86,7 +86,7 @@ const server = createServer(
             draft: false,
             prerelease: false,
             published_at: '2025-01-01T00:00:00Z',
-            tag_name: 'db-v1.9.0'
+            tag_name: 'db-v1.2.0'
           },
           {
             assets: [
@@ -189,6 +189,9 @@ type ToolClient = Pick<Client, 'callTool' | 'close'>
 
 beforeAll(async () => {
   initReference(dbPath)
+  const initial = new DatabaseSync(dbPath)
+  initial.exec("UPDATE meta SET value = '1.2.0' WHERE key = 'schema_version'")
+  initial.close()
   unpackPackage(dir)
   data = brotliCompressSync(readFileSync(dbPath))
 
@@ -200,6 +203,9 @@ beforeAll(async () => {
     const db = new DatabaseSync(file)
 
     db.prepare("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', ?)").run(name)
+    if (name === 'newer') {
+      db.exec("UPDATE meta SET value = '1.1.0' WHERE key = 'schema_version'")
+    }
     db.close()
 
     if (name === 'older') {
@@ -730,6 +736,30 @@ test.each(['bad', 'missing', 'offline', 'broken', 'schema'])(
   }
 )
 
+test('rejects a digest-valid asset whose schema version differs from the release tag', async () => {
+  const cache = mkdtempSync(path.join(dir, 'mismatch-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const original = data
+  data = newerData
+  scenario = 'good'
+
+  const client = await launch(env)
+
+  try {
+    const result = await call(client)
+
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result)).toContain('schema version 1.1.0 does not match db-v1.2.0')
+    expect(cacheStates(cacheDirectory(cache))).toEqual([])
+
+    data = original
+    expect((await call(client)).isError).not.toBe(true)
+  } finally {
+    data = original
+    await client.close()
+  }
+})
+
 test('higher-major-only releases name the required package major', async () => {
   scenario = 'higher'
   requests = []
@@ -817,6 +847,7 @@ test('a published rollback is activated at the next process start', async () => 
   const db = new DatabaseSync(replacement)
 
   db.exec("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', 'rollback')")
+  db.exec("UPDATE meta SET value = '1.1.0' WHERE key = 'schema_version'")
   db.close()
   data = olderData
   scenario = 'good'

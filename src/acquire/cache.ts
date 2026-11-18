@@ -15,6 +15,20 @@ const cacheStateSchema = z.object({
 })
 export type CacheState = z.infer<typeof cacheStateSchema>
 
+export function validateRelease(file: string, tag: string): void {
+  const db = openReference(file)
+
+  try {
+    const version = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value
+
+    if (`db-v${String(version)}` !== tag) {
+      throw new Error(`schema version ${String(version)} does not match ${tag}`)
+    }
+  } finally {
+    db.close()
+  }
+}
+
 function removeSessionOnExit(session: string): void {
   process.once('exit', () => {
     try {
@@ -110,7 +124,7 @@ export async function cached(
 
       try {
         await link(path.join(directory, entry.state.file), session)
-        openReference(session).close()
+        validateRelease(session, entry.state.version)
         keep.add(entry.name)
         keep.add(entry.state.file)
         files.add(entry.state.file)

@@ -18,7 +18,7 @@ Without `WOTLK_MCP_DB`, the server starts loading a database as soon as it start
 
 1. It lists this repository's releases and picks the newest published release tagged `db-v<major>.<minor>.<patch>` whose major matches the schema major the package accepts. Drafts and prereleases are skipped.
 2. It downloads the `wotlk.sqlite.br` asset and checks it against the SHA-256 digest GitHub records for that asset.
-3. It decompresses the file, checks the schema, and moves it into the cache.
+3. It decompresses the file and verifies that the embedded schema version exactly matches the release tag before moving it into the cache.
 
 A tool call waits up to 20 seconds for the first download. If the download is still running, the call fails with `reference database downloading (N of M bytes); retry shortly`. Retry the call; the download continues in the background.
 

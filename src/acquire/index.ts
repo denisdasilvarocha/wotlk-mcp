@@ -1,5 +1,12 @@
 import { openReference } from '../reference.js'
-import { cached, cacheDirectory, publish, removeIfPossible, states } from './cache.js'
+import {
+  cached,
+  cacheDirectory,
+  publish,
+  removeIfPossible,
+  states,
+  validateRelease
+} from './cache.js'
 import { selectRelease, transferAsset } from './release.js'
 import { randomUUID } from 'node:crypto'
 import { mkdir, rename } from 'node:fs/promises'
@@ -153,7 +160,7 @@ async function download(existing?: CacheState): Promise<boolean> {
         received += value
       }
     )
-    openReference(partial).close()
+    validateRelease(partial, release.tag_name)
     await rename(partial, final)
 
     const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
