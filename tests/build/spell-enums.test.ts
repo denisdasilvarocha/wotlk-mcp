@@ -46,6 +46,12 @@ test('spell mappings validate fields and materialize named references without ch
     db.exec(
       `CREATE TABLE dbc_Spell (ID INTEGER, Name_lang TEXT, ${columns.map((x) => `"${x}" INTEGER`).join(', ')}, Category INTEGER, Missing INTEGER); INSERT INTO dbc_Spell (ID, Name_lang, Effect_1, Effect_2, Effect_3, EffectAura_1, EffectAura_2, EffectAura_3, ImplicitTargetA_1, ImplicitTargetA_2, ImplicitTargetA_3, Attributes, AttributesExG, SchoolMask, ProcTypeMask, PowerType, Category, Missing) VALUES (1, 'Example', 1, 2, 9999, 1, 2, 1, 1, 2, 1, 9, 2, 1, 2, -1, 4, 7); INSERT INTO record VALUES ('spell:1', 'spell', 'Example', 'dbc_Spell', 1, '', ''); CREATE TABLE dbc_Category (ID INTEGER, Name_lang TEXT); INSERT INTO dbc_Category VALUES (4, 'Example category'); CREATE TABLE dbc_foreign_key (source_table TEXT, field TEXT, target_table TEXT, target_field TEXT); INSERT INTO dbc_foreign_key VALUES ('dbc_Spell', 'Category', 'dbc_Category', 'ID'), ('dbc_Spell', 'Missing', 'dbc_Category', 'ID');`
     )
+    db.exec(`
+      CREATE TABLE dbc_Achievement (ID INTEGER, Title_lang TEXT, Supercedes INTEGER);
+      INSERT INTO dbc_Achievement VALUES (6, 'Level 10', 0), (7, 'Level 20', 6);
+      INSERT INTO dbc_foreign_key VALUES ('dbc_Achievement', 'Supercedes', 'dbc_Achievement', 'ID');
+      INSERT INTO record VALUES ('achievement:7', 'achievement', 'Level 20', 'dbc_Achievement', 2, '', '');
+    `)
     db.exec(
       'UPDATE dbc_Spell SET ImplicitTargetB_1 = 1, ImplicitTargetB_2 = 2, ImplicitTargetB_3 = 1, Targets = 1, TargetCreatureType = 2, InterruptFlags = 1, AuraInterruptFlags = 2, ChannelInterruptFlags = 1'
     )
@@ -178,6 +184,12 @@ test('spell mappings validate fields and materialize named references without ch
 
       expect(sql).toContain('1\\t2\\t9999\\t9\\t4')
     } finally {
+      const achievement = await client.callTool({
+        arguments: { ids: ['achievement:7'] },
+        name: 'get'
+      })
+
+      expect(JSON.stringify(achievement)).toContain('Supercedes: 6 (Level 10)')
       await client.close()
     }
 

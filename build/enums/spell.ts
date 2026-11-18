@@ -90,8 +90,9 @@ function materializeTarget(
   if (!targetColumns.includes(targetField)) {
     return
   }
+  const localizedName = target === 'dbc_Achievement' ? /^Title_lang$/iu : /^Name_lang$/iu
   const nameColumn =
-    targetColumns.find((column) => /^Name_lang$/iu.test(column)) ??
+    targetColumns.find((column) => localizedName.test(column)) ??
     targetColumns.find((column) => column.endsWith('Name_lang')) ??
     targetColumns.find((column) => /^Name$/iu.test(column))
   if (nameColumn === undefined) {
