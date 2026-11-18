@@ -40,6 +40,7 @@ A server with a cached database starts immediately and checks for updates in the
 - A verified update is cached but used only from the next start. The running server keeps its snapshot for the whole session.
 - Offline starts use the cache. If the newest cached file is unusable, the server uses the previous one.
 - If the newest published release is an older version than the cached one (a rollback), the next start uses that release.
+- A download that finishes late does not replace a more recently observed release.
 
 ### Package and schema majors
 

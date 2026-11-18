@@ -164,7 +164,7 @@ const server = createServer(
 
       res.setHeader('content-length', data.length)
 
-      if (scenario === 'slow') {
+      if (scenario === 'slow' || scenario === 'late') {
         res.write(data.subarray(0, 10))
         download.finish = (): void => {
           res.end(data.subarray(10))
@@ -302,6 +302,7 @@ function cacheStates(directory: string): readonly Readonly<{
   file: string
   version: string
   lastCheck: number
+  observedAt?: number
   warningMajor?: number
 }>[] {
   return readdirSync(directory)
@@ -312,6 +313,7 @@ function cacheStates(directory: string): readonly Readonly<{
         .object({
           file: z.string(),
           lastCheck: z.number(),
+          observedAt: z.number().optional(),
           version: z.string(),
           warningMajor: z.number().optional()
         })
@@ -321,6 +323,7 @@ function cacheStates(directory: string): readonly Readonly<{
         file: state.file,
         lastCheck: state.lastCheck,
         name,
+        observedAt: state.observedAt,
         version: state.version,
         warningMajor: state.warningMajor
       }
@@ -565,6 +568,45 @@ test('shared cache survives concurrent first downloads and offline restarts', as
     expect(readdirSync(directory)).not.toContain(path.basename(abandoned))
   } finally {
     await offline.close()
+  }
+})
+
+test('a late cold download cannot replace a release observed after it', async () => {
+  const cache = mkdtempSync(path.join(dir, 'late-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const original = data
+  data = olderData
+  scenario = 'late'
+
+  const late = await launch(env)
+
+  try {
+    await waitUntil(() => hasPartial(cacheDirectory(cache)), 'older download did not start')
+    data = newerData
+    scenario = 'rollback'
+    const newer = await launch(env)
+
+    try {
+      expect(await marker(newer)).toContain('value\\nnewer')
+      data = olderData
+      download.finish()
+      expect(await marker(late)).toContain('value\\nnewer')
+
+      scenario = 'offline'
+      const offline = await launch(env)
+
+      try {
+        expect(await marker(offline)).toContain('value\\nnewer')
+      } finally {
+        await offline.close()
+      }
+    } finally {
+      await newer.close()
+    }
+  } finally {
+    download.finish()
+    await late.close()
+    data = original
   }
 })
 

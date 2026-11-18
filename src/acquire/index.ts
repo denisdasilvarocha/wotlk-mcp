@@ -127,9 +127,15 @@ async function download(existing?: CacheState): Promise<boolean> {
   const release = await selectRelease((value) => {
     warningMajor = value
   })
+  const observedAt = performance.timeOrigin + performance.now()
 
-  if (release.tag_name === existing?.version) {
-    return false
+  if (existing && release.tag_name === existing.version) {
+    await publish(
+      cacheDirectory(),
+      { ...existing, observedAt, warningMajor },
+      Math.max(Date.now(), existing.lastCheck + 2)
+    )
+    return true
   }
 
   const asset = release.assets.find((item) => item.name === 'wotlk.sqlite.br')
@@ -170,6 +176,7 @@ async function download(existing?: CacheState): Promise<boolean> {
       {
         file: path.basename(final),
         lastCheck: existing?.lastCheck ?? checked,
+        observedAt,
         version: release.tag_name,
         warningMajor
       },

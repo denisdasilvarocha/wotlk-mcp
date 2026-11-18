@@ -10,6 +10,7 @@ import * as z from 'zod'
 const cacheStateSchema = z.object({
   file: z.string().regex(/^db-v\d+\.\d+\.\d+-[0-9a-f-]+\.sqlite$/u),
   lastCheck: z.number(),
+  observedAt: z.number().optional(),
   version: z.string().regex(/^db-v\d+\.\d+\.\d+$/u),
   warningMajor: z.number().int().positive().optional()
 })
@@ -159,14 +160,22 @@ export async function states(directory: string) {
           JSON.parse(await readFile(path.join(directory, name), 'utf8'))
         )
 
-        return { name, state }
+        const publishedAt = Number(name.split('-', 2)[1])
+        return { name, state, publishedAt }
       } catch {
         return null
       }
     })
   )
 
-  return entries.filter((entry) => entry !== null).toSorted((a, b) => b.name.localeCompare(a.name))
+  return entries
+    .filter((entry) => entry !== null)
+    .toSorted(
+      (a, b) =>
+        (b.state.observedAt ?? b.publishedAt) - (a.state.observedAt ?? a.publishedAt) ||
+        b.publishedAt - a.publishedAt ||
+        b.name.localeCompare(a.name)
+    )
 }
 
 export async function removeIfPossible(file: string): Promise<void> {
