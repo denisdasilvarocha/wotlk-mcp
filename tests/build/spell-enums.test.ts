@@ -49,6 +49,10 @@ test('spell mappings validate fields and materialize named references without ch
     db.exec(
       'UPDATE dbc_Spell SET ImplicitTargetB_1 = 1, ImplicitTargetB_2 = 2, ImplicitTargetB_3 = 1, Targets = 1, TargetCreatureType = 2, InterruptFlags = 1, AuraInterruptFlags = 2, ChannelInterruptFlags = 1'
     )
+    db.exec(`
+      INSERT INTO dbc_Spell (ID, Name_lang, PowerType) VALUES (755, 'Health Funnel', -2);
+      INSERT INTO record VALUES ('spell:755', 'spell', 'Health Funnel', 'dbc_Spell', 2, '', '');
+    `)
     db.close()
 
     const headerNames: Record<string, string[]> = {
@@ -78,9 +82,10 @@ test('spell mappings validate fields and materialize named references without ch
       writeFileSync(
         destination,
         names
-          .map(
-            (name) =>
-              `enum ${name} { ${name.toUpperCase()}_NONE = 0, ${name.toUpperCase()}_FIRST = 1, ${name.toUpperCase()}_SECOND = 2 };`
+          .map((name) =>
+            name === 'Powers'
+              ? 'enum Powers { POWER_MANA = 0, POWER_HEALTH = 0xFFFFFFFE, POWER_SENTINEL = 0xFFFFFFFF };'
+              : `enum ${name} { ${name.toUpperCase()}_NONE = 0, ${name.toUpperCase()}_FIRST = 1, ${name.toUpperCase()}_SECOND = 2 };`
           )
           .join('\n')
       )
@@ -128,7 +133,7 @@ test('spell mappings validate fields and materialize named references without ch
 
     try {
       const get = JSON.stringify(
-        await client.callTool({ arguments: { ids: ['spell:1'] }, name: 'get' })
+        await client.callTool({ arguments: { ids: ['spell:1', 'spell:755'] }, name: 'get' })
       )
 
       for (const expected of [
@@ -154,11 +159,13 @@ test('spell mappings validate fields and materialize named references without ch
         'Attributes: 9 (FIRST, 8)',
         'AttributesExG: 2 (SECOND)',
         'PowerType: -1',
+        'PowerType: -2 (HEALTH)',
         'Category: 4 (Example category)',
         'Missing: 7'
       ]) {
         expect(get).toContain(expected)
       }
+      expect(get).not.toContain('PowerType: -1 (')
 
       const sql = JSON.stringify(
         await client.callTool({

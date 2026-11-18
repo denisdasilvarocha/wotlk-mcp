@@ -41,7 +41,9 @@ function insertSpellValues(
     const external = name === 'SpellSchoolMask' ? parseEnum(headers[0], 'SpellSchools') : []
     const entries = parseEnum(header, enumName, external)
     for (const entry of enumValues(entries, name === 'CreatureTypeMask')) {
-      insertValue.run(name, entry.value, entry.name)
+      const value = name === 'Powers' ? Number(BigInt.asIntN(32, BigInt(entry.value))) : entry.value
+
+      insertValue.run(name, value, entry.name)
     }
   }
 }
