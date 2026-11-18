@@ -181,7 +181,9 @@ export function openReference(path: string): DatabaseSync {
       )
     }
 
-    db.prepare('SELECT id, kind, name, source_table, source_row FROM record LIMIT 0').all()
+    db.prepare(
+      'SELECT id, kind, name, source_table, source_row, search_text, hint FROM record LIMIT 0'
+    ).all()
     db.prepare('SELECT source_id, relation, destination_id, notes FROM link LIMIT 0').all()
     db.prepare('SELECT id, name, text FROM record_fts LIMIT 0').all()
     db.prepare('SELECT path, line, text FROM ui_line_fts LIMIT 0').all()
