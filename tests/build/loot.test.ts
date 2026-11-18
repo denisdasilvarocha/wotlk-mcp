@@ -184,3 +184,33 @@ test('broken and cyclic references fail atomically with source diagnostics', () 
     check.close()
   }
 })
+
+test.each([
+  ['missing reference', -999, 'entry 41 item 9:.*missing reference ref:999 \\(stored -999\\)'],
+  ['cyclic reference', 40, 'entry 41 item 9:.*cyclic reference ref:40 -> ref:41 -> ref:40']
+] as const)('rejects an unused template with a %s', (name, ref, message) => {
+  const file = fixture(name)
+  const db = new DatabaseSync(file)
+
+  db.exec(`INSERT INTO world_reference_loot_template VALUES
+    (40,8,41,100,0,1,0,1,1,'unused'),
+    (41,9,${ref},100,0,1,0,1,1,'invalid');`)
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(new RegExp(`world_reference_loot_template ${message}`, 'u'))
+})
+
+test('rejects a missing reference from a loot template without a Record owner', () => {
+  const file = fixture('unowned')
+  const db = new DatabaseSync(file)
+
+  db.exec(`INSERT INTO world_creature_template VALUES (99,90,0,0);
+    INSERT INTO world_creature_loot_template VALUES (90,9,999,100,0,1,0,1,1,'invalid');`)
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(/world_creature_loot_template entry 90 item 9:.*missing reference ref:999/u)
+})
