@@ -1,7 +1,7 @@
 import { sha256Hex } from '../shared/sha256.ts'
 import { image, run, worldRevision } from './images.ts'
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { chmodSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { open } from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
@@ -81,6 +81,22 @@ async function response(url: string): Promise<Response> {
   return result
 }
 
+function makePublicMount(directory: string, privateEntry?: string): void {
+  chmodSync(directory, 0o755)
+
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === privateEntry) {
+      continue
+    }
+    const file = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      makePublicMount(file)
+    } else if (entry.isFile()) {
+      chmodSync(file, (statSync(file).mode & 0o700) | 0o044)
+    }
+  }
+}
+
 async function archive(
   output: string,
   name: string,
@@ -109,7 +125,6 @@ async function archive(
 
   const directory = path.join(output, name)
 
-  // Public sources; Linux containers read the bind mount as a different user.
   mkdirSync(directory, { mode: 0o755 })
   run('tar', ['-xzf', file, '-C', directory, '--strip-components=1'])
 
@@ -205,9 +220,11 @@ export async function acquireSources(directory: string): Promise<Sources> {
       'azerothcore/azerothcore-wotlk',
       worldCommit
     )
+    makePublicMount(azerothcore.directory)
     const codexNodeImage = image('node:24-alpine', 'node')
     const codexRevision = await revision('Shard-MW/milkyway-codex', 'main')
     const codex = acquireCodex(output, codexRevision)
+    makePublicMount(codex.directory, '.git')
 
     console.log(
       `WoWDBDefs ${wowRevision}; AzerothCore ${worldCommit} (${worldImporterImage}); Codex ${codexRevision} (${codexNodeImage})`

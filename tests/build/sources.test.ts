@@ -23,7 +23,7 @@ function lastJsonLine(output: string): unknown {
   return JSON.parse(output.trim().split('\n').at(-1) ?? '')
 }
 
-function run(output: string, bin: string): SpawnSyncReturns<string> {
+function run(output: string, bin: string, umask?: number): SpawnSyncReturns<string> {
   if (!existsSync(path.join(bin, 'fetch.mjs'))) {
     writeFileSync(path.join(bin, 'fetch.mjs'), '')
   }
@@ -35,7 +35,7 @@ function run(output: string, bin: string): SpawnSyncReturns<string> {
       path.join(bin, 'fetch.mjs'),
       '--input-type=module',
       '-e',
-      `import { acquireSources } from ${JSON.stringify(new URL('../../build/sources/index.ts', import.meta.url).href)}; console.log(JSON.stringify(await acquireSources(process.argv[1])))`,
+      `import { acquireSources } from ${JSON.stringify(new URL('../../build/sources/index.ts', import.meta.url).href)}; ${umask === undefined ? '' : `process.umask(${umask});`} console.log(JSON.stringify(await acquireSources(process.argv[1])))`,
       output
     ],
     {
@@ -129,7 +129,7 @@ function fixtures(
     dir,
     'git',
     `case "$*" in
-    *"init -q"*) mkdir -p "$3/src/data"; for name in api-functions events widgets cvars data-types combat-log-events secure-templates book-chapters; do printf '%s' "$name" > "$3/src/data/$name.ts"; done ;;
+    *"init -q"*) mkdir -p "$3/.git" "$3/src/data"; for name in api-functions events widgets cvars data-types combat-log-events secure-templates book-chapters; do printf '%s' "$name" > "$3/src/data/$name.ts"; done ;;
     *"rev-parse HEAD"*) printf '%s' '${checkoutRevision}' ;;
   esac`
   )
@@ -229,6 +229,37 @@ test.each([undefined, 'GITHUB_TOKEN', 'GH_TOKEN'] as const)(
     }
   }
 )
+
+test('makes public mount content readable under umask 077 without opening private paths', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'reference-inputs-test-'))
+  const output = path.join(dir, 'inputs')
+
+  try {
+    fixtures(dir)
+    executable(
+      dir,
+      'tar',
+      `case "$*" in
+    *azerothcore.tar.gz*) mkdir "$4/data"; printf sql > "$4/data/world.sql"; ln -s ../client-inputs "$4/client-link" ;;
+  esac`
+    )
+
+    const result = run(output, dir, 0o077)
+
+    expect(result.status).toBe(0)
+    expect(statSync(path.join(output, 'azerothcore')).mode & 0o777).toBe(0o755)
+    expect(statSync(path.join(output, 'azerothcore/data')).mode & 0o777).toBe(0o755)
+    expect(statSync(path.join(output, 'azerothcore/data/world.sql')).mode & 0o777).toBe(0o644)
+    expect(statSync(path.join(output, 'codex')).mode & 0o777).toBe(0o755)
+    expect(statSync(path.join(output, 'codex/src/data')).mode & 0o777).toBe(0o755)
+    expect(statSync(path.join(output, 'codex/src/data/widgets.ts')).mode & 0o777).toBe(0o644)
+    expect(statSync(path.join(output, 'codex/.git')).mode & 0o777).toBe(0o700)
+    expect(statSync(path.join(output, 'client-inputs')).mode & 0o777).toBe(0o700)
+    expect(statSync(output).mode & 0o777).toBe(0o700)
+  } finally {
+    rmSync(dir, { force: true, recursive: true })
+  }
+})
 
 test.each([
   ['malformed provenance', { badProvenance: true }],
