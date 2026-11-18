@@ -5,6 +5,16 @@ import { Worker, isMainThread, parentPort } from 'node:worker_threads'
 import type { SQLOutputValue, StatementSync } from 'node:sqlite'
 
 const maxOutput = 32000
+const maxSqliteValueBytes = 32 * 1024 * 1024
+const maxWorkerRssBytes = 192 * 1024 * 1024
+const memorySampleMs = 20
+
+const escapedCharacters = new Map([
+  ['\\', '\\\\'],
+  ['\t', '\\t'],
+  ['\n', '\\n'],
+  ['\r', '\\r']
+])
 
 const pragmas = new Set([
   'table_info',
@@ -27,7 +37,9 @@ function execute(path: string, query: string, limit: number): string {
   const db = new DatabaseSync(path, { allowExtension: false, readOnly: true })
 
   try {
+    db.limits.length = maxSqliteValueBytes
     validateReference(db)
+
     db.setAuthorizer((action, arg1) => {
       if (actions.has(action)) {
         return constants.SQLITE_OK
@@ -89,14 +101,19 @@ function render(statement: Readonly<StatementSync>, limit: number): string {
     throw new Error('SQL statement must return columns')
   }
 
-  const header = columns.map((column) => escape(column.name, true)).join('\t')
+  const header = renderLine(
+    columns.map((column) => column.name),
+    maxOutput,
+    true
+  )
+
+  if (header === undefined) {
+    return '[truncated: output limit]'
+  }
+
   let { length } = header
   let reason = ''
   const rows = [header]
-
-  if (length > maxOutput) {
-    return '[truncated: output limit]'
-  }
 
   for (const row of statement.iterate()) {
     if (rows.length > limit) {
@@ -104,11 +121,9 @@ function render(statement: Readonly<StatementSync>, limit: number): string {
       break
     }
 
-    const line = Object.values(row)
-      .map((value: Cell) => escape(value))
-      .join('\t')
+    const line = renderLine(Object.values(row), maxOutput - length - 1)
 
-    if (length + line.length + 1 > maxOutput) {
+    if (line === undefined) {
       reason = 'output limit'
       break
     }
@@ -136,25 +151,60 @@ function render(statement: Readonly<StatementSync>, limit: number): string {
   return rows.join('\n')
 }
 
-function escape(value: Cell, header = false): string {
+function renderLine(values: readonly Cell[], budget: number, header = false): string | undefined {
+  const cells: string[] = []
+  let remaining = budget
+
+  for (const value of values) {
+    if (cells.length > 0) {
+      remaining -= 1
+    }
+
+    const cell = escape(value, remaining, header)
+
+    if (cell === undefined) {
+      return undefined
+    }
+    cells.push(cell)
+    remaining -= cell.length
+  }
+
+  return cells.join('\t')
+}
+
+function escape(value: Cell, budget: number, header: boolean): string | undefined {
   if (value === null) {
-    return 'NULL'
+    return budget >= 4 ? 'NULL' : undefined
   }
   if (value instanceof Uint8Array) {
-    return `\\x${Buffer.from(value).toString('hex')}`
+    if (2 + value.byteLength * 2 > budget) {
+      return undefined
+    }
+    return `\\x${Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('hex')}`
   }
 
   const text = String(value)
-    .replaceAll('\\', '\\\\')
-    .replaceAll('	', '\\t')
-    .replaceAll('\n', '\\n')
-    .replaceAll('\r', '\\r')
 
+  if (text.length > budget) {
+    return undefined
+  }
   if (!header && text === 'NULL') {
-    return '\\NULL'
+    return budget >= 5 ? '\\NULL' : undefined
   }
 
-  return text
+  const special = /[\\\t\n\r]/gu
+  let length = text.length
+
+  while (special.test(text)) {
+    length += 1
+    if (length > budget) {
+      return undefined
+    }
+  }
+
+  return length === text.length
+    ? text
+    : text.replaceAll(special, (character) => escapedCharacters.get(character) ?? character)
 }
 
 type Request = Readonly<{ deadline: number; path: string; query: string; limit: number }>
@@ -176,6 +226,16 @@ function supervise(data: Request): void {
   const timer = setTimeout(killWorkerProcess, Math.max(0, data.deadline - Date.now()))
   const thread = new Worker(new URL(import.meta.url))
   let result: Result | undefined
+  let overBudget = false
+  const monitor = setInterval(() => {
+    if (process.memoryUsage.rss() <= maxWorkerRssBytes) {
+      return
+    }
+
+    overBudget = true
+    clearInterval(monitor)
+    process.send?.({ error: 'SQL worker exceeded its memory budget' }, killWorkerProcess)
+  }, memorySampleMs)
 
   thread.once('message', (message: Result) => {
     result = message
@@ -184,6 +244,11 @@ function supervise(data: Request): void {
     result = { error: String(error).replaceAll(/[\r\n]+/gu, ' ') }
   })
   thread.once('exit', (code) => {
+    clearInterval(monitor)
+    if (overBudget) {
+      return
+    }
+
     const response = result ?? { error: `SQL worker thread exited unexpectedly (${code})` }
     process.send?.(response, () => {
       clearTimeout(timer)
