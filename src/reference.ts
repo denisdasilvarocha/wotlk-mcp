@@ -166,33 +166,36 @@ function getRecord(db: Database, id: string, from: number, to: number): string {
   ].join('\n')
 }
 
+export function validateReference(db: Database): void {
+  const version = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value
+
+  if (
+    typeof version !== 'string' ||
+    !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`, 'u').test(version)
+  ) {
+    throw new Error(
+      `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
+    )
+  }
+
+  db.prepare(
+    'SELECT id, kind, name, source_table, source_row, search_text, hint FROM record LIMIT 0'
+  ).all()
+  db.prepare('SELECT source_id, relation, destination_id, notes FROM link LIMIT 0').all()
+  db.prepare('SELECT id, name, text FROM record_fts LIMIT 0').all()
+  db.prepare('SELECT path, line, text FROM ui_line_fts LIMIT 0').all()
+  db.prepare('SELECT enum_name, value, name FROM enum_value LIMIT 0').all()
+  db.prepare(
+    'SELECT source_table, field, enum_name, flags, condition_field, condition_value FROM enum_field LIMIT 0'
+  ).all()
+  db.prepare('SELECT name, pin, sha256, licence, attribution FROM source LIMIT 0').all()
+}
+
 export function openReference(path: string): DatabaseSync {
   const db = new DatabaseSync(path, { readOnly: true })
 
   try {
-    const version = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value
-
-    if (
-      typeof version !== 'string' ||
-      !new RegExp(`^${acceptedSchemaMajor}\\.\\d+\\.\\d+$`, 'u').test(version)
-    ) {
-      throw new Error(
-        `incompatible schema version ${String(version)}; use wotlk-mcp matching the database major`
-      )
-    }
-
-    db.prepare(
-      'SELECT id, kind, name, source_table, source_row, search_text, hint FROM record LIMIT 0'
-    ).all()
-    db.prepare('SELECT source_id, relation, destination_id, notes FROM link LIMIT 0').all()
-    db.prepare('SELECT id, name, text FROM record_fts LIMIT 0').all()
-    db.prepare('SELECT path, line, text FROM ui_line_fts LIMIT 0').all()
-    db.prepare('SELECT enum_name, value, name FROM enum_value LIMIT 0').all()
-    db.prepare(
-      'SELECT source_table, field, enum_name, flags, condition_field, condition_value FROM enum_field LIMIT 0'
-    ).all()
-    db.prepare('SELECT name, pin, sha256, licence, attribution FROM source LIMIT 0').all()
-
+    validateReference(db)
     return db
   } catch (error) {
     db.close()

@@ -1,3 +1,4 @@
+import { validateReference } from './reference.js'
 import { DatabaseSync, constants } from 'node:sqlite'
 
 import type { SQLOutputValue, StatementSync } from 'node:sqlite'
@@ -25,6 +26,7 @@ function execute(path: string, query: string, limit: number): string {
   const db = new DatabaseSync(path, { allowExtension: false, readOnly: true })
 
   try {
+    validateReference(db)
     db.setAuthorizer((action, arg1) => {
       if (actions.has(action)) {
         return constants.SQLITE_OK
