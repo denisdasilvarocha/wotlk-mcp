@@ -55,6 +55,7 @@ const fields: Record<string, string[]> = {
     'inherits',
     'methods',
     'inheritedMethods',
+    'inheritedMethodDocs',
     'scriptHandlers',
     'category',
     'bookPage',
@@ -161,6 +162,7 @@ function importWidgets(data: CodexData, add: ReturnType<typeof createAdder>): vo
     }
     add('widget', {
       ...widget,
+      inheritedMethodDocs: widget.inheritedMethods,
       inheritedMethods: widget.inheritedMethods.map(methodName),
       methods: widget.methods.map(methodName)
     })
