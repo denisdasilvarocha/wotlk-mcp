@@ -1,5 +1,6 @@
 import { validateReference } from './reference.js'
 import { installSqlAuthorizer } from './sql-authorization.js'
+import { extractSqlStatement } from './sql-statement.js'
 import { DatabaseSync } from 'node:sqlite'
 import { Worker, isMainThread, parentPort } from 'node:worker_threads'
 
@@ -30,7 +31,7 @@ function execute(path: string, query: string, limit: number): string {
 
     const statement = db.prepare(query)
 
-    if (!isCommentTail(query, statement.sourceSQL.length)) {
+    if (extractSqlStatement(query, statement.sourceSQL) === undefined) {
       throw new Error('SQL requires exactly one statement')
     }
 
@@ -41,34 +42,6 @@ function execute(path: string, query: string, limit: number): string {
   } finally {
     db.close()
   }
-}
-
-function isCommentTail(query: string, start: number): boolean {
-  let i = start
-
-  while (i < query.length) {
-    if (/\s/u.test(query[i])) {
-      i++
-    } else if (query[i] === '-' && query[i + 1] === '-') {
-      i += 2
-      while (i < query.length && query[i] !== '\r' && query[i] !== '\n') {
-        i++
-      }
-    } else if (query[i] === '/' && query[i + 1] === '*') {
-      i += 2
-      while (i < query.length && !(query[i] === '*' && query[i + 1] === '/')) {
-        i++
-      }
-      if (i === query.length) {
-        return false
-      }
-      i += 2
-    } else {
-      return false
-    }
-  }
-
-  return true
 }
 
 function render(statement: Readonly<StatementSync>, limit: number): string {
