@@ -231,6 +231,21 @@ test('Client Data importer preserves wide values and SQL-only Item, and verifies
       importClientData(other, dir, digest(missingManifest), definitions)
     }).toThrow(/Missing required Client Data/u)
     expect(snapshot(other)).toEqual(before)
+
+    const itemDefinition = path.join(dir, 'fixture', 'definitions', 'Item.dbd')
+
+    writeFileSync(
+      itemDefinition,
+      readFileSync(itemDefinition, 'utf8').replace('BUILD 3.3.5.12340', 'BUILD 4.0.1.13164')
+    )
+    execFileSync('tar', ['-czf', archive, '-C', dir, 'fixture'])
+    writeFileSync(path.join(dir, 'manifest.json'), manifest)
+    const revisedDefinitions = { ...definitions, sha256: digest(readFileSync(archive)) }
+
+    expect(() => {
+      importClientData(other, dir, digest(manifest), revisedDefinitions)
+    }).toThrow('Missing build 12340 layout: Item')
+    expect(snapshot(other)).toEqual(before)
   } finally {
     await client.close()
     rmSync(dir, { force: true, recursive: true })

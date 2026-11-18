@@ -50,10 +50,7 @@ function importFiles(
       throw new Error(`Missing definition: ${name}`)
     }
     const definition = readFileSync(path.join(definitionsDirectory, file), 'utf8')
-    const fields = parseLayout(definition, name, Boolean(kinds[name]))
-    if (fields === undefined) {
-      continue
-    }
+    const fields = parseLayout(definition, name)
     importTable(db, data, fields, name, entry.path, kinds[name], statements)
     imported.add(name)
   }
