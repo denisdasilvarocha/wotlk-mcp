@@ -47,7 +47,7 @@ Find Records by name or text and return their IDs.
 | `limit` | integer, 1–100 | `20` | Hits per page. |
 | `offset` | integer, ≥ 0 | `0` | Hits to skip. Pass the `next offset` from the previous footer. |
 
-Matching is case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text.
+Matching is Unicode case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text.
 
 - A bare number matches that key in every kind, so `19019` finds `item:19019` and `creature:19019`.
 - A full ID such as `spell:133` ranks first.

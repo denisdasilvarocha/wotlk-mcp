@@ -35,7 +35,12 @@ beforeAll(async () => {
     ['item:9', 'item', 'dracon', '', ''],
     ['item:10', 'item', 'dragons', '', ''],
     ['item:11', 'item', 'Quote "AND" -star*', '', ''],
-    ['item:12', 'item', 'Hidden description', `${'padding '.repeat(30)}needle here`, '']
+    ['item:12', 'item', 'Hidden description', `${'padding '.repeat(30)}needle here`, ''],
+    ['area:101', 'area', 'Tön', '', ''],
+    ['area:102', 'area', 'Tön tower', '', ''],
+    ['area:103', 'area', "Claytön's WoWEdit Land", '', ''],
+    ['area:104', 'area', 'Hidden description', `${'padding '.repeat(30)}tön here`, ''],
+    ['area:105', 'area', 'xy\u1c80 marker', '', '']
   ]
 
   for (const [id, kind, name, description, hint] of rows) {
@@ -68,6 +73,8 @@ beforeAll(async () => {
   fts.run('file:GlueXML/Other.xml', 'GlueXML/Other.xml', '')
   line.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
+  line.run('GlueXML/Other.xml', 2, 'Tön at Key')
+  lineFts.run('GlueXML/Other.xml', 2, 'Tön at Key')
   db.close()
   unpackPackage(dir)
   await client.connect(packagedServer(dir, dbPath))
@@ -181,6 +188,32 @@ test('file names and exact IDs are searchable only with the file filter', async 
 
 test('description snippets include a match beyond the prefix', async () => {
   expect(await text({ kind: ['item'], query: 'needle' })).toContain('needle here')
+})
+
+test('Unicode case-insensitive matches preserve exact, prefix, name and text tiers', async () => {
+  const output = await text({ kind: ['area'], query: 'TÖN' })
+
+  expect(ids(output)).toEqual(['area:101', 'area:102', 'area:103', 'area:104'])
+  expect(output).toContain('tön here')
+  expect(output).not.toContain('Fuzzy:')
+})
+
+test('short Unicode queries match only name prefixes', async () => {
+  const output = await text({ kind: ['area'], query: 'TÖ' })
+
+  expect(ids(output)).toEqual(['area:101', 'area:102'])
+})
+
+test('literal Unicode matches are not limited to the FTS tokenizer case mappings', async () => {
+  const output = await text({ kind: ['area'], query: 'XYВ' })
+
+  expect(ids(output)).toEqual(['area:105'])
+})
+
+test('ASCII queries can match Unicode case equivalents in source lines', async () => {
+  const output = await text({ kind: ['file'], query: 'KEY' })
+
+  expect(ids(output)).toEqual(['file:GlueXML/Other.xml:2'])
 })
 
 test('explicit source lines are literal, paginated, and isolated from ordinary search', async () => {
