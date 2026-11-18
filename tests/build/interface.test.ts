@@ -7,8 +7,20 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { expect, test } from 'vite-plus/test'
 
-const source =
-  'SLASH_CAST1 = "/cast";\r\nSLASH_CAST2 = "/spell";\r\nSecureCmdList["CAST"] = function() end\r\nEMOTE102_CMD1 = "/wave";\r\n--SlashCmdList["CAST"] = function() end\r\n'
+const source = [
+  'SLASH_CAST1 = "/cast";',
+  'SLASH_CAST2 = "/spell";',
+  'SecureCmdList["CAST"] = function() end',
+  'EMOTE102_CMD1 = "/wave";',
+  '--SlashCmdList["CAST"] = function() end',
+  'SLASH_TOKEN1 = "/token";',
+  'SLASH_TOKEN2 = "/token";',
+  'SLASH_TOKEN3 = "/tk";',
+  'SlashCmdList["TOKENUI"] = function() end',
+  'SLASH_TEST1 = "/test";',
+  'SlashCmdList["TEST"] = function() end',
+  ''
+].join('\r\n')
 const xml = '<Ui>literal source text</Ui>\n'
 const files = [
   { content: source, path: 'Interface/FrameXML/GlobalStrings.lua' },
@@ -144,7 +156,13 @@ test('maintainer import preserves interface files, lines and full-text search', 
       { line: 2, text: 'SLASH_CAST2 = "/spell";' },
       { line: 3, text: 'SecureCmdList["CAST"] = function() end' },
       { line: 4, text: 'EMOTE102_CMD1 = "/wave";' },
-      { line: 5, text: '--SlashCmdList["CAST"] = function() end' }
+      { line: 5, text: '--SlashCmdList["CAST"] = function() end' },
+      { line: 6, text: 'SLASH_TOKEN1 = "/token";' },
+      { line: 7, text: 'SLASH_TOKEN2 = "/token";' },
+      { line: 8, text: 'SLASH_TOKEN3 = "/tk";' },
+      { line: 9, text: 'SlashCmdList["TOKENUI"] = function() end' },
+      { line: 10, text: 'SLASH_TEST1 = "/test";' },
+      { line: 11, text: 'SlashCmdList["TEST"] = function() end' }
     ])
     expect(
       result
@@ -165,7 +183,7 @@ test('maintainer import preserves interface files, lines and full-text search', 
   }
 })
 
-test('maintainer import records slash command evidence', () => {
+test('maintainer import preserves slash evidence but indexes only exact-key registrations', () => {
   const { dir, manifest, database } = createFixture()
 
   try {
@@ -175,6 +193,9 @@ test('maintainer import records slash command evidence', () => {
     const cast = readSlashEvidence(
       result.prepare('SELECT * FROM ui_slash WHERE command = ?').get('CAST')
     )
+    const token = result
+      .prepare('SELECT aliases, handlers, secure FROM ui_slash WHERE command = ?')
+      .get('TOKEN')
 
     expect(cast.secure).toBe(1)
     expect(JSON.parse(cast.aliases)).toMatchObject([
@@ -187,11 +208,19 @@ test('maintainer import records slash command evidence', () => {
     expect(
       result.prepare('SELECT emote FROM ui_slash WHERE command = ?').get('EMOTE102')
     ).toMatchObject({ emote: 1 })
-    expect(
-      result
-        .prepare('SELECT id FROM record WHERE id IN (?, ?) ORDER BY id')
-        .all('slash:CAST', 'file:FrameXML/GlobalStrings.lua')
-    ).toHaveLength(2)
+    expect(token).toEqual({
+      aliases: JSON.stringify([
+        { global: 'SLASH_TOKEN1', line: 6, path: 'FrameXML/GlobalStrings.lua', value: '/token' },
+        { global: 'SLASH_TOKEN2', line: 7, path: 'FrameXML/GlobalStrings.lua', value: '/token' },
+        { global: 'SLASH_TOKEN3', line: 8, path: 'FrameXML/GlobalStrings.lua', value: '/tk' }
+      ]),
+      handlers: '[]',
+      secure: null
+    })
+    expect(result.prepare("SELECT id FROM record WHERE kind = 'slash' ORDER BY id").all()).toEqual([
+      { id: 'slash:CAST' },
+      { id: 'slash:TEST' }
+    ])
     result.close()
   } finally {
     rmSync(dir, { force: true, recursive: true })

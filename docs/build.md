@@ -116,6 +116,7 @@ The published importer image can lag AzerothCore's branch head, so World Data ma
 ### Interpretation rules
 
 - **Records are not merged.** AzerothCore `*_dbc` override tables stay in `world_` tables and do not change Client Data Records.
+- **Slash Records require a handler.** `ui_slash` keeps all declarations, but a declaration becomes a Record only when its exact key has a `SlashCmdList` handler.
 - **Links come only from stored keys.** Names, scripts, and text never create a Link, and both ends must be existing Records. Missing or cyclic loot references abort the build with the source row.
 - **Loot and spawn notes are raw values.** Chances, groups, and spawn counts repeat the stored rows; they are not effective drop probabilities or inferred zones.
 - **Enum decoding is additive.** `get` shows decoded names after the raw value. Unknown values, flag bits, and the sentinel `-1` are left undecoded.

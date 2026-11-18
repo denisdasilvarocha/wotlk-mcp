@@ -24,10 +24,6 @@ function insertSlashCommands(db: Database, commands: Readonly<Map<string, Comman
       continue
     }
 
-    const aliases = [
-      ...new Set(value.aliases.map((item: Readonly<Evidence & { value: string }>) => item.value))
-    ]
-    const [name] = aliases
     let secure = -1
 
     if (value.handlers.length > 0) {
@@ -36,12 +32,6 @@ function insertSlashCommands(db: Database, commands: Readonly<Map<string, Comman
 
     if (value.handlers.some((item: Readonly<Evidence>) => item.registry === 'SecureCmdList')) {
       secure = 1
-    }
-
-    let hint = ''
-
-    if (value.emote) {
-      hint = 'emote'
     }
 
     const row = insertSlash.run(
@@ -53,6 +43,22 @@ function insertSlashCommands(db: Database, commands: Readonly<Map<string, Comman
       'enGB',
       provenance
     )
+
+    if (value.handlers.length === 0) {
+      continue
+    }
+
+    const aliases = [
+      ...new Set(value.aliases.map((item: Readonly<Evidence & { value: string }>) => item.value))
+    ]
+    const [name] = aliases
+
+    let hint = ''
+
+    if (value.emote) {
+      hint = 'emote'
+    }
+
     insertRecord.run(
       `slash:${key}`,
       'slash',
@@ -115,7 +121,9 @@ export function importInterface(database: string, directory: string, manifestHas
     insertInterface(db, directory, manifestHash)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()
