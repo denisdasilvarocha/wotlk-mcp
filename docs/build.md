@@ -78,8 +78,9 @@ With `WOTLK_MCP_DB` set, the server makes no network requests.
 | world enums, spell enums and foreign keys | Loads enum and flag names from the AzerothCore headers. |
 | fidelity report | Writes `fidelity.json`. |
 | provenance and notices | Fills the `source` table and writes `NOTICE.md`. |
-| compressed reference | Writes `wotlk.sqlite.br` and `build-report.json`. |
+| compressed reference | Writes `wotlk.sqlite.br`. |
 | server and SQL worker | Runs `vp pack` to compile `dist/`. |
+| build report | Writes `build-report.json` with all completed stage timings. |
 
 ## Outputs
 
