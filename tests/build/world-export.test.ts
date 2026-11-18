@@ -91,7 +91,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
 
     const fixtures: Record<string, Record<string, string | Buffer | null>> = {
       creature: {
-        Comment: 'Snow\n雪',
+        Comment: '\uFEFFSnow\n雪',
         areaId: '3',
         guid: '11',
         id: '101',
@@ -278,7 +278,7 @@ esac
           )
           .get()
       ).toMatchObject({
-        Comment: 'Snow\n雪',
+        Comment: '\uFEFFSnow\n雪',
         areaId: 3,
         id: 101,
         map: 1,
