@@ -2,14 +2,13 @@
 
 ## [2.0.0](https://github.com/denisdasilvarocha/wotlk-mcp/compare/v1.0.2...v2.0.0) (2026-11-19)
 
-
 ### ⚠ BREAKING CHANGES
 
-* **reference:** bound queries and validate reference data ([#76](https://github.com/denisdasilvarocha/wotlk-mcp/issues/76))
+- **reference:** bound queries and validate reference data ([#76](https://github.com/denisdasilvarocha/wotlk-mcp/issues/76))
 
 ### Bug Fixes
 
-* **reference:** bound queries and validate reference data ([#76](https://github.com/denisdasilvarocha/wotlk-mcp/issues/76)) ([7e06107](https://github.com/denisdasilvarocha/wotlk-mcp/commit/7e06107409c171ac6e193cd1fb2075c9b87c9b79))
+- **reference:** bound queries and validate reference data ([#76](https://github.com/denisdasilvarocha/wotlk-mcp/issues/76)) ([7e06107](https://github.com/denisdasilvarocha/wotlk-mcp/commit/7e06107409c171ac6e193cd1fb2075c9b87c9b79))
 
 ## [1.0.2](https://github.com/denisdasilvarocha/wotlk-mcp/compare/v1.0.1...v1.0.2) (2026-11-17)
 
