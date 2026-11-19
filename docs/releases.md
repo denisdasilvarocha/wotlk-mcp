@@ -110,7 +110,7 @@ Any change to the fixture file needs a new approval.
 
 The [release workflow](../.github/workflows/package-release.yml) uses [release-please](https://github.com/googleapis/release-please). Every push to `main` opens or updates a release pull request (`chore(main): release X.Y.Z`) that sets `version` in `package.json` and adds a `CHANGELOG.md` entry from the pull request titles merged since the last release. `feat` bumps the minor version, `fix` the patch version, and a breaking change (`!` or a `BREAKING CHANGE:` footer) the major version. Commits that only touch `.github/`, `build/`, `data/`, `docs/`, `scripts/`, or `tests/` do not count, because they do not change the package; `release-please-config.json` lists these paths.
 
-The workflow authenticates as the repository's GitHub App (variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY`), so the release pull request runs CI and the tag it creates starts the publish job. The Dependabot auto-merge workflow uses the same App; store the private key in the Dependabot secrets too.
+The workflow authenticates as the repository's GitHub App (variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY`) so release pull requests run CI. When a merge creates a release draft, the same workflow starts the `publish` job. Dependabot auto-merge uses the App to trigger `main` workflows too. It requires the private key in Dependabot secrets and queues only verified minor or patch updates behind `ci-ok` and `pr-title`.
 
 ### One-time npm setup
 
