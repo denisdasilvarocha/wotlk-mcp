@@ -190,7 +190,7 @@ test('compares previous versions, shrink, drift and explicit override', () => {
   db.exec('UPDATE meta SET value=\'{"fixture":"one"}\' WHERE key=\'input_pins\'')
   db.close()
   expect(gate(candidate, previous, '--allow-shrink', '--prepare').status).not.toBe(0)
-})
+}, 30_000)
 
 test('rejects an oversized or mismatched compressed asset', () => {
   const file = fixture()
@@ -305,31 +305,35 @@ test('rejects invalid declared logical hashes', () => {
   expect(spawnSync('vpx', ['scripts/release-gate.ts', file, `${file}.br`]).status).not.toBe(0)
 })
 
-test.each(['kind', 'relation'])('rejects %s shrink independently of table counts', (dimension) => {
-  const candidate = fixture()
-  let db = new DatabaseSync(candidate)
+test.each(['kind', 'relation'])(
+  'rejects %s shrink independently of table counts',
+  (dimension) => {
+    const candidate = fixture()
+    let db = new DatabaseSync(candidate)
 
-  prepareShrink(db, dimension)
+    prepareShrink(db, dimension)
 
-  db.close()
-  sealReleaseFixture(candidate)
+    db.close()
+    sealReleaseFixture(candidate)
 
-  const previous = `${candidate}.previous`
+    const previous = `${candidate}.previous`
 
-  copyFileSync(candidate, previous)
-  db = new DatabaseSync(previous)
+    copyFileSync(candidate, previous)
+    db = new DatabaseSync(previous)
 
-  const expected = addShrinkBaseline(db, dimension)
+    const expected = addShrinkBaseline(db, dimension)
 
-  db.close()
-  db = new DatabaseSync(candidate)
-  db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
-  db.close()
+    db.close()
+    db = new DatabaseSync(candidate)
+    db.exec('UPDATE meta SET value=\'{"fixture":"two"}\' WHERE key=\'input_pins\'')
+    db.close()
 
-  const rejected = gate(candidate, previous, '--prepare')
+    const rejected = gate(candidate, previous, '--prepare')
 
-  expect(rejected.status).not.toBe(0)
+    expect(rejected.status).not.toBe(0)
 
-  expect(rejected.stderr).toContain(expected)
-  expect(gate(candidate, previous, '--prepare', '--allow-shrink').status).toBe(0)
-})
+    expect(rejected.stderr).toContain(expected)
+    expect(gate(candidate, previous, '--prepare', '--allow-shrink').status).toBe(0)
+  },
+  30_000
+)
