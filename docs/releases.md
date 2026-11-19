@@ -1,6 +1,6 @@
 # Release operations
 
-This project publishes two independent things: the reference database, as GitHub releases tagged `db-v<major>.<minor>.<patch>`, and the npm package, tagged `v<version>`. Data updates need only a database release. Installed servers pick up a new database on their next update check, without a package release.
+Use the manual [Release workflow](../.github/workflows/package-release.yml) to publish the reference database alone or together with the npm package. Database releases use `db-v<major>.<minor>.<patch>` tags; package releases use `v<version>` tags. Installed servers pick up a new database on their next update check, without a package release.
 
 ## Rules for every release
 
@@ -8,11 +8,9 @@ This project publishes two independent things: the reference database, as GitHub
 - Release tags are never reused, including tags of deleted or failed drafts.
 - Keep old database releases available; older package majors still download them.
 
-## Database releases
+## Authorize database publication
 
-### Authorize publication
-
-The [database release workflow](../.github/workflows/database-release.yml) refuses to publish until the repository owner sets up the `database-publication` environment:
+The workflow refuses to publish a database until the repository owner sets up the `database-publication` environment:
 
 1. Add the repository owner as the environment's only required reviewer. The release script reads the environment through the GitHub API and fails without this rule.
 2. Disable administrator bypass and restrict deployments to `main`.
@@ -20,23 +18,45 @@ The [database release workflow](../.github/workflows/database-release.yml) refus
 
 The owner then approves each protected job: the candidate build and the promotion.
 
-### How the workflow runs
+## Run a release
 
-The workflow runs on pushes to `main` that touch `data/`, `build/`, `scripts/`, `src/`, `tests/fixtures/acceptance.json`, `package.json`, `pnpm-lock.yaml`, or the workflow itself. Runs are serialized. You can also run it manually, with the `allow-shrink` input when a count drop is intentional.
+Only the repository owner can run the workflow, and only on `main`. Choose `operation`: `prepare` is the default, `publish` releases a package and database, and `database-only` releases a database without a package release. Runs are serialized.
 
-```mermaid
-flowchart LR
-  A[candidate: build, gate, draft release] --> B[acceptance: 3 OS x 2 Node versions]
-  B --> C[promote: publish the verified draft]
+To create or update the ordinary release pull request, run:
+
+```sh
+gh workflow run package-release.yml --ref main -f operation=prepare
 ```
 
-1. **candidate** builds the complete reference, downloads the previous published database, runs the release gate, packs the npm tarball, and uploads the database as a draft release.
-2. **acceptance** downloads the actual draft asset, checks its digest, and runs the cited acceptance fixtures through the packed CLI on Ubuntu, macOS, and Windows with Node 24.15.0 and the current Node release. All six runs must pass.
-3. **promote** publishes the same draft, after checking its tag and digest again.
+Review the release pull request and merge it through the normal CI requirements. Merging it does not create a tag or release and does not dispatch publication. After the merge, publish the package and database from the tagged commit:
 
-A failed run leaves its draft unpublished, and its version stays reserved. After investigating, an authorized operator may delete the failed draft before retrying. Never delete or replace a published asset to make a retry work.
+```sh
+gh workflow run package-release.yml --ref main -f operation=publish
+```
+
+For a database-only release, use the dispatched `main` commit instead; no package pull request, package draft, or npm publication is involved:
+
+```sh
+gh workflow run package-release.yml --ref main -f operation=database-only
+```
+
+For either publishing mode, append `-f allow-shrink=true` to the command only when the shrink is intentional. The owner must approve both protected `database-publication` jobs: candidate and promotion.
+
+For `publish`, Release Please creates the package tag and draft after the release pull request has merged. The workflow builds the database and one npm tarball from that tagged commit. For `database-only`, it builds from the dispatched `main` commit. The candidate job runs the release gate and uploads the database to a draft release. All six acceptance jobs download that draft asset, verify its digest, and test it with the same packed CLI on Ubuntu, macOS, and Windows with Node 24.15.0 and the current Node release. After all six pass and the owner approves promotion, the workflow publishes the database. In `publish` mode, it then checks package and database compatibility, attests and uploads the same npm tarball, publishes it through npm trusted publishing, and publishes the package draft.
 
 Release metadata may contain null digests for unrelated assets. The selected database asset must still have a valid SHA-256 digest, and newly uploaded assets must match their local file hashes.
+
+### Recover a failed release
+
+If a run fails after creating a draft, investigate and use **Re-run failed jobs** in that same GitHub Actions run. Do not start a new dispatch to recover that draft. Never replace a published asset or reuse a tag; if a version cannot pass its checks, leave its tag reserved and release a new version. A failed database draft remains unpublished.
+
+If npm publication succeeds but the final GitHub release promotion fails, do not repeat npm publication. The owner must publish the existing package draft instead:
+
+```sh
+gh release edit vX.Y.Z --draft=false --latest
+```
+
+Replace `vX.Y.Z` with the existing package tag.
 
 ### Release gate
 
@@ -89,11 +109,12 @@ A local candidate is for investigation only. Publication always goes through the
 The acceptance command runs the packed CLI against a candidate database and checks the cited fixtures in `tests/fixtures/acceptance.json`:
 
 ```sh
+vp pack
 vp pm pack
 vpx scripts/acceptance.ts wotlk-mcp-1.0.0.tgz candidate/wotlk.sqlite tests/fixtures/acceptance.json
 ```
 
-The World Data fixtures are unapproved candidates, so the command fails until a maintainer reviews them and records approval in `data/world-acceptance-approval.json`:
+`data/world-acceptance-approval.json` currently records an approved review of the World Data fixtures. Before publishing, check that the approval still matches `tests/fixtures/acceptance.json` and its World Data cases. If the fixtures change, a maintainer must review them and record a new approval:
 
 | Field             | Value                             |
 | ----------------- | --------------------------------- |
@@ -108,9 +129,9 @@ Any change to the fixture file needs a new approval.
 
 ## npm package releases
 
-The [release workflow](../.github/workflows/package-release.yml) uses [release-please](https://github.com/googleapis/release-please). Every push to `main` opens or updates a release pull request (`chore(main): release X.Y.Z`) that sets `version` in `package.json` and adds a `CHANGELOG.md` entry from the pull request titles merged since the last release. `feat` bumps the minor version, `fix` the patch version, and a breaking change (`!` or a `BREAKING CHANGE:` footer) the major version. Commits that only touch `.github/`, `build/`, `data/`, `docs/`, `scripts/`, or `tests/` do not count, because they do not change the package; `release-please-config.json` lists these paths.
+The `prepare` operation uses [Release Please](https://github.com/googleapis/release-please) to open or update an ordinary release pull request (`chore(main): release X.Y.Z`). The pull request sets `version` in `package.json` and adds a `CHANGELOG.md` entry from pull request titles merged since the last release. `feat` bumps the minor version, `fix` the patch version, and a breaking change (`!` or a `BREAKING CHANGE:` footer) the major version. Commits that only touch `.github/`, `build/`, `data/`, `docs/`, `scripts/`, or `tests/` do not count, because they do not change the package; `release-please-config.json` lists these paths.
 
-The workflow authenticates as the repository's GitHub App (variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY`) so release pull requests run CI. When a merge creates a release draft, the same workflow starts the `publish` job. Dependabot auto-merge uses the App to trigger `main` workflows too. It requires the private key in Dependabot secrets and queues only verified minor or patch updates behind `ci-ok` and `pr-title`.
+The workflow authenticates as the repository's GitHub App (variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY`) so release pull requests run CI. Dependabot auto-merge also uses the App; it requires the private key in Dependabot secrets and queues only verified minor or patch updates behind `ci-ok` and `pr-title`.
 
 ### One-time npm setup
 
@@ -121,11 +142,11 @@ npm trusted publishing requires an existing package. This setup is done; it is r
 
 ### Publish a version
 
-1. Publish a compatible database release first.
-2. If the schema major changed, the pull request that changes it updates both `acceptedSchemaMajor` in `src/schema.ts` and `wotlkSchemaMajor` in `package.json`, and marks its title as breaking (`feat!: ...`) so the release is a new package major. A breaking change to a tool's parameters or output is also marked breaking.
-3. Merge the release pull request. To choose the version yourself, add a `Release-As: X.Y.Z` line to the body of any pull request merged before it.
+1. Check the fixture approval and review the candidate changes. If the schema major changed, the pull request that changes it must update both `acceptedSchemaMajor` in `src/schema.ts` and `wotlkSchemaMajor` in `package.json`, and mark its title as breaking (`feat!: ...`) so the release is a new package major. Mark a breaking change to a tool's parameters or output as breaking too.
+2. Run `prepare`, then review and merge the release pull request through CI. To choose the version yourself, add a `Release-As: X.Y.Z` line to the body of a pull request merged before it.
+3. Run `publish` on `main` and approve the database candidate and promotion jobs as the owner. The workflow creates and tests the compatible database before publishing the npm package.
 
-Merging creates the `v<version>` tag and a draft release. The `publish` job then runs `scripts/check-package-release.mjs`, which fails if:
+The package compatibility check in `scripts/check-package-release.mjs` fails if:
 
 - The tag does not equal `v` plus the `package.json` version.
 - The two schema-major values disagree.
@@ -133,11 +154,7 @@ Merging creates the `v<version>` tag and a draft release. The `publish` job then
 - An earlier version with the same package major used a different schema major.
 - No published database exists for the package's schema major, or its asset fails the digest or schema check.
 
-The job then packs the server, runs the package tests, attests the npm tarball, uploads it to the draft release, publishes it with `npm publish` from the tarball's staging directory, and publishes the release. Publishing outside the checkout keeps npm's publication step separate from the checkout's pnpm `devEngines` requirement.
-
-If the job fails before `npm publish`, fix the cause and rerun it; the draft still accepts the tarball. If the check cannot pass for this version, leave the tag in place and release a new patch version. If npm publication succeeds but publishing the release fails, do not rerun the job: npm rejects republishing a version. Publish the draft instead with `gh release edit vX.Y.Z --draft=false --latest`.
-
-Merging the release pull request changes `package.json`, which also starts the database release workflow. Decline its deployment approval when no database release is due.
+The workflow tests, attests, uploads, and publishes the same tarball used for database acceptance. Publishing outside the checkout keeps npm's publication step separate from the checkout's pnpm `devEngines` requirement. Follow [failed release recovery](#recover-a-failed-release) if a job fails.
 
 ## Roll back a database release
 
@@ -173,4 +190,4 @@ Deleting a release does not delete its Git tag; leave the tag in place so the ve
 
 ## Client-input release
 
-Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources/index.ts` pins its manifest hash. It was published once and is not part of the database or package workflows. Never replace its asset; changed inputs need a new release name. It was published before the repository enabled immutable releases, so GitHub does not lock its asset.
+Release `client-inputs-12340-engb-1` holds the build inputs: DBC files, Interface source, and the native registration dump, but no client executable. Its asset `client-inputs-12340-engb-1.tar.gz` has SHA-256 `9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136`, and `build/sources/index.ts` pins its manifest hash. It was published once and is not part of the release workflow. Never replace its asset; changed inputs need a new release name. It was published before the repository enabled immutable releases, so GitHub does not lock its asset.

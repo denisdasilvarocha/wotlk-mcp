@@ -130,12 +130,19 @@ export function validateMatrix(value) {
   }
   const jobs = asArray(response.jobs).map((job) => asRecord(job))
   for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) {
-    for (const node of ['24.15.0', 'node']) {
+    for (const node of ['24.15.0', 'latest']) {
       const matches = jobs.filter((job) => job.name === `acceptance (${os}, ${node})`)
       if (
-        matches.length !== 1 ||
-        matches[0].status !== 'completed' ||
-        matches[0].conclusion !== 'success'
+        matches.some((job) => !Number.isSafeInteger(job.run_attempt) || Number(job.run_attempt) < 1)
+      ) {
+        throw new Error(`invalid acceptance attempt: ${os} ${node}`)
+      }
+      const latestAttempt = Math.max(0, ...matches.map((job) => Number(job.run_attempt)))
+      const latest = matches.filter((job) => job.run_attempt === latestAttempt)
+      if (
+        latest.length !== 1 ||
+        latest[0].status !== 'completed' ||
+        latest[0].conclusion !== 'success'
       ) {
         throw new Error(`acceptance matrix failed: ${os} ${node}`)
       }

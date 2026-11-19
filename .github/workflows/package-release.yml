@@ -1,8 +1,19 @@
 name: Release
+run-name: Release (${{ inputs.operation }})
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Prepare the release PR, publish both releases, or publish only the database
+        type: choice
+        options: [prepare, publish, database-only]
+        default: prepare
+        required: true
+      allow-shrink:
+        description: Approve a database row count drop over five percent
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -12,13 +23,16 @@ concurrency:
 
 jobs:
   release-please:
+    if: >-
+      github.ref == 'refs/heads/main' && github.repository == 'denisdasilvarocha/wotlk-mcp' && github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      source: ${{ steps.release.outputs.tag_name && format('refs/tags/{0}', steps.release.outputs.tag_name) || github.sha }}
     steps:
       - id: app-token
+        if: inputs.operation == 'prepare' || inputs.operation == 'publish'
         uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           client-id: ${{ vars.APP_CLIENT_ID }}
@@ -27,15 +41,152 @@ jobs:
           permission-issues: write
           permission-pull-requests: write
       - id: release
+        if: inputs.operation == 'prepare' || inputs.operation == 'publish'
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ steps.app-token.outputs.token }}
+          skip-github-release: ${{ inputs.operation != 'publish' }}
+          skip-github-pull-request: ${{ inputs.operation != 'prepare' }}
+      - name: Require a merged release PR
+        if: inputs.operation == 'publish' && (steps.release.outputs.release_created != 'true' || steps.release.outputs.tag_name == '')
+        run: |
+          echo "::error::No new package draft. Run prepare and merge the release PR, or rerun failed jobs from the dispatch that created the draft."
+          exit 1
+
+  candidate:
+    needs: release-please
+    if: inputs.operation == 'publish' || inputs.operation == 'database-only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: database-publication
+    permissions:
+      contents: write
+    outputs:
+      id: ${{ steps.create.outputs.id }}
+      tag: ${{ steps.create.outputs.tag }}
+      digest: ${{ steps.create.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.source }}
+          persist-credentials: false
+      - name: Require owner authorization
+        env:
+          DATABASE_RELEASE_AUTHORIZATION: ${{ secrets.DATABASE_RELEASE_AUTHORIZATION }}
+        run: test "$DATABASE_RELEASE_AUTHORIZATION" = owner-authorized
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
+        with:
+          node-version: 24.15.0
+      - run: vp pack
+      - if: inputs.operation == 'publish'
+        run: vp test tests/release/package-release.test.ts tests/release/package-install.test.ts
+      - name: Pack the package for acceptance and publishing
+        run: vp pm pack --pack-destination "$RUNNER_TEMP/package"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packed-tool
+          path: ${{ runner.temp }}/package/*.tgz
+          if-no-files-found: error
+          overwrite: true
+      - name: Build the database and verify the previous release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          vp run build "$RUNNER_TEMP/candidate"
+          node scripts/database-release.mjs previous "$RUNNER_TEMP/previous.sqlite" "$RUNNER_TEMP/versions.json"
+      - name: Validate and version the candidate
+        env:
+          ALLOW_SHRINK: ${{ inputs.allow-shrink }}
+        shell: bash
+        run: |
+          d="$RUNNER_TEMP/candidate"
+          args=("$d" "--used-versions=$RUNNER_TEMP/versions.json")
+          if test -f "$RUNNER_TEMP/previous.sqlite"; then args+=("$RUNNER_TEMP/previous.sqlite"); fi
+          if test "$ALLOW_SHRINK" = true; then args+=(--allow-shrink); fi
+          vpx scripts/prepare-reference.ts "${args[@]}"
+      - name: Create the database draft and verify uploaded assets
+        id: create
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DATABASE_RELEASE_AUTHORIZATION: ${{ secrets.DATABASE_RELEASE_AUTHORIZATION }}
+        shell: bash
+        run: |
+          d="$RUNNER_TEMP/candidate"
+          source_sha=$(git rev-parse HEAD)
+          GITHUB_SHA="$source_sha" node scripts/database-release.mjs create "$d/gate.json" "$d/wotlk.sqlite" "$d/wotlk.sqlite.br" "$d/NOTICE.md" "$d/fidelity.json" "$d/build-report.json" "$d/gate.json"
+
+  acceptance:
+    needs: [release-please, candidate]
+    name: acceptance
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [24.15.0, latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.source }}
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packed-tool
+          path: packed-tool
+      - name: Download the uploaded draft and verify its digest
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ needs.candidate.outputs.id }}
+          RELEASE_DIGEST: ${{ needs.candidate.outputs.digest }}
+        run: node scripts/database-release.mjs download "$RELEASE_ID" "$RELEASE_DIGEST" candidate.br
+        shell: bash
+      - name: Run acceptance with the packed CLI
+        shell: bash
+        run: |
+          node --input-type=module -e 'import {createReadStream,createWriteStream} from "node:fs"; import {pipeline} from "node:stream/promises"; import {createBrotliDecompress} from "node:zlib"; await pipeline(createReadStream("candidate.br"),createBrotliDecompress(),createWriteStream("candidate.sqlite",{flags:"wx"}))'
+          archives=(packed-tool/*.tgz)
+          test "${#archives[@]}" = 1
+          test -f "${archives[0]}"
+          vpx scripts/acceptance.ts "${archives[0]}" candidate.sqlite tests/fixtures/acceptance.json
+
+  promote:
+    needs: [release-please, candidate, acceptance]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: database-publication
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.source }}
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
+        with:
+          node-version: 24.15.0
+          run-install: false
+      - name: Publish the verified database draft
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DATABASE_RELEASE_AUTHORIZATION: ${{ secrets.DATABASE_RELEASE_AUTHORIZATION }}
+          RELEASE_ID: ${{ needs.candidate.outputs.id }}
+          RELEASE_TAG: ${{ needs.candidate.outputs.tag }}
+          RELEASE_DIGEST: ${{ needs.candidate.outputs.digest }}
+        run: node scripts/database-release.mjs promote "$RELEASE_ID" "$RELEASE_TAG" "$RELEASE_DIGEST"
 
   publish:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: [release-please, promote]
+    if: inputs.operation == 'publish'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       contents: write
       id-token: write
@@ -43,33 +194,34 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          ref: ${{ needs.release-please.outputs.source }}
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
           node-version-file: package.json
+          run-install: false
           registry-url: https://registry.npmjs.org
       - name: Check version and published database
         run: node scripts/check-package-release.mjs "$TAG"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
-      - run: vp pack
-      - run: vp test tests/release/package-release.test.ts tests/release/package-install.test.ts
-      - name: Pack npm tarball
-        run: vp pm pack --pack-destination "$RUNNER_TEMP/release"
+          TAG: ${{ needs.release-please.outputs.tag }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packed-tool
+          path: ${{ runner.temp }}/release
       - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: ${{ runner.temp }}/release/*.tgz
       - name: Upload tarball
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ needs.release-please.outputs.tag }}
         run: gh release upload "$TAG" "$RUNNER_TEMP"/release/*.tgz --clobber --repo "$GITHUB_REPOSITORY"
       - name: Publish with npm trusted publishing
         working-directory: ${{ runner.temp }}/release
         env:
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ needs.release-please.outputs.tag }}
         run: |
           npm publish "$RUNNER_TEMP/release/wotlk-mcp-${TAG#v}.tgz" --ignore-scripts || {
             echo "::error::npm publish failed; verify the package exists and its npm trusted publisher permits this workflow (see docs/releases.md)."
@@ -78,5 +230,5 @@ jobs:
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ needs.release-please.outputs.tag }}
         run: gh release edit "$TAG" --draft=false --latest --repo "$GITHUB_REPOSITORY"
