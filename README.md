@@ -77,6 +77,7 @@ The reference covers only the 3.3.5a build 12340 Windows x86 client, not retail,
 
 - [Tool reference](docs/tools.md): parameters, output, IDs, relations, and SQL tables for each tool.
 - [Database and updates](docs/database.md): download, verification, cache, updates, offline use, and error messages.
+- [Harness testing prompt](docs/testing.md): build locally and run 100 gameplay questions through your agent.
 - [Development](docs/development.md): set up the repository, run checks, and test changes.
 - [Build the reference](docs/build.md): build the database from source and run the server against it.
 - [Release operations](docs/releases.md): database and npm releases, acceptance, and rollback.
