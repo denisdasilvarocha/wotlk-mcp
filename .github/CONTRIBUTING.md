@@ -18,7 +18,7 @@ vp install
 | Build the server into `dist/`     | `vp pack`  |
 | Test (needs `dist/`)              | `vp test`  |
 
-CI runs these commands in this order; a pull request merges only when they pass.
+The `ci-ok` check requires these commands, the workflow audit, and dependency review to pass. The separate `pr-title` check validates the title, including after edits.
 
 ## Pull requests
 

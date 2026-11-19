@@ -37,7 +37,7 @@ jobs:
       tag: ${{ steps.create.outputs.tag }}
       digest: ${{ steps.create.outputs.digest }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
@@ -66,7 +66,9 @@ jobs:
           if test "$ALLOW_SHRINK" = true; then args+=(--allow-shrink); fi
           vpx scripts/prepare-reference.ts "${args[@]}"
       - name: Pack npm tarball
-        run: vp pm pack --pack-destination "$RUNNER_TEMP/candidate"
+        run: |
+          vp pack
+          vp pm pack --pack-destination "$RUNNER_TEMP/candidate"
       - name: Create draft and verify uploaded assets
         id: create
         env:
@@ -77,7 +79,7 @@ jobs:
           set -euo pipefail
           d="$RUNNER_TEMP/candidate"
           node scripts/database-release.mjs create "$d/gate.json" "$d/wotlk.sqlite" "$d/wotlk.sqlite.br" "$d/NOTICE.md" "$d/fidelity.json" "$d/build-report.json" "$d/gate.json"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: packed-tool
           path: ${{ runner.temp }}/candidate/*.tgz
@@ -90,24 +92,20 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: ['24.15.0', 'node']
+        node: ['24.15.0', 'latest']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     permissions:
       # GitHub shows draft releases and their assets only to tokens with write access.
       contents: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: ${{ matrix.node }}
-          package-manager-cache: false
       - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
-          node-manager: false
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: packed-tool
           path: packed-tool
@@ -136,13 +134,13 @@ jobs:
       contents: write
       actions: read
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
           node-version: '24.15.0'
-          package-manager-cache: false
+          run-install: false
       - name: Promote only the verified draft
         env:
           GITHUB_TOKEN: ${{ github.token }}
