@@ -25,6 +25,10 @@ beforeAll(async () => {
     ['quest:9', 'quest', 'Fire Bolt', '', 'level 9, Forest'],
     ['creature:7', 'creature', 'Fire Boltling', '', 'levels 1-2, Wolf'],
     ['fn:FireBolt', 'fn', 'Big Fire Bolt', '', 'Combat'],
+    ['fn:Key', 'fn', 'Unrelated function', '', ''],
+    ['cvar:ERRORS', 'cvar', 'ERRORS', '', ''],
+    ['cvar:Errors', 'cvar', 'Errors', '', ''],
+    ['cvar:errors', 'cvar', 'errors', '', ''],
     ['event:TEST', 'event', 'Fire Event', 'launches bolt now', 'Events'],
     ['item:3', 'item', '100%_safe', 'literal symbols', ''],
     ['item:4', 'item', '100XXsafe', '', ''],
@@ -75,6 +79,10 @@ beforeAll(async () => {
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   line.run('GlueXML/Other.xml', 2, 'Tön at Key')
   lineFts.run('GlueXML/Other.xml', 2, 'Tön at Key')
+  line.run('GlueXML/Other.xml', 3, 'cast caſt')
+  lineFts.run('GlueXML/Other.xml', 3, 'cast caſt')
+  line.run('GlueXML/Other.xml', 4, 'caſt')
+  lineFts.run('GlueXML/Other.xml', 4, 'caſt')
   db.close()
   unpackPackage(dir)
   await client.connect(packagedServer(dir, dbPath))
@@ -140,6 +148,18 @@ test('normal tiers, hints, IDs, filtering and pagination are deterministic', asy
   expect((await text({ offset: 99, query: 'Fire Bolt' })).toLowerCase()).not.toContain('fuzzy')
 })
 
+test('full IDs match case insensitively with canonical output and kind filtering', async () => {
+  expect(ids(await text({ query: 'ITEM:42' }))).toEqual(['item:42'])
+  expect(ids(await text({ query: 'FN:key' }))).toEqual(['fn:Key'])
+  expect(ids(await text({ kind: ['spell'], query: 'ITEM:42' }))).toEqual([])
+})
+
+test('case-exact IDs rank ahead of case-folded ID collisions', async () => {
+  const output = await text({ kind: ['cvar'], query: 'cvar:errors' })
+
+  expect(ids(output)).toEqual(['cvar:errors', 'cvar:ERRORS', 'cvar:Errors'])
+})
+
 test('punctuation, short queries and fuzzy fallback stay literal', async () => {
   expect(ids(await text({ query: '100%_safe' }))).toEqual(['item:3'])
   expect(ids(await text({ query: '"AND" -star*' }))).toEqual(['item:11'])
@@ -197,6 +217,55 @@ test('overlong queries report a validation error', async () => {
   expect(JSON.stringify(result.content)).toContain(
     'Search query needs at most 4096 UTF-16 code units'
   )
+})
+
+test('search validation precedes opening a missing reference', async () => {
+  const missing = new Client({ name: 'missing-search-test', version: '1' })
+  await missing.connect(packagedServer(dir, path.join(dir, 'missing.sqlite')))
+
+  try {
+    const result = await missing.callTool({
+      arguments: { query: 'a'.repeat(4097) },
+      name: 'search'
+    })
+
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result.content)).toContain(
+      'Search query needs at most 4096 UTF-16 code units'
+    )
+  } finally {
+    await missing.close()
+  }
+})
+
+test('search decodes literal matches using the database encoding', async () => {
+  const utf16Path = path.join(dir, 'utf16.sqlite')
+  const db = new DatabaseSync(utf16Path)
+  db.exec("PRAGMA encoding = 'UTF-16le'")
+  db.exec(schema)
+  db.exec("INSERT INTO meta VALUES ('schema_version', '1.0.0')")
+  db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+    'spell:1',
+    'spell',
+    'Fire Bolt',
+    'world_example',
+    1,
+    '',
+    ''
+  )
+  db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)').run('spell:1', 'Fire Bolt', '')
+  db.close()
+  const utf16 = new Client({ name: 'utf16-search-test', version: '1' })
+  await utf16.connect(packagedServer(dir, utf16Path))
+
+  try {
+    const result = await utf16.callTool({ arguments: { query: 'Fi' }, name: 'search' })
+
+    expect(result.isError).not.toBe(true)
+    expect(JSON.stringify(result.content)).toContain('spell:1 Fire Bolt')
+  } finally {
+    await utf16.close()
+  }
 })
 
 test('long typo queries retain fuzzy results without exhausting the expression budget', async () => {
@@ -260,6 +329,12 @@ test('ASCII queries can match Unicode case equivalents in source lines', async (
   const output = await text({ kind: ['file'], query: 'KEY' })
 
   expect(ids(output)).toEqual(['file:GlueXML/Other.xml:2'])
+})
+
+test('ASCII source searches match both ASCII and Unicode case equivalents', async () => {
+  const output = await text({ kind: ['file'], query: 'CAST' })
+
+  expect(ids(output)).toEqual(['file:GlueXML/Other.xml:3', 'file:GlueXML/Other.xml:4'])
 })
 
 test('explicit source lines are literal, paginated, and isolated from ordinary search', async () => {

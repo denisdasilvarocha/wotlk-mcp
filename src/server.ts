@@ -3,7 +3,7 @@ import { getReferencePath, takeUpdateWarning } from './acquire/index.js'
 import { getRecords, openReference } from './reference.js'
 import { getRelated } from './related.js'
 import { kinds, relations } from './schema.js'
-import { searchRecords } from './search.js'
+import { searchRecords, validateSearch } from './search.js'
 import { runSql } from './sql.js'
 import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
 import { serveStdio } from '@modelcontextprotocol/server/stdio'
@@ -161,7 +161,10 @@ function createServer(): McpServer {
       title: 'Search WotLK Reference'
     },
     (input, ctx) =>
-      respond(ctx.mcpReq.signal, () => withReference((db) => searchRecords(db, input)))
+      respond(ctx.mcpReq.signal, () => {
+        const terms = validateSearch(input)
+        return withReference((db) => searchRecords(db, input, terms))
+      })
   )
   server.registerTool(
     'get',

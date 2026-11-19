@@ -51,7 +51,7 @@ Matching is Unicode case-insensitive and literal: every whitespace-separated ter
 
 - A bare number matches that key in every kind, so `19019` finds `item:19019` and `creature:19019`.
 - Queries may contain up to 4,096 UTF-16 code units and 64 distinct terms.
-- A full ID such as `spell:133` ranks first.
+- A full ID such as `spell:133` ranks ahead of name and text matches, regardless of letter case. If IDs differ only by case, an exact spelling ranks first.
 - Queries under three characters match name prefixes only.
 - When a query of four or more characters finds no literal hits, a typo-tolerant search runs for the selected non-file kinds and the footer starts with `Fuzzy:`. Interface source lines are always matched literally.
 

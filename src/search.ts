@@ -1,3 +1,5 @@
+import { kinds } from './schema.js'
+
 import type { Database } from './database.js'
 import type { StatementSync } from 'node:sqlite'
 
@@ -13,6 +15,7 @@ type Params = Record<string, string | number>
 const maxQueryLength = 4096
 const maxTerms = 64
 const maxFuzzyTrigrams = 64
+const kindPrefix = new RegExp(`^(${kinds.join('|')}):`, 'iu')
 
 function quoteFts(value: string): string {
   return `"${value.replaceAll('"', '""')}"`
@@ -40,12 +43,30 @@ function indexedLiteral(terms: readonly string[]): string {
     }
   }
 
-  return longest
+  if (longest) {
+    return quoteFts(longest)
+  }
+
+  for (const term of terms) {
+    const part = term.match(/[!-~]{3}/u)?.[0]
+    if (part) {
+      let variants = ['']
+      for (const character of part.toLowerCase()) {
+        const equivalents =
+          character === 's' ? ['s', 'ſ'] : character === 'k' ? ['k', 'K'] : [character]
+        variants = variants.flatMap((variant) => equivalents.map((value) => variant + value))
+      }
+      return variants.map(quoteFts).join(' OR ')
+    }
+  }
+
+  return ''
 }
 
 function registerLiteralMatch(db: Database, query: string, terms: readonly RegExp[]): void {
   const patterns = [literalPattern(query, 'exact'), literalPattern(query, 'prefix'), ...terms]
-  const decoder = new TextDecoder('utf-8', { ignoreBOM: true })
+  const encoding = String(db.prepare('PRAGMA encoding').get()?.encoding)
+  const decoder = new TextDecoder(encoding, { ignoreBOM: true })
 
   db.function('literal_match', { deterministic: true, directOnly: true }, (value, pattern) =>
     value instanceof Uint8Array && typeof pattern === 'number'
@@ -70,17 +91,23 @@ function matchSql(
   kindParams: Readonly<Params>
 ): { params: Params; sql: string } {
   const params: Params = { ...kindParams, query }
+  const idKind = kindPrefix.exec(query)?.[1].toLowerCase().replaceAll('ſ', 's')
+  if (idKind) {
+    params.idKind = idKind
+  }
   const priority = /^\d+$/u.test(query)
     ? "substr(r.id, instr(r.id, ':') + 1) = $query"
-    : 'r.id = $query'
+    : idKind
+      ? '(r.kind = $idKind AND literal_match(CAST(r.id AS BLOB), 0))'
+      : 'r.id = $query'
   const name = 'CAST(r.name AS BLOB)'
   const nameTests = terms.map((_, i) => `literal_match(${name}, ${i + 2})`)
-  const longest = indexedLiteral(terms)
+  const fts = indexedLiteral(terms)
   let candidate = ''
   let lineCandidate = ''
 
-  if (longest) {
-    params.fts = quoteFts(longest)
+  if (fts) {
+    params.fts = fts
     candidate = `AND (r.id IN (SELECT id FROM record_fts WHERE record_fts MATCH $fts) OR ${priority})`
     lineCandidate = 'AND ui_line_fts MATCH $fts'
   }
@@ -193,27 +220,33 @@ function validatedTerms(query: string): string[] {
   return terms
 }
 
-export function searchRecords(db: Database, input: Readonly<SearchInput>): string {
-  const { query } = input
-  const terms = validatedTerms(query)
-  const files = input.kind?.includes('file') ?? false
-
-  if (files && characters(query).length < 3) {
+export function validateSearch(input: Readonly<SearchInput>): string[] {
+  const terms = validatedTerms(input.query)
+  if (input.kind?.includes('file') && characters(input.query).length < 3) {
     throw new Error('source search needs ≥ 3 characters')
   }
+  return terms
+}
+
+export function searchRecords(
+  db: Database,
+  input: Readonly<SearchInput>,
+  terms: readonly string[]
+): string {
+  const { query } = input
+  const files = input.kind?.includes('file') ?? false
 
   const kindParams: Params = {}
   let kindFilter = files ? '' : "AND r.kind <> 'file'"
 
   if (input.kind) {
-    kindFilter += ` AND r.kind IN (${
-      [...new Set(input.kind)]
-        .map((kind, i) => {
-          kindParams[`kind${i}`] = kind
-          return `$kind${i}`
-        })
-        .join(',') || 'NULL'
-    })`
+    const selectedKinds = [...new Set(input.kind)]
+      .map((kind, i) => {
+        kindParams[`kind${i}`] = kind
+        return `$kind${i}`
+      })
+      .join(',')
+    kindFilter += ` AND r.kind IN (${selectedKinds || 'NULL'})`
   }
 
   const patterns = terms.map((term) => literalPattern(term))
@@ -227,13 +260,15 @@ export function searchRecords(db: Database, input: Readonly<SearchInput>): strin
 
   if (fuzzy) {
     const recordFilter = files ? `${kindFilter} AND r.kind <> 'file'` : kindFilter
-    ;({ params, sql } = fuzzySql(query, recordFilter, kindParams))
+    const fallback = fuzzySql(query, recordFilter, kindParams)
+    params = fallback.params
+    sql = fallback.sql
     count = Number(prepare(db, `SELECT count(*) AS total FROM (${sql})`).get(params)?.total)
   }
 
   const order = fuzzy
     ? 'score DESC, length(name), kind, id'
-    : 'tier, CASE WHEN tier = 5 THEN name END, CASE WHEN tier = 5 THEN line END, length(name), kind, id'
+    : 'tier, CASE WHEN tier = 0 AND id = $query THEN 0 ELSE 1 END, CASE WHEN tier = 5 THEN name END, CASE WHEN tier = 5 THEN line END, length(name), kind, id'
   const rows = prepare(
     db,
     `SELECT * FROM (${sql}) ORDER BY ${order} LIMIT $limit OFFSET $offset`
