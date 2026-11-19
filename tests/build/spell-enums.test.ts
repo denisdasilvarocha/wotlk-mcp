@@ -1,3 +1,4 @@
+import { parseEnum } from '../../build/enums/parser.ts'
 import { importSpellEnums } from '../../build/enums/spell.ts'
 import { initReference } from '../../build/offsets.ts'
 import { packagedServer, unpackPackage } from '../helpers/package.js'
@@ -242,4 +243,12 @@ test('spell mappings validate fields and materialize named references without ch
   } finally {
     rmSync(dir, { force: true, recursive: true })
   }
+})
+
+test('external enum symbols are accepted as shift counts without guessing their type', () => {
+  const schools = parseEnum('enum Schools { FIRE = 2 };', 'Schools')
+  const masks = parseEnum('enum Masks { FIRE_MASK = 1 << FIRE };', 'Masks', schools)
+
+  expect(masks).toEqual([{ name: 'FIRE_MASK', value: 4 }])
+  expect(() => parseEnum('enum Masks { BAD = ~FIRE };', 'Masks', schools)).toThrow('symbol type')
 })
