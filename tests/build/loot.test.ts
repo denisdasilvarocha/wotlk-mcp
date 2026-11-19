@@ -33,6 +33,7 @@ function fixture(name: string): string {
     'creature',
     'gameobject',
     'item',
+    'fishing',
     'skinning',
     'pickpocketing',
     'reference'
@@ -47,7 +48,8 @@ function fixture(name: string): string {
     INSERT INTO world_skinning_loot_template VALUES (11,103,0,40,0,1,0,1,1,'skin');
     INSERT INTO world_pickpocketing_loot_template VALUES (12,104,0,30,0,1,0,1,1,'pick');
     INSERT INTO world_gameobject_loot_template VALUES (20,100,0,80,0,1,0,1,1,'chest');
-    INSERT INTO world_item_loot_template VALUES (101,100,0,90,0,1,0,1,1,'container');`)
+    INSERT INTO world_item_loot_template VALUES (101,100,0,90,0,1,0,1,1,'container');
+    INSERT INTO world_fishing_loot_template VALUES (50,1,30,100,0,1,0,1,1,'valid');`)
 
   const add = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
 
@@ -213,4 +215,18 @@ test('rejects a missing reference from a loot template without a Record owner', 
   expect(() => {
     buildLootLinks(file)
   }).toThrow(/world_creature_loot_template entry 90 item 9:.*missing reference ref:999/u)
+})
+
+test('rejects a missing reference from a SQL-only loot table', () => {
+  const file = fixture('fishing')
+  const db = new DatabaseSync(file)
+
+  db.exec("INSERT INTO world_fishing_loot_template VALUES (50,9,-999,100,0,1,0,1,1,'invalid')")
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(
+    /world_fishing_loot_template entry 50 item 9:.*missing reference ref:999 \(stored -999\)/u
+  )
 })

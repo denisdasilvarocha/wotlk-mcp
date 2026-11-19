@@ -59,6 +59,12 @@ test('native facts retain contexts and only link verified equal curated VAs', as
       INSERT INTO record VALUES ('fn:Foo','fn','Foo','lua_fn',1,'',''), ('method:Region:SetPoint','method','SetPoint','lua_method',1,'','');
       INSERT INTO offsets_entry VALUES ('fixture-a','0x00400002','function','',NULL), ('fixture-b','0x00400002','function','',NULL), ('documentation-only','0x00400001','function','',NULL);
       INSERT INTO record VALUES ('offset:fixture-a','offset','fixture-a','offsets_entry',(SELECT rowid FROM offsets_entry WHERE path='fixture-a'),'',''), ('offset:fixture-b','offset','fixture-b','offsets_entry',(SELECT rowid FROM offsets_entry WHERE path='fixture-b'),'',''), ('offset:documentation-only','offset','documentation-only','offsets_entry',(SELECT rowid FROM offsets_entry WHERE path='documentation-only'),'','');`)
+    db.exec(`INSERT INTO offsets_entry VALUES
+      ('same-data','0x00400002','data','',NULL),
+      ('same-absent','0x00400002','function','','not-present'),
+      ('same-unverified','0x00400002','function','','unverified');
+      INSERT INTO record SELECT 'offset:' || path, 'offset', path, 'offsets_entry', rowid, '', ''
+        FROM offsets_entry WHERE path IN ('same-data','same-absent','same-unverified');`)
     db.close()
 
     const dump = JSON.stringify({
@@ -225,6 +231,17 @@ test('native facts retain contexts and only link verified equal curated VAs', as
         .prepare("SELECT destination_id FROM link WHERE source_id='fn:Foo' ORDER BY destination_id")
         .all()
     ).toEqual([{ destination_id: 'offset:fixture-a' }, { destination_id: 'offset:fixture-b' }])
+    expect(
+      result
+        .prepare(
+          "SELECT kind, status FROM offsets_entry WHERE path IN ('same-data','same-absent','same-unverified') ORDER BY path"
+        )
+        .all()
+    ).toEqual([
+      { kind: 'function', status: 'not-present' },
+      { kind: 'data', status: null },
+      { kind: 'function', status: 'unverified' }
+    ])
     result.close()
     unpackPackage(dir)
     await client.connect(packagedServer(dir, database))

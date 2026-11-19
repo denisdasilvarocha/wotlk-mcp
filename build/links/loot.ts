@@ -1,3 +1,4 @@
+import { quoteIdentifier } from '../shared/table-hash.ts'
 import { linkWriter, type AddLink } from './insert.ts'
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
@@ -148,6 +149,30 @@ function validateReferences(
         if (row.Reference) {
           referenceRows(context, table, type, row, active, Math.abs(row.Reference))
         }
+      }
+    }
+  }
+
+  for (const { name } of context.db
+    .prepare(
+      "SELECT name FROM sqlite_schema WHERE type = 'table' AND name GLOB 'world_*_loot_template' ORDER BY name"
+    )
+    .iterate()) {
+    const table = String(name)
+    if (tables.has(table.slice('world_'.length, -'_loot_template'.length))) {
+      continue
+    }
+    for (const row of context.db
+      .prepare(
+        `SELECT Entry, Item, Reference FROM ${quoteIdentifier(table)} WHERE Reference <> 0 ORDER BY rowid`
+      )
+      .iterate()) {
+      const reference = Number(row.Reference)
+      const id = Math.abs(reference)
+      if (!context.refs.has(id)) {
+        throw new Error(
+          `${table} entry ${String(row.Entry)} item ${String(row.Item)}: missing reference ref:${id} (stored ${reference})`
+        )
       }
     }
   }
