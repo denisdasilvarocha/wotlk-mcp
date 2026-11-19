@@ -2,6 +2,23 @@
   "name": "wotlk-mcp",
   "version": "1.0.2",
   "description": "Read-only MCP reference for World of Warcraft 3.3.5a build 12340.",
+  "keywords": [
+    "3.3.5a",
+    "api",
+    "azerothcore",
+    "database",
+    "local",
+    "lua",
+    "mcp",
+    "offsets",
+    "private",
+    "server",
+    "trinitycore",
+    "world-of-warcraft",
+    "wotlk",
+    "wow",
+    "wrath-of-the-lich-king"
+  ],
   "homepage": "https://github.com/denisdasilvarocha/wotlk-mcp#readme",
   "bugs": {
     "url": "https://github.com/denisdasilvarocha/wotlk-mcp/issues"
