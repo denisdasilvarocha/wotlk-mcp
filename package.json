@@ -1,6 +1,6 @@
 {
   "name": "wotlk-mcp",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Read-only MCP reference for World of Warcraft 3.3.5a build 12340.",
   "keywords": [
     "3.3.5a",
