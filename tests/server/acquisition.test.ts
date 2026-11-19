@@ -1028,6 +1028,50 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   await retry.close()
 }, 20000)
 
+test('failed fallback checks are throttled even when a corrupt snapshot was observed later', async () => {
+  const cache = mkdtempSync(path.join(dir, 'fallback-clock-'))
+  const day = 24 * 60 * 60 * 1000
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const start = 2_000_000_000_000
+
+  scenario = 'good'
+  const initial = await launch({ ...env, TEST_NOW: String(start) })
+  expect((await call(initial)).isError).not.toBe(true)
+  await initial.close()
+
+  const directory = cacheDirectory(cache)
+  const fallback = required(cacheStates(directory)[0], 'missing initial state')
+  const corrupt = {
+    file: 'db-v1.3.0-abc.sqlite',
+    lastCheck: start,
+    observedAt: (fallback.observedAt ?? start) + 1,
+    version: 'db-v1.3.0'
+  }
+  writeFileSync(path.join(directory, corrupt.file), 'not a database')
+  writeFileSync(path.join(directory, `state-${start + 1}-abc.json`), JSON.stringify(corrupt))
+
+  scenario = '403'
+  requests = []
+  const first = await launch({ ...env, TEST_NOW: String(start + day) })
+  expect((await call(first)).isError).not.toBe(true)
+  await waitUntil(() => checkedAt(directory, start + day), 'fallback update did not finish')
+  await first.close()
+  expect(requests).toEqual(['/releases'])
+
+  requests = []
+  const second = await launch({ ...env, TEST_NOW: String(start + day + 1) })
+  expect((await call(second)).isError).not.toBe(true)
+  await delay(100)
+  await second.close()
+  expect(requests).toEqual([])
+
+  const retry = await launch({ ...env, TEST_NOW: String(start + 2 * day) })
+  expect((await call(retry)).isError).not.toBe(true)
+  await waitUntil(() => checkedAt(directory, start + 2 * day), 'fallback retry did not finish')
+  await retry.close()
+  expect(requests).toEqual(['/releases'])
+}, 20000)
+
 test('invalid override never contacts the network', async () => {
   scenario = 'good'
   requests = []

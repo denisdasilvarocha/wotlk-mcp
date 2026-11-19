@@ -38,7 +38,7 @@ At startup the server selects the newest cached database that opens with a compa
 
 A server with a cached database starts immediately and checks for updates in the background:
 
-- It checks at most once every 24 hours, counting failed attempts. Only one server checks at a time; another server that tries at the same moment logs a failed check and carries on.
+- It checks at most once every 24 hours, counting failed attempts even if it starts from an older cached copy. Only one server checks at a time; another server that tries at the same moment logs a failed check and carries on.
 - A verified update is cached but used only from the next start. The running server keeps its snapshot for the whole session.
 - Offline starts use the cache. If the newest cached file is unusable, the server uses the previous one.
 - If the newest published release is an older version than the cached one (a rollback), the next start uses that release.

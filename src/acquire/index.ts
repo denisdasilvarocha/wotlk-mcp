@@ -91,10 +91,13 @@ async function update(directory: string, current: CacheState): Promise<void> {
     lock.exec('BEGIN IMMEDIATE')
 
     try {
-      const latest = (await states(directory))[0]?.state ?? current
+      const latestCheck = (await states(directory)).reduce(
+        (latest, entry) => Math.max(latest, entry.state.lastCheck),
+        current.lastCheck
+      )
       const now = Date.now()
 
-      if (now - latest.lastCheck < 24 * 60 * 60 * 1000) {
+      if (now - latestCheck < 24 * 60 * 60 * 1000) {
         return
       }
 
