@@ -139,11 +139,17 @@ function insertRows(
   for (let row = 0; row < header.rows; row++) {
     let cursor = 20 + row * header.width
     const values: (number | string)[] = []
+    let hasInfinity = false
     for (const field of fields) {
-      values.push(readValue(data, field, cursor, header.strings, stringStart, name))
+      const value = readValue(data, field, cursor, header.strings, stringStart, name)
+      hasInfinity ||= value === Infinity || value === -Infinity
+      values.push(value)
       cursor += field.size
     }
-    logicalHash.update(JSON.stringify(values)).update('\n')
+    const hashValues = hasInfinity
+      ? values.map((value) => (value === Infinity || value === -Infinity ? [String(value)] : value))
+      : values
+    logicalHash.update(JSON.stringify(hashValues)).update('\n')
     const inserted = insert.run(...values)
     if (kind !== undefined && kind !== '') {
       insertRecord(statements, fields, values, kind, table, inserted.lastInsertRowid)
