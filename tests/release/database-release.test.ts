@@ -11,9 +11,7 @@ import { expect, test } from 'vite-plus/test'
 
 type DeepReadonly<T> = T extends (...args: readonly never[]) => unknown
   ? T
-  : T extends object
-    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-    : T
+  : { readonly [K in keyof T]: DeepReadonly<T[K]> }
 
 function parseObject(text: string): Record<string, unknown> {
   const value: unknown = JSON.parse(text)
@@ -38,6 +36,7 @@ async function releaseScenario(
   let corruptDownload = false
   const digest = `sha256:${createHash('sha256').update(asset).digest('hex')}`
   let failedCell = -1
+  let matrixScenario = 'normal'
   let promotions = 0
   let protectedEnvironment = true
   let release: Record<string, unknown> | undefined
@@ -187,16 +186,42 @@ async function releaseScenario(
 
     if (url.pathname === '/repos/test/repo/actions/runs/10/jobs') {
       const names = ['ubuntu-latest', 'macos-latest', 'windows-latest'].flatMap((os) =>
-        ['24.15.0', 'node'].map((node) => `acceptance (${os}, ${node})`)
+        ['24.15.0', 'latest'].map((node) => `acceptance (${os}, ${node})`)
       )
+      const jobs = names.map((name, index) => ({
+        conclusion: ['success', 'failure'][Number(index === failedCell)],
+        name,
+        run_attempt: 1,
+        status: 'completed'
+      }))
 
-      json({
-        jobs: names.map((name, index) => ({
-          conclusion: ['success', 'failure'][Number(index === failedCell)],
-          name,
-          status: 'completed'
-        }))
-      })
+      if (matrixScenario === 'missing') {
+        jobs.pop()
+      } else if (matrixScenario === 'rerun-success') {
+        jobs[0].conclusion = 'failure'
+        jobs.unshift(
+          ...Array.from({ length: 100 }, () => ({
+            conclusion: 'success',
+            name: 'unrelated',
+            run_attempt: 1,
+            status: 'completed'
+          }))
+        )
+        jobs.push({ conclusion: 'success', name: names[0], run_attempt: 2, status: 'completed' })
+      } else if (matrixScenario === 'rerun-failure') {
+        jobs.push({ conclusion: 'failure', name: names[0], run_attempt: 2, status: 'completed' })
+      } else if (matrixScenario === 'rerun-incomplete') {
+        jobs.push({ conclusion: 'success', name: names[0], run_attempt: 2, status: 'in_progress' })
+      } else if (matrixScenario === 'ambiguous') {
+        jobs.push({ conclusion: 'success', name: names[0], run_attempt: 1, status: 'completed' })
+      }
+
+      if (url.searchParams.get('filter') !== 'all' || url.searchParams.get('per_page') !== '100') {
+        json({}, 400)
+        return
+      }
+      const page = Number(url.searchParams.get('page'))
+      json({ jobs: jobs.slice((page - 1) * 100, page * 100), total_count: jobs.length })
       return
     }
 
@@ -344,6 +369,16 @@ async function releaseScenario(
 
       await checkFailedCell(0)
       failedCell = -1
+      async function rejectMatrixCase(matrixCase: string): Promise<void> {
+        matrixScenario = matrixCase
+        expect((await run(['promote', '7', 'db-v1.0.0', digest])).status).not.toBe(0)
+        expect(promotions).toBe(0)
+      }
+      await rejectMatrixCase('missing')
+      await rejectMatrixCase('rerun-failure')
+      await rejectMatrixCase('rerun-incomplete')
+      await rejectMatrixCase('ambiguous')
+      matrixScenario = 'rerun-success'
       expect((await run(['promote', '7', 'db-v1.0.0', digest], false)).status).not.toBe(0)
       expect((await run(['promote', '7', 'db-v1.0.1', digest])).status).not.toBe(0)
       expect((await run(['promote', '7', 'db-v1.0.0', digest])).status).toBe(0)
