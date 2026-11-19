@@ -1,6 +1,19 @@
+import { loadCommittedOffsets } from '../offsets.ts'
+import { clientExecutableSha256, readClientManifest } from '../shared/client-manifest.ts'
+import { isRecord } from '../shared/record.ts'
 import { sha256Hex } from '../shared/sha256.ts'
 import { canonicalTableHash, canonicalTables } from '../shared/table-hash.ts'
-import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { hashCodex } from '../sources/index.ts'
+import { createHash } from 'node:crypto'
+import {
+  closeSync,
+  openSync,
+  readFileSync,
+  readSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
@@ -10,11 +23,103 @@ import type { Sources } from '../sources/index.ts'
 
 type ProvenanceSources = DeepReadonly<Sources>
 
-function recordClientBundle(db: Database, clientManifestHash: string): void {
-  if (!db.prepare("SELECT 1 FROM source WHERE name = 'client-data'").get()) {
-    return
+function hashArchive(archive: string): string {
+  const hash = createHash('sha256')
+  const buffer = Buffer.allocUnsafe(64 * 1024)
+  const file = openSync(archive, 'r')
+  try {
+    let count = readSync(file, buffer)
+    while (count > 0) {
+      hash.update(buffer.subarray(0, count))
+      count = readSync(file, buffer)
+    }
+  } finally {
+    closeSync(file)
+  }
+  return hash.digest('hex')
+}
+
+function verifySourceDeclarations(
+  db: Database,
+  inputs: ProvenanceSources
+): Record<string, unknown> {
+  const meta = db.prepare('SELECT value FROM meta WHERE key = ?')
+  const row = meta.get('input_pins')
+  const pins: unknown = typeof row?.value === 'string' ? JSON.parse(row.value) : null
+  if (!isRecord(pins)) {
+    throw new Error('Reference input pins are missing')
   }
 
+  const declaration = db.prepare('SELECT pin, sha256 FROM source WHERE name = ?')
+  const verifySource = (name: string, pin: string, sha256: string): void => {
+    const source = declaration.get(name)
+    if (!source) {
+      throw new Error(`Missing source declaration: ${name}`)
+    }
+    if (source.pin !== pin || source.sha256 !== sha256) {
+      throw new Error(`Source declaration does not match acquired input: ${name}`)
+    }
+  }
+
+  const manifestHash = sha256Hex(readFileSync('data/client-inputs/manifest.json'))
+  if (inputs.clientManifestHash !== manifestHash) {
+    throw new Error('Client manifest pin does not match the published client-inputs asset manifest')
+  }
+  const manifest = readClientManifest(inputs.client, manifestHash)
+  const nativeDigest = manifest.find((file) => file.path === 'native-registrations.json')?.sha256
+  if (nativeDigest === undefined) {
+    throw new Error('Client manifest is missing native-registrations.json')
+  }
+  verifySource('client-data', '12340 enGB', manifestHash)
+  verifySource('interface', 'build 12340 enGB', manifestHash)
+  verifySource('native-registrations', clientExecutableSha256, nativeDigest)
+
+  for (const [name, source] of [
+    ['wowdbdefs', inputs.wowdbdefs],
+    ['world', inputs.azerothcore]
+  ] as const) {
+    if (hashArchive(source.archive) !== source.sha256) {
+      throw new Error(`Acquired archive SHA-256 mismatch: ${name}`)
+    }
+    verifySource(name, source.revision, source.sha256)
+  }
+
+  const codex = hashCodex(inputs.codex.directory, inputs.codex.files)
+  if (codex.sha256 !== inputs.codex.sha256) {
+    throw new Error('Acquired Codex aggregate SHA-256 mismatch')
+  }
+  verifySource('codex', inputs.codex.revision, codex.sha256)
+
+  const commit = meta.get('build_commit')?.value
+  if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/u.test(commit) || pins.offsets !== commit) {
+    throw new Error('Offsets input pin does not match build_commit')
+  }
+  verifySource('offsets', commit, loadCommittedOffsets(commit).digest)
+
+  for (const [key, expected] of Object.entries({
+    client_inputs: manifestHash,
+    codex: inputs.codex.revision,
+    native: nativeDigest,
+    native_manifest: manifestHash,
+    world: inputs.azerothcore.revision,
+    wowdbdefs: inputs.wowdbdefs.revision
+  })) {
+    if (pins[key] !== expected) {
+      throw new Error(`Input pin does not match acquired input: ${key}`)
+    }
+  }
+  for (const [key, expected] of [
+    ['hash.interface_manifest', manifestHash],
+    ['world.importer_image', inputs.worldImporterImage]
+  ] as const) {
+    if (meta.get(key)?.value !== expected) {
+      throw new Error(`Reference metadata does not match acquired input: ${key}`)
+    }
+  }
+  return pins
+}
+
+function recordClientBundle(db: Database, pins: Record<string, unknown>): void {
   const bundleHash = '9f57598199dd2e9b185c1f3e14f42ba59b10f11b30f2e672d3554cebbe191136'
   const tag = 'client-inputs-12340-engb-1'
 
@@ -25,27 +130,10 @@ function recordClientBundle(db: Database, clientManifestHash: string): void {
     tag,
     bundleHash,
     'Blizzard-derived; redistribution risk accepted, permission not established',
-    'Published verified enGB client-inputs asset for build 12340. Original trusted executable SHA-256: aa63a5750d60ef16746c686b3d5e26876d98953eab08b1c026cd0faf78e88cb8. This is not the large-address-aware executable variant; enGB is an English stand-in, not verified byte-identical enUS.'
+    `Published verified enGB client-inputs asset for build 12340. Original trusted executable SHA-256: ${clientExecutableSha256}. This is not the large-address-aware executable variant; enGB is an English stand-in, not verified byte-identical enUS.`
   )
 
-  const pinsRow = db.prepare("SELECT value FROM meta WHERE key = 'input_pins'").get()
-  if (!pinsRow || typeof pinsRow.value !== 'string') {
-    throw new Error('Reference input pins are missing')
-  }
-
-  const pins: unknown = JSON.parse(pinsRow.value)
-  if (typeof pins !== 'object' || pins === null) {
-    throw new Error('Reference input pins are missing')
-  }
-  const clientInputs = 'client_inputs' in pins ? pins.client_inputs : undefined
-  const manifestHash = sha256Hex(readFileSync('data/client-inputs/manifest.json'))
-
-  if (clientInputs !== manifestHash || clientManifestHash !== manifestHash) {
-    throw new Error('Client manifest pin does not match the published client-inputs asset manifest')
-  }
-
   Object.assign(pins, { client_inputs_asset: { sha256: bundleHash, tag } })
-  db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify(pins))
 }
 
 function addNotice(
@@ -148,7 +236,8 @@ export function writeProvenance(database: string, notice: string, inputs: Proven
   try {
     db.exec('BEGIN IMMEDIATE')
 
-    recordClientBundle(db, inputs.clientManifestHash)
+    const pins = verifySourceDeclarations(db, inputs)
+    recordClientBundle(db, pins)
     addSourceNotices(db, inputs)
 
     const output = noticeOutput(db)
@@ -157,6 +246,14 @@ export function writeProvenance(database: string, notice: string, inputs: Proven
     )
 
     metadata.run('codex.node_image', inputs.codexNodeImage)
+    metadata.run(
+      'input_pins',
+      JSON.stringify({
+        ...pins,
+        codex_node_image: inputs.codexNodeImage,
+        world_importer_image: inputs.worldImporterImage
+      })
+    )
 
     for (const name of canonicalTables(db)) {
       const { hash, count } = canonicalTableHash(db, name)

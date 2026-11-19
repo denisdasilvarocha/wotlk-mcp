@@ -1,4 +1,4 @@
-import { writeReferenceArtifact } from '../../build/reference/artifact.ts'
+import { compressReferenceArtifact, writeBuildReport } from '../../build/reference/artifact.ts'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -12,7 +12,7 @@ function readReport(file: string): {
   uncompressed_bytes: unknown
   compressed_bytes: unknown
   compressed_sha256: unknown
-  timings_seconds: { acquisition: unknown; compression: unknown }
+  timings_seconds: { acquisition: unknown; compression: unknown } & Record<string, unknown>
   build_seconds: unknown
 } {
   const report: unknown = JSON.parse(readFileSync(file, 'utf8'))
@@ -42,7 +42,10 @@ test('compresses the database and reports the actual artifact and timings', asyn
 
     const started = Date.now()
 
-    await writeReferenceArtifact(dir, { acquisition: 1.25 }, started, 2)
+    const artifact = await compressReferenceArtifact(dir)
+    const timings = { acquisition: 1.25, 'compressed reference': 2, 'server and SQL worker': 3 }
+    expect(readdirSync(dir)).not.toContain('build-report.json')
+    writeBuildReport(dir, artifact, timings, started, 2)
 
     const original = readFileSync(database)
     const compressed = readFileSync(path.join(dir, 'wotlk.sqlite.br'))
@@ -56,6 +59,8 @@ test('compresses the database and reports the actual artifact and timings', asyn
     expect(report.compressed_sha256).toBe(createHash('sha256').update(compressed).digest('hex'))
     expect(report.timings_seconds.acquisition).toBe(1.25)
     expect(report.timings_seconds.compression).toBeGreaterThanOrEqual(0)
+    expect(report.timings_seconds['compressed reference']).toBe(2)
+    expect(report.timings_seconds['server and SQL worker']).toBe(3)
     expect(report.build_seconds).toBeGreaterThanOrEqual(2)
   } finally {
     rmSync(dir, { force: true, recursive: true })
@@ -67,7 +72,7 @@ test('missing database leaves no artifact, report or temporary output', async ()
 
   try {
     writeFileSync(path.join(dir, 'sentinel'), 'untouched')
-    await expect(writeReferenceArtifact(dir, {}, Date.now())).rejects.toThrow(/ENOENT/u)
+    await expect(compressReferenceArtifact(dir)).rejects.toThrow(/ENOENT/u)
     expect(readdirSync(dir)).toEqual(['sentinel'])
     expect(readFileSync(path.join(dir, 'sentinel'), 'utf8')).toBe('untouched')
   } finally {

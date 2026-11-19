@@ -50,10 +50,7 @@ function importFiles(
       throw new Error(`Missing definition: ${name}`)
     }
     const definition = readFileSync(path.join(definitionsDirectory, file), 'utf8')
-    const fields = parseLayout(definition, name, Boolean(kinds[name]))
-    if (fields === undefined) {
-      continue
-    }
+    const fields = parseLayout(definition, name)
     importTable(db, data, fields, name, entry.path, kinds[name], statements)
     imported.add(name)
   }
@@ -129,7 +126,9 @@ export function importClientData(
     writeMetadata(db, definitions, manifestHash)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

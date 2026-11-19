@@ -86,7 +86,7 @@ const server = createServer(
             draft: false,
             prerelease: false,
             published_at: '2025-01-01T00:00:00Z',
-            tag_name: 'db-v1.9.0'
+            tag_name: 'db-v1.2.0'
           },
           {
             assets: [
@@ -164,7 +164,7 @@ const server = createServer(
 
       res.setHeader('content-length', data.length)
 
-      if (scenario === 'slow') {
+      if (scenario === 'slow' || scenario === 'late') {
         res.write(data.subarray(0, 10))
         download.finish = (): void => {
           res.end(data.subarray(10))
@@ -189,6 +189,9 @@ type ToolClient = Pick<Client, 'callTool' | 'close'>
 
 beforeAll(async () => {
   initReference(dbPath)
+  const initial = new DatabaseSync(dbPath)
+  initial.exec("UPDATE meta SET value = '1.2.0' WHERE key = 'schema_version'")
+  initial.close()
   unpackPackage(dir)
   data = brotliCompressSync(readFileSync(dbPath))
 
@@ -200,6 +203,9 @@ beforeAll(async () => {
     const db = new DatabaseSync(file)
 
     db.prepare("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', ?)").run(name)
+    if (name === 'newer') {
+      db.exec("UPDATE meta SET value = '1.1.0' WHERE key = 'schema_version'")
+    }
     db.close()
 
     if (name === 'older') {
@@ -222,7 +228,13 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${address.port}`
   writeFileSync(
     preload,
-    `const original = globalThis.fetch; globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options); if (process.env.TEST_NOW) Date.now = () => Number(process.env.TEST_NOW)`
+    `const original = globalThis.fetch;
+globalThis.fetch = (url, options) => original(String(url).startsWith('https://api.github.com/') ? process.env.TEST_RELEASES : url, options);
+if (process.env.TEST_NOW) Date.now = () => Number(process.env.TEST_NOW);
+if (process.env.TEST_ACQUIRE_TIMEOUT) {
+  const timeout = AbortSignal.timeout;
+  AbortSignal.timeout = (ms) => timeout(ms === 120_000 ? Number(process.env.TEST_ACQUIRE_TIMEOUT) : ms);
+}`
   )
 })
 
@@ -296,6 +308,7 @@ function cacheStates(directory: string): readonly Readonly<{
   file: string
   version: string
   lastCheck: number
+  observedAt?: number
   warningMajor?: number
 }>[] {
   return readdirSync(directory)
@@ -306,6 +319,7 @@ function cacheStates(directory: string): readonly Readonly<{
         .object({
           file: z.string(),
           lastCheck: z.number(),
+          observedAt: z.number().optional(),
           version: z.string(),
           warningMajor: z.number().optional()
         })
@@ -315,6 +329,7 @@ function cacheStates(directory: string): readonly Readonly<{
         file: state.file,
         lastCheck: state.lastCheck,
         name,
+        observedAt: state.observedAt,
         version: state.version,
         warningMajor: state.warningMajor
       }
@@ -562,6 +577,45 @@ test('shared cache survives concurrent first downloads and offline restarts', as
   }
 })
 
+test('a late cold download cannot replace a release observed after it', async () => {
+  const cache = mkdtempSync(path.join(dir, 'late-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const original = data
+  data = olderData
+  scenario = 'late'
+
+  const late = await launch(env)
+
+  try {
+    await waitUntil(() => hasPartial(cacheDirectory(cache)), 'older download did not start')
+    data = newerData
+    scenario = 'rollback'
+    const newer = await launch(env)
+
+    try {
+      expect(await marker(newer)).toContain('value\\nnewer')
+      data = olderData
+      download.finish()
+      expect(await marker(late)).toContain('value\\nnewer')
+
+      scenario = 'offline'
+      const offline = await launch(env)
+
+      try {
+        expect(await marker(offline)).toContain('value\\nnewer')
+      } finally {
+        await offline.close()
+      }
+    } finally {
+      await newer.close()
+    }
+  } finally {
+    download.finish()
+    await late.close()
+    data = original
+  }
+})
+
 test('another process pruning old copies preserves a live session snapshot', async () => {
   const cache = mkdtempSync(path.join(dir, 'active-'))
   const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
@@ -730,6 +784,30 @@ test.each(['bad', 'missing', 'offline', 'broken', 'schema'])(
   }
 )
 
+test('rejects a digest-valid asset whose schema version differs from the release tag', async () => {
+  const cache = mkdtempSync(path.join(dir, 'mismatch-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const original = data
+  data = newerData
+  scenario = 'good'
+
+  const client = await launch(env)
+
+  try {
+    const result = await call(client)
+
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result)).toContain('schema version 1.1.0 does not match db-v1.2.0')
+    expect(cacheStates(cacheDirectory(cache))).toEqual([])
+
+    data = original
+    expect((await call(client)).isError).not.toBe(true)
+  } finally {
+    data = original
+    await client.close()
+  }
+})
+
 test('higher-major-only releases name the required package major', async () => {
   scenario = 'higher'
   requests = []
@@ -817,6 +895,7 @@ test('a published rollback is activated at the next process start', async () => 
   const db = new DatabaseSync(replacement)
 
   db.exec("INSERT INTO meta (key, value) VALUES ('lifecycle_marker', 'rollback')")
+  db.exec("UPDATE meta SET value = '1.1.0' WHERE key = 'schema_version'")
   db.close()
   data = olderData
   scenario = 'good'
@@ -949,6 +1028,50 @@ test('failed checks persist the full 24-hour attempt window', async () => {
   await retry.close()
 }, 20000)
 
+test('failed fallback checks are throttled even when a corrupt snapshot was observed later', async () => {
+  const cache = mkdtempSync(path.join(dir, 'fallback-clock-'))
+  const day = 24 * 60 * 60 * 1000
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const start = 2_000_000_000_000
+
+  scenario = 'good'
+  const initial = await launch({ ...env, TEST_NOW: String(start) })
+  expect((await call(initial)).isError).not.toBe(true)
+  await initial.close()
+
+  const directory = cacheDirectory(cache)
+  const fallback = required(cacheStates(directory)[0], 'missing initial state')
+  const corrupt = {
+    file: 'db-v1.3.0-abc.sqlite',
+    lastCheck: start,
+    observedAt: (fallback.observedAt ?? start) + 1,
+    version: 'db-v1.3.0'
+  }
+  writeFileSync(path.join(directory, corrupt.file), 'not a database')
+  writeFileSync(path.join(directory, `state-${start + 1}-abc.json`), JSON.stringify(corrupt))
+
+  scenario = '403'
+  requests = []
+  const first = await launch({ ...env, TEST_NOW: String(start + day) })
+  expect((await call(first)).isError).not.toBe(true)
+  await waitUntil(() => checkedAt(directory, start + day), 'fallback update did not finish')
+  await first.close()
+  expect(requests).toEqual(['/releases'])
+
+  requests = []
+  const second = await launch({ ...env, TEST_NOW: String(start + day + 1) })
+  expect((await call(second)).isError).not.toBe(true)
+  await delay(100)
+  await second.close()
+  expect(requests).toEqual([])
+
+  const retry = await launch({ ...env, TEST_NOW: String(start + 2 * day) })
+  expect((await call(retry)).isError).not.toBe(true)
+  await waitUntil(() => checkedAt(directory, start + 2 * day), 'fallback retry did not finish')
+  await retry.close()
+  expect(requests).toEqual(['/releases'])
+}, 20000)
+
 test('invalid override never contacts the network', async () => {
   scenario = 'good'
   requests = []
@@ -962,6 +1085,100 @@ test('invalid override never contacts the network', async () => {
     await client.close()
   }
 })
+
+test.each(['listing', 'transfer'])(
+  'a stalled %s expires the shared attempt and allows a clean retry',
+  async (phase) => {
+    const cache = mkdtempSync(path.join(dir, 'timeout-'))
+    const env = {
+      HOME: cache,
+      LOCALAPPDATA: cache,
+      XDG_CACHE_HOME: cache,
+      TEST_ACQUIRE_TIMEOUT: '1500'
+    }
+    const directory = cacheDirectory(cache)
+    scenario = phase === 'transfer' ? 'slow' : 'good'
+    metadata.hold = phase === 'listing'
+    requests = []
+    download.finish = (): void => {}
+
+    const client = await launch(env)
+
+    try {
+      if (phase === 'transfer') {
+        await waitUntil(() => hasPartial(directory), 'transfer did not start')
+      }
+      const results = await Promise.all([call(client), call(client)])
+
+      for (const result of results) {
+        expect(result.isError).toBe(true)
+        expect(JSON.stringify(result)).toContain('reference acquisition timed out')
+      }
+      expect(readdirSync(directory).filter((name) => name.endsWith('.partial'))).toEqual([])
+      expect(cacheStates(directory)).toEqual([])
+      expect(requests).toEqual(phase === 'listing' ? ['/releases'] : ['/releases', '/asset'])
+
+      metadata.hold = false
+      scenario = 'good'
+      expect((await call(client)).isError).not.toBe(true)
+    } finally {
+      metadata.hold = false
+      metadata.finish()
+      download.finish()
+      await client.close()
+    }
+  },
+  10000
+)
+
+test('a stalled background check expires without holding the update lock', async () => {
+  const cache = mkdtempSync(path.join(dir, 'update-timeout-'))
+  const env = { HOME: cache, LOCALAPPDATA: cache, XDG_CACHE_HOME: cache }
+  const directory = cacheDirectory(cache)
+  const clock = 2_000_000_000_000
+  scenario = 'good'
+
+  const initial = await launch(env)
+  try {
+    expect((await call(initial)).isError).not.toBe(true)
+  } finally {
+    await initial.close()
+  }
+
+  requests = []
+  metadata.hold = true
+  const stalled = await launch({
+    ...env,
+    TEST_ACQUIRE_TIMEOUT: '1500',
+    TEST_NOW: String(clock)
+  })
+
+  try {
+    expect((await call(stalled)).isError).not.toBe(true)
+    await waitUntil(
+      () => cacheStates(directory).filter((entry) => entry.lastCheck === clock).length === 2,
+      'stalled check did not finish'
+    )
+
+    metadata.hold = false
+    metadata.finish()
+    const nextDay = clock + 24 * 60 * 60 * 1000
+    requests = []
+    const retry = await launch({ ...env, TEST_NOW: String(nextDay) })
+
+    try {
+      expect((await call(retry)).isError).not.toBe(true)
+      await waitUntil(() => checkedAt(directory, nextDay), 'next check could not acquire the lock')
+      expect(requests).toEqual(['/releases'])
+    } finally {
+      await retry.close()
+    }
+  } finally {
+    metadata.hold = false
+    metadata.finish()
+    await stalled.close()
+  }
+}, 10000)
 
 test('discovery stays available and a slow download continues after the bounded wait', async () => {
   scenario = 'slow'

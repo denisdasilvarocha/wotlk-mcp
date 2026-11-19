@@ -25,6 +25,10 @@ beforeAll(async () => {
     ['quest:9', 'quest', 'Fire Bolt', '', 'level 9, Forest'],
     ['creature:7', 'creature', 'Fire Boltling', '', 'levels 1-2, Wolf'],
     ['fn:FireBolt', 'fn', 'Big Fire Bolt', '', 'Combat'],
+    ['fn:Key', 'fn', 'Unrelated function', '', ''],
+    ['cvar:ERRORS', 'cvar', 'ERRORS', '', ''],
+    ['cvar:Errors', 'cvar', 'Errors', '', ''],
+    ['cvar:errors', 'cvar', 'errors', '', ''],
     ['event:TEST', 'event', 'Fire Event', 'launches bolt now', 'Events'],
     ['item:3', 'item', '100%_safe', 'literal symbols', ''],
     ['item:4', 'item', '100XXsafe', '', ''],
@@ -35,7 +39,12 @@ beforeAll(async () => {
     ['item:9', 'item', 'dracon', '', ''],
     ['item:10', 'item', 'dragons', '', ''],
     ['item:11', 'item', 'Quote "AND" -star*', '', ''],
-    ['item:12', 'item', 'Hidden description', `${'padding '.repeat(30)}needle here`, '']
+    ['item:12', 'item', 'Hidden description', `${'padding '.repeat(30)}needle here`, ''],
+    ['area:101', 'area', 'Tön', '', ''],
+    ['area:102', 'area', 'Tön tower', '', ''],
+    ['area:103', 'area', "Claytön's WoWEdit Land", '', ''],
+    ['area:104', 'area', 'Hidden description', `${'padding '.repeat(30)}tön here`, ''],
+    ['area:105', 'area', 'xy\u1c80 marker', '', '']
   ]
 
   for (const [id, kind, name, description, hint] of rows) {
@@ -68,6 +77,12 @@ beforeAll(async () => {
   fts.run('file:GlueXML/Other.xml', 'GlueXML/Other.xml', '')
   line.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
   lineFts.run('GlueXML/Other.xml', 1, 'Fire Bolt literal %_ token')
+  line.run('GlueXML/Other.xml', 2, 'Tön at Key')
+  lineFts.run('GlueXML/Other.xml', 2, 'Tön at Key')
+  line.run('GlueXML/Other.xml', 3, 'cast caſt')
+  lineFts.run('GlueXML/Other.xml', 3, 'cast caſt')
+  line.run('GlueXML/Other.xml', 4, 'caſt')
+  lineFts.run('GlueXML/Other.xml', 4, 'caſt')
   db.close()
   unpackPackage(dir)
   await client.connect(packagedServer(dir, dbPath))
@@ -133,6 +148,18 @@ test('normal tiers, hints, IDs, filtering and pagination are deterministic', asy
   expect((await text({ offset: 99, query: 'Fire Bolt' })).toLowerCase()).not.toContain('fuzzy')
 })
 
+test('full IDs match case insensitively with canonical output and kind filtering', async () => {
+  expect(ids(await text({ query: 'ITEM:42' }))).toEqual(['item:42'])
+  expect(ids(await text({ query: 'FN:key' }))).toEqual(['fn:Key'])
+  expect(ids(await text({ kind: ['spell'], query: 'ITEM:42' }))).toEqual([])
+})
+
+test('case-exact IDs rank ahead of case-folded ID collisions', async () => {
+  const output = await text({ kind: ['cvar'], query: 'cvar:errors' })
+
+  expect(ids(output)).toEqual(['cvar:errors', 'cvar:ERRORS', 'cvar:Errors'])
+})
+
 test('punctuation, short queries and fuzzy fallback stay literal', async () => {
   expect(ids(await text({ query: '100%_safe' }))).toEqual(['item:3'])
   expect(ids(await text({ query: '"AND" -star*' }))).toEqual(['item:11'])
@@ -168,6 +195,88 @@ test('punctuation, short queries and fuzzy fallback stay literal', async () => {
   }
 })
 
+test('repeated case-insensitive terms do not exhaust the expression budget', async () => {
+  const output = await text({ kind: ['spell'], query: 'e E '.repeat(1000).trim() })
+
+  expect(ids(output)).toEqual(['spell:42'])
+})
+
+test('queries with too many distinct terms report a validation error', async () => {
+  const query = Array.from({ length: 1001 }, (_, i) => `q${i.toString(36)}`).join(' ')
+
+  const result = await search({ query })
+
+  expect(result.isError).toBe(true)
+  expect(JSON.stringify(result.content)).toContain('Search query needs at most 64 distinct terms')
+})
+
+test('overlong queries report a validation error', async () => {
+  const result = await search({ query: 'a'.repeat(4097) })
+
+  expect(result.isError).toBe(true)
+  expect(JSON.stringify(result.content)).toContain(
+    'Search query needs at most 4096 UTF-16 code units'
+  )
+})
+
+test('search validation precedes opening a missing reference', async () => {
+  const missing = new Client({ name: 'missing-search-test', version: '1' })
+  await missing.connect(packagedServer(dir, path.join(dir, 'missing.sqlite')))
+
+  try {
+    const result = await missing.callTool({
+      arguments: { query: 'a'.repeat(4097) },
+      name: 'search'
+    })
+
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result.content)).toContain(
+      'Search query needs at most 4096 UTF-16 code units'
+    )
+  } finally {
+    await missing.close()
+  }
+})
+
+test('search decodes literal matches using the database encoding', async () => {
+  const utf16Path = path.join(dir, 'utf16.sqlite')
+  const db = new DatabaseSync(utf16Path)
+  db.exec("PRAGMA encoding = 'UTF-16le'")
+  db.exec(schema)
+  db.exec("INSERT INTO meta VALUES ('schema_version', '1.0.0')")
+  db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+    'spell:1',
+    'spell',
+    'Fire Bolt',
+    'world_example',
+    1,
+    '',
+    ''
+  )
+  db.prepare('INSERT INTO record_fts VALUES (?, ?, ?)').run('spell:1', 'Fire Bolt', '')
+  db.close()
+  const utf16 = new Client({ name: 'utf16-search-test', version: '1' })
+  await utf16.connect(packagedServer(dir, utf16Path))
+
+  try {
+    const result = await utf16.callTool({ arguments: { query: 'Fi' }, name: 'search' })
+
+    expect(result.isError).not.toBe(true)
+    expect(JSON.stringify(result.content)).toContain('spell:1 Fire Bolt')
+  } finally {
+    await utf16.close()
+  }
+})
+
+test('long typo queries retain fuzzy results without exhausting the expression budget', async () => {
+  const suffix = Array.from({ length: 1024 }, (_, i) => String.fromCodePoint(0x4e00 + i)).join('')
+
+  const output = await text({ kind: ['item'], query: `dragn${suffix}` })
+
+  expect(ids(output)).toEqual(['item:8', 'item:10', 'item:9'])
+  expect(output).toContain('Fuzzy: 1–3 of 3; end')
+})
+
 test('file names and exact IDs are searchable only with the file filter', async () => {
   expect(await text({ kind: ['file'], query: 'file:FrameXML/Test.lua' })).toContain(
     'file:FrameXML/Test.lua'
@@ -179,8 +288,53 @@ test('file names and exact IDs are searchable only with the file filter', async 
   )
 })
 
+test('mixed file and Record searches fall back to fuzzy Records only', async () => {
+  const output = await text({ kind: ['file', 'item'], query: 'otheX' })
+
+  expect(ids(output)).toEqual(['item:42'])
+  expect(output).toContain('Fuzzy: 1–1 of 1; end')
+})
+
+test('file-only searches never fall back to fuzzy file names', async () => {
+  const output = await text({ kind: ['file'], query: 'otheX' })
+
+  expect(output).toBe('0–0 of 0; end')
+})
+
 test('description snippets include a match beyond the prefix', async () => {
   expect(await text({ kind: ['item'], query: 'needle' })).toContain('needle here')
+})
+
+test('Unicode case-insensitive matches preserve exact, prefix, name and text tiers', async () => {
+  const output = await text({ kind: ['area'], query: 'TÖN' })
+
+  expect(ids(output)).toEqual(['area:101', 'area:102', 'area:103', 'area:104'])
+  expect(output).toContain('tön here')
+  expect(output).not.toContain('Fuzzy:')
+})
+
+test('short Unicode queries match only name prefixes', async () => {
+  const output = await text({ kind: ['area'], query: 'TÖ' })
+
+  expect(ids(output)).toEqual(['area:101', 'area:102'])
+})
+
+test('literal Unicode matches are not limited to the FTS tokenizer case mappings', async () => {
+  const output = await text({ kind: ['area'], query: 'XYВ' })
+
+  expect(ids(output)).toEqual(['area:105'])
+})
+
+test('ASCII queries can match Unicode case equivalents in source lines', async () => {
+  const output = await text({ kind: ['file'], query: 'KEY' })
+
+  expect(ids(output)).toEqual(['file:GlueXML/Other.xml:2'])
+})
+
+test('ASCII source searches match both ASCII and Unicode case equivalents', async () => {
+  const output = await text({ kind: ['file'], query: 'CAST' })
+
+  expect(ids(output)).toEqual(['file:GlueXML/Other.xml:3', 'file:GlueXML/Other.xml:4'])
 })
 
 test('explicit source lines are literal, paginated, and isolated from ordinary search', async () => {

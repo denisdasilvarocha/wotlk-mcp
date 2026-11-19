@@ -91,7 +91,7 @@ test('exported artifact preserves world rows and indexes only curated templates'
 
     const fixtures: Record<string, Record<string, string | Buffer | null>> = {
       creature: {
-        Comment: 'Snow\n雪',
+        Comment: '\uFEFFSnow\n雪',
         areaId: '3',
         guid: '11',
         id: '101',
@@ -160,9 +160,10 @@ test('exported artifact preserves world rows and indexes only curated templates'
     writeFileSync(
       path.join(bin, 'docker'),
       `#!/bin/sh
-case "$1" in rm|network) exit 0 ;; esac
+case "$1" in rm|network|run) exit 0 ;; esac
 for query do :; done
 case "$query" in
+  'SELECT 1'|'CREATE USER '*) exit 0 ;;
   *'SELECT VERSION()'*) printf '%s\\n' '8.4.3	ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION	+00:00	utf8mb4	utf8mb4_general_ci'; exit ;;
   *information_schema.columns*) cat "$WORLD_ROOT/schema-columns.tsv"; exit ;;
   *information_schema.statistics*) cat "$WORLD_ROOT/schema-indexes.tsv"; exit ;;
@@ -170,9 +171,15 @@ esac
 table=\${query#*' FROM \`'}
 table=\${table%%'\`'*}
 case "$query" in
-  'SELECT COUNT('* ) if [ "$WORLD_MISMATCH" = 1 ]; then echo 1; elif [ -f "$WORLD_ROWS/$table" ]; then echo 1; else echo 0; fi ;;
-  * ) if [ -f "$WORLD_ROWS/$table" ]; then cat "$WORLD_ROWS/$table"; fi ;;
+  *'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY; SELECT IF('*'COUNT(*)'*'ORDER BY SHA2('*'; COMMIT') ;;
+  *) echo 'invalid export protocol' >&2; exit 1 ;;
 esac
+if [ -n "$WORLD_SCAN_LOG" ]; then
+  if grep -Fx "$table" "$WORLD_SCAN_LOG" >/dev/null 2>&1; then echo 'duplicate table scan' >&2; exit 1; fi
+  echo "$table" >> "$WORLD_SCAN_LOG"
+fi
+if [ "$WORLD_MISMATCH" = 1 ]; then echo 1; elif [ -f "$WORLD_ROWS/$table" ]; then echo 1; else echo 0; fi
+if [ -f "$WORLD_ROWS/$table" ]; then cat "$WORLD_ROWS/$table"; fi
 `,
       { mode: 0o755 }
     )
@@ -185,6 +192,7 @@ esac
         ...process.env,
         PATH: `${bin}${path.delimiter}${process.env.PATH}`,
         WORLD_ROOT: world,
+        WORLD_SCAN_LOG: path.join(dir, 'scans'),
         WORLD_ROWS: rows
       }
     })
@@ -278,7 +286,7 @@ esac
           )
           .get()
       ).toMatchObject({
-        Comment: 'Snow\n雪',
+        Comment: '\uFEFFSnow\n雪',
         areaId: 3,
         id: 101,
         map: 1,
@@ -383,6 +391,42 @@ esac
     } finally {
       rolledBack.close()
     }
+
+    const automaticRollbackDatabase = path.join(dir, 'automatic-rollback.sqlite')
+
+    initReference(automaticRollbackDatabase)
+
+    const triggerDb = new DatabaseSync(automaticRollbackDatabase)
+
+    try {
+      triggerDb.exec(`
+        CREATE TRIGGER abort_world_import BEFORE INSERT ON meta
+        WHEN NEW.key LIKE 'hash.world_%'
+        BEGIN
+          SELECT RAISE(ROLLBACK, 'fixture automatic rollback');
+        END;
+      `)
+    } finally {
+      triggerDb.close()
+    }
+
+    const automaticRollback = spawnSync(
+      'vpx',
+      [exporter, automaticRollbackDatabase, path.join(dir, 'automatic-rollback-work')],
+      {
+        cwd: dir,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+          WORLD_ROOT: world,
+          WORLD_ROWS: rows
+        }
+      }
+    )
+
+    expect(automaticRollback.status).not.toBe(0)
+    expect(automaticRollback.stderr).toContain('fixture automatic rollback')
 
     const edgeFile = path.join(rows, 'synthetic_types')
     const edgeFields = readFileSync(edgeFile, 'utf8').trimEnd().split('\t')

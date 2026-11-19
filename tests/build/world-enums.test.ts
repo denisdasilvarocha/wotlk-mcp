@@ -1,3 +1,4 @@
+import { parseEnum } from '../../build/enums/parser.ts'
 import { importWorldEnums } from '../../build/enums/world.ts'
 import { initReference } from '../../build/offsets.ts'
 import {
@@ -167,4 +168,49 @@ test('world enum import parses expressions and rejects missing mapped columns', 
   } finally {
     rmSync(dir, { force: true, recursive: true })
   }
+})
+
+test('enum expressions preserve unsigned values and fixed underlying types', () => {
+  const entries = parseEnum(
+    `enum Flags : uint32 {
+      HIGH = ~0x7FFFFFFFu,
+      NEXT = HIGH >> 31,
+      WRAP = 0xffffffffu + 2,
+      MIXED = -1 | 1u,
+      OCTAL = 010
+    };`,
+    'Flags'
+  )
+
+  expect(entries).toEqual([
+    { name: 'HIGH', value: 2147483648 },
+    { name: 'NEXT', value: 1 },
+    { name: 'WRAP', value: 1 },
+    { name: 'MIXED', value: 4294967295 },
+    { name: 'OCTAL', value: 8 }
+  ])
+})
+
+test('enum expressions reject unsupported widths and invalid shifts', () => {
+  expect(() => parseEnum('enum Flags { FLAG = 1ULL << 2 };', 'Flags')).toThrow('Unsupported')
+  expect(() => parseEnum('enum Flags { FLAG = 1u << 32 };', 'Flags')).toThrow('Unsupported')
+  expect(() => parseEnum('enum Flags { FLAG = 2147483647 + 1 };', 'Flags')).toThrow('overflow')
+})
+
+test('implicit enumerators preserve their predecessor signedness', () => {
+  const entries = parseEnum('enum Flags { A = 0u, B, C = ~B, D = 1 + +1 };', 'Flags')
+
+  expect(entries).toEqual([
+    { name: 'A', value: 0 },
+    { name: 'B', value: 1 },
+    { name: 'C', value: 4294967294 },
+    { name: 'D', value: 2 }
+  ])
+})
+
+test('enum expressions reject ambiguous implicit widening and undefined operations', () => {
+  expect(() => parseEnum('enum Flags { A = 2147483647, B };', 'Flags')).toThrow('overflow')
+  expect(() => parseEnum('enum Flags { A = (-2147483647 - 1) % -1 };', 'Flags')).toThrow('overflow')
+  expect(() => parseEnum('enum Flags { A = 1++1 };', 'Flags')).toThrow('Unsupported')
+  expect(() => parseEnum('enum Flags { A = 1--1 };', 'Flags')).toThrow('Unsupported')
 })

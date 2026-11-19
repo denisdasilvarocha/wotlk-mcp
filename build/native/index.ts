@@ -50,7 +50,9 @@ export function importNative(
     db.prepare("UPDATE meta SET value = ? WHERE key = 'input_pins'").run(JSON.stringify(pins))
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

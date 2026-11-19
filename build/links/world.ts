@@ -54,9 +54,19 @@ function addQuestLinks(db: Database): void {
 function addOtherLinks(db: Database): void {
   addLinkRows(
     db,
-    `SELECT 'creature:' || v.entry AS source, 'item:' || v.item AS destination,
+    `WITH RECURSIVE vendor_lists(vendor_entry, list_entry) AS (
+      SELECT v.entry, v.entry FROM world_npc_vendor v
+      JOIN record s ON s.id = 'creature:' || v.entry
+      UNION
+      SELECT lists.vendor_entry, -v.item
+      FROM vendor_lists lists
+      JOIN world_npc_vendor v ON v.entry = lists.list_entry WHERE v.item < 0
+    )
+    SELECT 'creature:' || lists.vendor_entry AS source, 'item:' || v.item AS destination,
+    CASE WHEN lists.list_entry = lists.vendor_entry THEN '' ELSE 'entry=' || v.entry || ', ' END ||
     'slot=' || v.slot || ', maxcount=' || v.maxcount || ', incrtime=' || v.incrtime || ', ExtendedCost=' || v.ExtendedCost AS note
-    FROM world_npc_vendor v JOIN record s ON s.id = 'creature:' || v.entry
+    FROM vendor_lists lists
+    JOIN world_npc_vendor v ON v.entry = lists.list_entry
     JOIN record d ON d.id = 'item:' || v.item WHERE v.item > 0`,
     'sells'
   )
@@ -97,7 +107,9 @@ export function buildWorldLinks(file: string): void {
 
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

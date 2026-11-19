@@ -47,12 +47,13 @@ Find Records by name or text and return their IDs.
 | `limit` | integer, 1–100 | `20` | Hits per page. |
 | `offset` | integer, ≥ 0 | `0` | Hits to skip. Pass the `next offset` from the previous footer. |
 
-Matching is case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text.
+Matching is Unicode case-insensitive and literal: every whitespace-separated term must appear in the name or indexed text.
 
 - A bare number matches that key in every kind, so `19019` finds `item:19019` and `creature:19019`.
-- A full ID such as `spell:133` ranks first.
+- Queries may contain up to 4,096 UTF-16 code units and 64 distinct terms.
+- A full ID such as `spell:133` ranks ahead of name and text matches, regardless of letter case. If IDs differ only by case, an exact spelling ranks first.
 - Queries under three characters match name prefixes only.
-- When a query of four or more characters finds nothing, a typo-tolerant search runs and the footer starts with `Fuzzy:`.
+- When a query of four or more characters finds no literal hits, a typo-tolerant search runs for the selected non-file kinds and the footer starts with `Fuzzy:`. Interface source lines are always matched literally.
 
 Each hit is one line, `id name — hint`, followed by a footer with the range, the total, and either `next offset: N` or `end`:
 
@@ -196,7 +197,9 @@ PRAGMA table_info('world_item_template')
 - Only `SELECT` and the `table_info`, `table_xinfo`, `table_list`, `index_list`, and `foreign_key_list` pragmas are allowed. Writes, `ATTACH`, extension loading, and other pragmas fail with `not authorized`.
 - The query must be exactly one statement. Only whitespace, line comments, and closed block comments may follow it.
 - Output stops at `limit` rows or 32,000 characters and ends with a `[truncated: …]` line.
+- SQLite limits strings, blobs, and encoded rows to 32 MiB. The isolated SQL worker also samples its process memory and stops the query if resident memory exceeds 192 MiB at a sample.
 - A query that runs longer than 5 seconds is stopped with `SQL query timed out after 5 seconds`.
+- The server runs up to 4 SQL queries at once and queues up to 32 more. The 5-second timeout starts when a query begins running. If the queue is full, wait for outstanding calls to finish before retrying.
 
 ### Output format
 

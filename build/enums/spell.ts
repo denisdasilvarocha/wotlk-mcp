@@ -41,7 +41,9 @@ function insertSpellValues(
     const external = name === 'SpellSchoolMask' ? parseEnum(headers[0], 'SpellSchools') : []
     const entries = parseEnum(header, enumName, external)
     for (const entry of enumValues(entries, name === 'CreatureTypeMask')) {
-      insertValue.run(name, entry.value, entry.name)
+      const value = name === 'Powers' ? Number(BigInt.asIntN(32, BigInt(entry.value))) : entry.value
+
+      insertValue.run(name, value, entry.name)
     }
   }
 }
@@ -88,8 +90,9 @@ function materializeTarget(
   if (!targetColumns.includes(targetField)) {
     return
   }
+  const localizedName = target === 'dbc_Achievement' ? /^Title_lang$/iu : /^Name_lang$/iu
   const nameColumn =
-    targetColumns.find((column) => /^Name_lang$/iu.test(column)) ??
+    targetColumns.find((column) => localizedName.test(column)) ??
     targetColumns.find((column) => column.endsWith('Name_lang')) ??
     targetColumns.find((column) => /^Name$/iu.test(column))
   if (nameColumn === undefined) {
@@ -190,7 +193,9 @@ export function importSpellEnums(database: string, sourceDirectory: string): voi
 
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

@@ -1,3 +1,4 @@
+import { quoteIdentifier } from '../shared/table-hash.ts'
 import { linkWriter, type AddLink } from './insert.ts'
 import { existsSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
@@ -24,12 +25,14 @@ interface Row {
   MaxCount: number
 }
 
+type LootEntries = ReadonlyMap<number, readonly Readonly<Row>[]>
+
 interface LootContext {
   readonly addLink: AddLink
   readonly db: Database
   readonly conditions: Readonly<ReadonlySet<string>>
   readonly records: Readonly<ReadonlySet<string>>
-  readonly refs: Readonly<ReadonlyMap<number, readonly Readonly<Row>[]>>
+  readonly refs: LootEntries
 }
 
 function loadTables(db: Database): Map<string, Map<number, Row[]>> {
@@ -87,6 +90,94 @@ function describe(
   return `world_${table}_loot_template entry ${row.Entry} item ${row.Item}: chance ${row.Chance}%; group ${row.GroupId}; quest required ${row.QuestRequired}; loot mode ${row.LootMode}; count ${row.MinCount}-${row.MaxCount}${condition}`
 }
 
+function referenceRows(
+  context: Readonly<LootContext>,
+  table: string,
+  type: number,
+  row: Readonly<Row>,
+  path: Iterable<number>,
+  id: number
+): readonly Readonly<Row>[] {
+  const next = context.refs.get(id)
+
+  if (!next) {
+    const note = describe(row, table, type, context.conditions)
+    throw new Error(
+      `${note}: missing reference ref:${id} (stored ${row.Reference}); path ${Array.from(path, (n) => `ref:${n}`).join(' -> ') || 'root'}`
+    )
+  }
+  return next
+}
+
+function validateReferences(
+  context: Readonly<LootContext>,
+  tables: ReadonlyMap<string, LootEntries>
+): void {
+  const active = new Set<number>()
+  const validated = new Set<number>()
+
+  function validateEntry(id: number, rows: readonly Readonly<Row>[]): void {
+    active.add(id)
+    for (const row of rows) {
+      if (!row.Reference) {
+        continue
+      }
+      const target = Math.abs(row.Reference)
+      if (active.has(target)) {
+        const note = describe(row, 'reference', 10, context.conditions)
+        throw new Error(
+          `${note}: cyclic reference ${[...active, target].map((n) => `ref:${n}`).join(' -> ')}`
+        )
+      }
+      if (!validated.has(target)) {
+        validateEntry(target, referenceRows(context, 'reference', 10, row, active, target))
+      }
+    }
+    active.delete(id)
+    validated.add(id)
+  }
+
+  for (const [id, rows] of context.refs) {
+    if (!validated.has(id)) {
+      validateEntry(id, rows)
+    }
+  }
+
+  for (const [, table, , type] of sources) {
+    for (const rows of tables.get(table)?.values() ?? []) {
+      for (const row of rows) {
+        if (row.Reference) {
+          referenceRows(context, table, type, row, active, Math.abs(row.Reference))
+        }
+      }
+    }
+  }
+
+  for (const { name } of context.db
+    .prepare(
+      "SELECT name FROM sqlite_schema WHERE type = 'table' AND name GLOB 'world_*_loot_template' ORDER BY name"
+    )
+    .iterate()) {
+    const table = String(name)
+    if (tables.has(table.slice('world_'.length, -'_loot_template'.length))) {
+      continue
+    }
+    for (const row of context.db
+      .prepare(
+        `SELECT Entry, Item, Reference FROM ${quoteIdentifier(table)} WHERE Reference <> 0 ORDER BY rowid`
+      )
+      .iterate()) {
+      const reference = Number(row.Reference)
+      const id = Math.abs(reference)
+      if (!context.refs.has(id)) {
+        throw new Error(
+          `${table} entry ${String(row.Entry)} item ${String(row.Item)}: missing reference ref:${id} (stored ${reference})`
+        )
+      }
+    }
+  }
+}
+
 function visit(
   context: Readonly<LootContext>,
   source: string,
@@ -100,18 +191,7 @@ function visit(
 
   if (row.Reference) {
     const id = Math.abs(row.Reference)
-    const next = context.refs.get(id)
-
-    if (!next) {
-      throw new Error(
-        `${note}: missing reference ref:${id} (stored ${row.Reference}); path ${path.map((n) => `ref:${n}`).join(' -> ') || 'root'}`
-      )
-    }
-    if (path.includes(id)) {
-      throw new Error(
-        `${note}: cyclic reference ${[...path, id].map((n) => `ref:${n}`).join(' -> ')}`
-      )
-    }
+    const next = referenceRows(context, table, type, row, path, id)
 
     for (const child of next) {
       visit(context, source, 'reference', 10, child, [...path, id], [...evidence, note])
@@ -132,7 +212,7 @@ function visit(
 
 function linkOwners(
   context: Readonly<LootContext>,
-  tables: Readonly<ReadonlyMap<string, Readonly<ReadonlyMap<number, readonly Readonly<Row>[]>>>>
+  tables: ReadonlyMap<string, LootEntries>
 ): void {
   for (const [kind, table, key, type] of sources) {
     let filter = ''
@@ -194,10 +274,14 @@ export function buildLootLinks(file: string): void {
       throw new Error('Missing reference loot table')
     }
 
-    linkOwners({ addLink: linkWriter(db), conditions, db, records, refs }, tables)
+    const context = { addLink: linkWriter(db), conditions, db, records, refs }
+    validateReferences(context, tables)
+    linkOwners(context, tables)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

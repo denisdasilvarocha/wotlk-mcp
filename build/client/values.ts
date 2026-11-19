@@ -1,17 +1,28 @@
+import type { Field } from './layout.ts'
+
 export type DbcBuffer = Readonly<
   Pick<
     Buffer,
-    'length' | 'indexOf' | 'toString' | 'readFloatLE' | 'readUInt32LE' | 'readUIntLE' | 'readIntLE'
+    | 'length'
+    | 'indexOf'
+    | 'subarray'
+    | 'toString'
+    | 'readFloatLE'
+    | 'readUInt32LE'
+    | 'readUIntLE'
+    | 'readIntLE'
   >
 >
-type Field = Readonly<{ type: string; unsigned: boolean; size: number }>
+
+const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 function text(
   data: DbcBuffer,
   offset: number,
   strings: number,
   stringStart: number,
-  name: string
+  name: string,
+  field: string
 ): string {
   if (offset >= strings) {
     throw new Error(`Invalid string offset in ${name}`)
@@ -23,7 +34,11 @@ function text(
     throw new Error(`Unterminated string in ${name}`)
   }
 
-  return data.toString('utf8', stringStart + offset, end)
+  try {
+    return decoder.decode(data.subarray(stringStart + offset, end))
+  } catch {
+    throw new Error(`Invalid UTF-8 in dbc_${name}.${field} at string-block offset ${offset}`)
+  }
 }
 
 export function readValue(
@@ -35,10 +50,17 @@ export function readValue(
   name: string
 ): number | string {
   if (field.type === 'float') {
-    return data.readFloatLE(cursor)
+    const value = data.readFloatLE(cursor)
+    const negativeZero = Object.is(value, -0)
+    if (Number.isNaN(value) || negativeZero) {
+      throw new Error(
+        `DBC floating conversion loss in dbc_${name}.${field.name}: ${negativeZero ? '-0' : value}`
+      )
+    }
+    return value
   }
   if (field.type.includes('string')) {
-    return text(data, data.readUInt32LE(cursor), strings, stringStart, name)
+    return text(data, data.readUInt32LE(cursor), strings, stringStart, name, field.name)
   }
   if (field.unsigned) {
     return data.readUIntLE(cursor, field.size)

@@ -1,6 +1,6 @@
 import { runImportStages } from './import-stages.ts'
 import { runLinkStages } from './link-stages.ts'
-import { writeReferenceArtifact } from './reference/artifact.ts'
+import { compressReferenceArtifact, writeBuildReport } from './reference/artifact.ts'
 import { writeFidelity } from './reference/fidelity.ts'
 import { writeProvenance } from './reference/provenance.ts'
 import { acquireSources } from './sources/index.ts'
@@ -69,8 +69,10 @@ export async function buildReference(directory: string): Promise<void> {
     await run('provenance and notices', () => {
       writeProvenance(database, path.join(output, 'NOTICE.md'), sources)
     })
-    await run('compressed reference', () => writeReferenceArtifact(output, timings, started))
+    const artifact = await run('compressed reference', () => compressReferenceArtifact(output))
     await run('server and SQL worker', () => execFileSync('vp', ['pack'], { stdio: 'inherit' }))
+    stage = 'build report'
+    writeBuildReport(output, artifact, timings, started)
   } catch (error) {
     throw new Error(
       `Build failed during ${stage}. Partial output retained at ${output}. World updater log, if created: ${path.join(output, 'world/updater.log')}`,

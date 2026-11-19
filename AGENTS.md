@@ -49,6 +49,5 @@ vp run build ./output-next          # full database build; slow, needs Docker, g
 ## References
 
 - `docs/build.md`: read before changing `build/` or `data/`.
-- `docs/releases.md`: read before touching `scripts/`, `.github/workflows/`, or versioning.
 - `docs/tools.md`: read before changing tool parameters or output in `src/`.
 - `docs/database.md`: read before changing database download, caching, or updates in `src/`.

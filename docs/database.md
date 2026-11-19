@@ -18,9 +18,11 @@ Without `WOTLK_MCP_DB`, the server starts loading a database as soon as it start
 
 1. It lists this repository's releases and picks the newest published release tagged `db-v<major>.<minor>.<patch>` whose major matches the schema major the package accepts. Drafts and prereleases are skipped.
 2. It downloads the `wotlk.sqlite.br` asset and checks it against the SHA-256 digest GitHub records for that asset.
-3. It decompresses the file, checks the schema, and moves it into the cache.
+3. It decompresses the file and verifies that the embedded schema version exactly matches the release tag before moving it into the cache.
 
 A tool call waits up to 20 seconds for the first download. If the download is still running, the call fails with `reference database downloading (N of M bytes); retry shortly`. Retry the call; the download continues in the background.
+
+The acquisition itself has a two-minute deadline covering release discovery, transfer, and decompression. After a failed initial acquisition, a later tool call can retry.
 
 The cache lives in a directory per schema major, so package majors installed side by side never remove each other's files:
 
@@ -36,10 +38,11 @@ At startup the server selects the newest cached database that opens with a compa
 
 A server with a cached database starts immediately and checks for updates in the background:
 
-- It checks at most once every 24 hours, counting failed attempts. Only one server checks at a time; another server that tries at the same moment logs a failed check and carries on.
+- It checks at most once every 24 hours, counting failed attempts even if it starts from an older cached copy. Only one server checks at a time; another server that tries at the same moment logs a failed check and carries on.
 - A verified update is cached but used only from the next start. The running server keeps its snapshot for the whole session.
 - Offline starts use the cache. If the newest cached file is unusable, the server uses the previous one.
 - If the newest published release is an older version than the cached one (a rollback), the next start uses that release.
+- A download that finishes late does not replace a more recently observed release.
 
 ### Package and schema majors
 

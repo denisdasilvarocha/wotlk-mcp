@@ -106,7 +106,9 @@ export function importCodex(database: string, source: ReadonlyCodexSource, data:
     importCodexRows(db, source, data)
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    if (db.isTransaction) {
+      db.exec('ROLLBACK')
+    }
     throw error
   } finally {
     db.close()

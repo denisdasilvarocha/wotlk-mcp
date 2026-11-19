@@ -9,13 +9,12 @@ import type { StatementSync } from 'node:sqlite'
 interface ExportContext {
   readonly db: Database
   readonly metadata: Readonly<Pick<StatementSync, 'run'>>
-  readonly mysql: (query: string) => Promise<string>
   readonly scan: (
     query: string,
     table: string,
     columns: readonly Column[],
     consume: (values: readonly unknown[]) => void
-  ) => Promise<void>
+  ) => Promise<bigint>
 }
 
 function quoteMy(name: string): string {
@@ -58,25 +57,6 @@ function createTable(db: Database, destination: string, columns: readonly Column
   )
 }
 
-async function scanTable(
-  context: Readonly<ExportContext>,
-  query: string,
-  table: string,
-  columns: readonly Column[],
-  insert?: Readonly<Pick<StatementSync, 'run'>>
-): Promise<{ count: bigint; hash: Hash }> {
-  let count = 0n
-  const hash = createHash('sha256')
-
-  await context.scan(query, table, columns, (values) => {
-    hashRow(hash, columns, values)
-    insert?.run(...values)
-    count++
-  })
-
-  return { count, hash }
-}
-
 function hashSqlite(
   context: Readonly<ExportContext>,
   destination: string,
@@ -110,35 +90,32 @@ export async function exportTable(
   columns: readonly Column[]
 ): Promise<void> {
   const destination = `world_${table}`
-  const query = exportQuery(table, columns)
-  const countText = (await context.mysql(`SELECT COUNT(*) FROM ${quoteMy(table)}`)).trim()
-
-  if (!/^\d+$/u.test(countText)) {
-    throw new Error(`Invalid source count for ${table}`)
-  }
-
-  const expectedCount = BigInt(countText)
-  const source = await scanTable(context, query, table, columns)
+  const tableName = Buffer.from(table).toString('hex')
+  const query = `SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY; SELECT IF((SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = CONVERT(0x${tableName} USING utf8mb4)) = 'InnoDB', COUNT(*), 'non-InnoDB') FROM ${quoteMy(table)}; ${exportQuery(table, columns)}; COMMIT`
 
   createTable(context.db, destination, columns)
 
   const insert = context.db.prepare(
     `INSERT INTO ${quoteIdentifier(destination)} (${columns.map(({ name }) => quoteIdentifier(name)).join(',')}) VALUES (${columns.map(() => '?').join(',')})`
   )
-  const exported = await scanTable(context, query, table, columns, insert)
+  const hash = createHash('sha256')
+  let count = 0n
+  const expectedCount = await context.scan(query, table, columns, (values) => {
+    hashRow(hash, columns, values)
+    insert.run(...values)
+    count++
+  })
   const sqlite = hashSqlite(context, destination, columns)
-  const sourceDigest = source.hash.digest('hex')
+  const sourceDigest = hash.digest('hex')
 
   if (
-    source.count !== expectedCount ||
-    exported.count !== expectedCount ||
+    count !== expectedCount ||
     sqlite.count !== expectedCount ||
-    exported.hash.digest('hex') !== sourceDigest ||
     sqlite.hash.digest('hex') !== sourceDigest
   ) {
     throw new Error(`World data count or logical hash mismatch in ${table}`)
   }
 
   context.metadata.run(`hash.${destination}`, sourceDigest)
-  context.metadata.run(`count.${destination}`, countText)
+  context.metadata.run(`count.${destination}`, expectedCount.toString())
 }

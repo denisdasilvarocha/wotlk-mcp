@@ -33,6 +33,7 @@ function fixture(name: string): string {
     'creature',
     'gameobject',
     'item',
+    'fishing',
     'skinning',
     'pickpocketing',
     'reference'
@@ -47,7 +48,8 @@ function fixture(name: string): string {
     INSERT INTO world_skinning_loot_template VALUES (11,103,0,40,0,1,0,1,1,'skin');
     INSERT INTO world_pickpocketing_loot_template VALUES (12,104,0,30,0,1,0,1,1,'pick');
     INSERT INTO world_gameobject_loot_template VALUES (20,100,0,80,0,1,0,1,1,'chest');
-    INSERT INTO world_item_loot_template VALUES (101,100,0,90,0,1,0,1,1,'container');`)
+    INSERT INTO world_item_loot_template VALUES (101,100,0,90,0,1,0,1,1,'container');
+    INSERT INTO world_fishing_loot_template VALUES (50,1,30,100,0,1,0,1,1,'valid');`)
 
   const add = db.prepare('INSERT INTO record VALUES (?, ?, ?, ?, ?, ?, ?)')
 
@@ -183,4 +185,48 @@ test('broken and cyclic references fail atomically with source diagnostics', () 
     expect(check.prepare("SELECT count(*) AS n FROM link WHERE relation='drops'").get()?.n).toBe(0)
     check.close()
   }
+})
+
+test.each([
+  ['missing reference', -999, 'entry 41 item 9:.*missing reference ref:999 \\(stored -999\\)'],
+  ['cyclic reference', 40, 'entry 41 item 9:.*cyclic reference ref:40 -> ref:41 -> ref:40']
+] as const)('rejects an unused template with a %s', (name, ref, message) => {
+  const file = fixture(name)
+  const db = new DatabaseSync(file)
+
+  db.exec(`INSERT INTO world_reference_loot_template VALUES
+    (40,8,41,100,0,1,0,1,1,'unused'),
+    (41,9,${ref},100,0,1,0,1,1,'invalid');`)
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(new RegExp(`world_reference_loot_template ${message}`, 'u'))
+})
+
+test('rejects a missing reference from a loot template without a Record owner', () => {
+  const file = fixture('unowned')
+  const db = new DatabaseSync(file)
+
+  db.exec(`INSERT INTO world_creature_template VALUES (99,90,0,0);
+    INSERT INTO world_creature_loot_template VALUES (90,9,999,100,0,1,0,1,1,'invalid');`)
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(/world_creature_loot_template entry 90 item 9:.*missing reference ref:999/u)
+})
+
+test('rejects a missing reference from a SQL-only loot table', () => {
+  const file = fixture('fishing')
+  const db = new DatabaseSync(file)
+
+  db.exec("INSERT INTO world_fishing_loot_template VALUES (50,9,-999,100,0,1,0,1,1,'invalid')")
+  db.close()
+
+  expect(() => {
+    buildLootLinks(file)
+  }).toThrow(
+    /world_fishing_loot_template entry 50 item 9:.*missing reference ref:999 \(stored -999\)/u
+  )
 })

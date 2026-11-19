@@ -80,7 +80,9 @@ export function buildClientFactionSpawnLinks(file: string): void {
 
       db.exec('COMMIT')
     } catch (error) {
-      db.exec('ROLLBACK')
+      if (db.isTransaction) {
+        db.exec('ROLLBACK')
+      }
       throw error
     }
   } finally {

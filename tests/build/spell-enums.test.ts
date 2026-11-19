@@ -1,3 +1,4 @@
+import { parseEnum } from '../../build/enums/parser.ts'
 import { importSpellEnums } from '../../build/enums/spell.ts'
 import { initReference } from '../../build/offsets.ts'
 import { packagedServer, unpackPackage } from '../helpers/package.js'
@@ -46,9 +47,19 @@ test('spell mappings validate fields and materialize named references without ch
     db.exec(
       `CREATE TABLE dbc_Spell (ID INTEGER, Name_lang TEXT, ${columns.map((x) => `"${x}" INTEGER`).join(', ')}, Category INTEGER, Missing INTEGER); INSERT INTO dbc_Spell (ID, Name_lang, Effect_1, Effect_2, Effect_3, EffectAura_1, EffectAura_2, EffectAura_3, ImplicitTargetA_1, ImplicitTargetA_2, ImplicitTargetA_3, Attributes, AttributesExG, SchoolMask, ProcTypeMask, PowerType, Category, Missing) VALUES (1, 'Example', 1, 2, 9999, 1, 2, 1, 1, 2, 1, 9, 2, 1, 2, -1, 4, 7); INSERT INTO record VALUES ('spell:1', 'spell', 'Example', 'dbc_Spell', 1, '', ''); CREATE TABLE dbc_Category (ID INTEGER, Name_lang TEXT); INSERT INTO dbc_Category VALUES (4, 'Example category'); CREATE TABLE dbc_foreign_key (source_table TEXT, field TEXT, target_table TEXT, target_field TEXT); INSERT INTO dbc_foreign_key VALUES ('dbc_Spell', 'Category', 'dbc_Category', 'ID'), ('dbc_Spell', 'Missing', 'dbc_Category', 'ID');`
     )
+    db.exec(`
+      CREATE TABLE dbc_Achievement (ID INTEGER, Title_lang TEXT, Supercedes INTEGER);
+      INSERT INTO dbc_Achievement VALUES (6, 'Level 10', 0), (7, 'Level 20', 6);
+      INSERT INTO dbc_foreign_key VALUES ('dbc_Achievement', 'Supercedes', 'dbc_Achievement', 'ID');
+      INSERT INTO record VALUES ('achievement:7', 'achievement', 'Level 20', 'dbc_Achievement', 2, '', '');
+    `)
     db.exec(
       'UPDATE dbc_Spell SET ImplicitTargetB_1 = 1, ImplicitTargetB_2 = 2, ImplicitTargetB_3 = 1, Targets = 1, TargetCreatureType = 2, InterruptFlags = 1, AuraInterruptFlags = 2, ChannelInterruptFlags = 1'
     )
+    db.exec(`
+      INSERT INTO dbc_Spell (ID, Name_lang, PowerType) VALUES (755, 'Health Funnel', -2);
+      INSERT INTO record VALUES ('spell:755', 'spell', 'Health Funnel', 'dbc_Spell', 2, '', '');
+    `)
     db.close()
 
     const headerNames: Record<string, string[]> = {
@@ -78,9 +89,10 @@ test('spell mappings validate fields and materialize named references without ch
       writeFileSync(
         destination,
         names
-          .map(
-            (name) =>
-              `enum ${name} { ${name.toUpperCase()}_NONE = 0, ${name.toUpperCase()}_FIRST = 1, ${name.toUpperCase()}_SECOND = 2 };`
+          .map((name) =>
+            name === 'Powers'
+              ? 'enum Powers { POWER_MANA = 0, POWER_HEALTH = 0xFFFFFFFE, POWER_SENTINEL = 0xFFFFFFFF };'
+              : `enum ${name} { ${name.toUpperCase()}_NONE = 0, ${name.toUpperCase()}_FIRST = 1, ${name.toUpperCase()}_SECOND = 2 };`
           )
           .join('\n')
       )
@@ -128,7 +140,7 @@ test('spell mappings validate fields and materialize named references without ch
 
     try {
       const get = JSON.stringify(
-        await client.callTool({ arguments: { ids: ['spell:1'] }, name: 'get' })
+        await client.callTool({ arguments: { ids: ['spell:1', 'spell:755'] }, name: 'get' })
       )
 
       for (const expected of [
@@ -154,11 +166,13 @@ test('spell mappings validate fields and materialize named references without ch
         'Attributes: 9 (FIRST, 8)',
         'AttributesExG: 2 (SECOND)',
         'PowerType: -1',
+        'PowerType: -2 (HEALTH)',
         'Category: 4 (Example category)',
         'Missing: 7'
       ]) {
         expect(get).toContain(expected)
       }
+      expect(get).not.toContain('PowerType: -1 (')
 
       const sql = JSON.stringify(
         await client.callTool({
@@ -171,6 +185,12 @@ test('spell mappings validate fields and materialize named references without ch
 
       expect(sql).toContain('1\\t2\\t9999\\t9\\t4')
     } finally {
+      const achievement = await client.callTool({
+        arguments: { ids: ['achievement:7'] },
+        name: 'get'
+      })
+
+      expect(JSON.stringify(achievement)).toContain('Supercedes: 6 (Level 10)')
       await client.close()
     }
 
@@ -223,4 +243,12 @@ test('spell mappings validate fields and materialize named references without ch
   } finally {
     rmSync(dir, { force: true, recursive: true })
   }
+})
+
+test('external enum symbols are accepted as shift counts without guessing their type', () => {
+  const schools = parseEnum('enum Schools { FIRE = 2 };', 'Schools')
+  const masks = parseEnum('enum Masks { FIRE_MASK = 1 << FIRE };', 'Masks', schools)
+
+  expect(masks).toEqual([{ name: 'FIRE_MASK', value: 4 }])
+  expect(() => parseEnum('enum Masks { BAD = ~FIRE };', 'Masks', schools)).toThrow('symbol type')
 })

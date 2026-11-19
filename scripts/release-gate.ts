@@ -138,7 +138,7 @@ try {
       }
 
       const drift = afterTables.find(
-        (name) => canonicalTableHash(db, name).hash !== canonicalTableHash(old, name).hash
+        (name) => declarations.get(`canonical_hash.${name}`) !== canonicalTableHash(old, name).hash
       )
       if (drift !== undefined) {
         fail(`Unchanged input pins with logical drift: ${drift}`)

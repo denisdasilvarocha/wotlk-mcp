@@ -58,7 +58,9 @@ export function insertRegistrations(
     "INSERT INTO lua_native_registration VALUES (?, ?, ?, ?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''))"
   )
   const exists = db.prepare('SELECT 1 FROM record WHERE id = ?')
-  const offsets = db.prepare('SELECT path FROM offsets_entry WHERE va = ? ORDER BY path')
+  const offsets = db.prepare(
+    "SELECT path FROM offsets_entry WHERE va = ? AND kind = 'function' AND status IS NULL ORDER BY path"
+  )
   const addLink = linkWriter(db)
 
   for (const row of rows) {

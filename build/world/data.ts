@@ -1,6 +1,6 @@
 import type { Hash } from 'node:crypto'
 
-const decoder = new TextDecoder('utf-8', { fatal: true })
+const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 export type Kind = 'integer' | 'unsigned' | 'real' | 'text' | 'blob'
 

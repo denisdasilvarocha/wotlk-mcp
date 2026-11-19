@@ -1,4 +1,4 @@
-import { writeReferenceArtifact } from '../build/reference/artifact.ts'
+import { compressReferenceArtifact, writeBuildReport } from '../build/reference/artifact.ts'
 import { execFileSync } from 'node:child_process'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
@@ -31,11 +31,7 @@ const started = Date.now()
 const args = ['scripts/release-gate.ts', database, asset, ...options]
 rmSync(path.join(output, 'gate.json'), { force: true })
 execFileSync(process.execPath, [...args, '--prepare'], { encoding: 'utf8' })
-await writeReferenceArtifact(output, original.timings_seconds, started, original.build_seconds)
+const artifact = await compressReferenceArtifact(output)
 const gate = execFileSync(process.execPath, args, { encoding: 'utf8' })
 writeFileSync(path.join(output, 'gate.json'), gate)
-const finalReport = z
-  .record(z.string(), z.unknown())
-  .parse(JSON.parse(readFileSync(report, 'utf8')))
-finalReport.build_seconds = original.build_seconds + (Date.now() - started) / 1000
-writeFileSync(report, `${JSON.stringify(finalReport, undefined, 2)}\n`)
+writeBuildReport(output, artifact, original.timings_seconds, started, original.build_seconds)

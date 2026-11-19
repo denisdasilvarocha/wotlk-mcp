@@ -78,11 +78,7 @@ function parseFields(
   return fields
 }
 
-export function parseLayout(
-  definition: string,
-  name: string,
-  required: boolean
-): Field[] | undefined {
+export function parseLayout(definition: string, name: string): Field[] {
   const sections = definition.split(/\r?\n\s*\r?\n/u)
   const columns = parseColumns(sections[0])
   const section = sections
@@ -91,10 +87,7 @@ export function parseLayout(
       part.split(/\r?\n/u).some((line) => line.startsWith('BUILD ') && matchesBuild(line.slice(6)))
     )
   if (section === undefined || section === '') {
-    if (required) {
-      throw new Error(`Missing build 12340 layout: ${name}`)
-    }
-    return undefined
+    throw new Error(`Missing build 12340 layout: ${name}`)
   }
   return parseFields(section, name, columns)
 }

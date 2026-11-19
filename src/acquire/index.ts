@@ -1,5 +1,12 @@
 import { openReference } from '../reference.js'
-import { cached, cacheDirectory, publish, removeIfPossible, states } from './cache.js'
+import {
+  cached,
+  cacheDirectory,
+  publish,
+  removeIfPossible,
+  states,
+  validateRelease
+} from './cache.js'
 import { selectRelease, transferAsset } from './release.js'
 import { randomUUID } from 'node:crypto'
 import { mkdir, rename } from 'node:fs/promises'
@@ -84,10 +91,13 @@ async function update(directory: string, current: CacheState): Promise<void> {
     lock.exec('BEGIN IMMEDIATE')
 
     try {
-      const latest = (await states(directory))[0]?.state ?? current
+      const latestCheck = (await states(directory)).reduce(
+        (latest, entry) => Math.max(latest, entry.state.lastCheck),
+        current.lastCheck
+      )
       const now = Date.now()
 
-      if (now - latest.lastCheck < 24 * 60 * 60 * 1000) {
+      if (now - latestCheck < 24 * 60 * 60 * 1000) {
         return
       }
 
@@ -117,12 +127,32 @@ function downloadProgress(): string {
 }
 
 async function download(existing?: CacheState): Promise<boolean> {
-  const release = await selectRelease((value) => {
+  const signal = AbortSignal.timeout(120_000)
+
+  try {
+    return await downloadReference(signal, existing)
+  } catch (error) {
+    if (signal.aborted) {
+      throw new Error('reference acquisition timed out', { cause: error })
+    }
+    throw error
+  }
+}
+
+async function downloadReference(signal: AbortSignal, existing?: CacheState): Promise<boolean> {
+  const release = await selectRelease(signal, (value) => {
     warningMajor = value
   })
+  signal.throwIfAborted()
+  const observedAt = performance.timeOrigin + performance.now()
 
-  if (release.tag_name === existing?.version) {
-    return false
+  if (existing && release.tag_name === existing.version) {
+    await publish(
+      cacheDirectory(),
+      { ...existing, observedAt, warningMajor },
+      Math.max(Date.now(), existing.lastCheck + 2)
+    )
+    return true
   }
 
   const asset = release.assets.find((item) => item.name === 'wotlk.sqlite.br')
@@ -146,6 +176,7 @@ async function download(existing?: CacheState): Promise<boolean> {
       asset.digest,
       compressed,
       partial,
+      signal,
       (value) => {
         total = value
       },
@@ -153,7 +184,8 @@ async function download(existing?: CacheState): Promise<boolean> {
         received += value
       }
     )
-    openReference(partial).close()
+    validateRelease(partial, release.tag_name)
+    signal.throwIfAborted()
     await rename(partial, final)
 
     const checked = Math.max(Date.now(), (existing?.lastCheck ?? 0) + 2)
@@ -163,6 +195,7 @@ async function download(existing?: CacheState): Promise<boolean> {
       {
         file: path.basename(final),
         lastCheck: existing?.lastCheck ?? checked,
+        observedAt,
         version: release.tag_name,
         warningMajor
       },

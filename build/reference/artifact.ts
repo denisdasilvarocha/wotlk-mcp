@@ -40,36 +40,41 @@ async function hashFile(file: string): Promise<string> {
   return hash.digest('hex')
 }
 
-export async function writeReferenceArtifact(
-  output: string,
-  timings: Readonly<Record<string, number>>,
-  started: number,
-  previousSeconds = 0
-): Promise<void> {
+export async function compressReferenceArtifact(output: string) {
   const database = path.join(output, 'wotlk.sqlite')
   const compressed = path.join(output, 'wotlk.sqlite.br')
   const compression = await compressReference(database, compressed)
-  Object.assign(timings, { compression: (timings.compression ?? 0) + compression })
-
   const compressedBytes = statSync(compressed).size
+
   const summary = {
     brotli_quality: 5,
-    build_seconds: previousSeconds + (Date.now() - started) / 1000,
     compressed_250_mb_gate_passed: compressedBytes <= 250_000_000,
     compressed_bytes: compressedBytes,
     compressed_sha256: await hashFile(compressed),
-    timings_seconds: timings,
     uncompressed_bytes: statSync(database).size
   }
-
-  writeFileSync(
-    path.join(output, 'build-report.json'),
-    `${JSON.stringify(summary, undefined, 2)}\n`
-  )
 
   if (!summary.compressed_250_mb_gate_passed) {
     console.error(
       'Compressed asset exceeds 250 MB; an explicit scope decision is required before publication.'
     )
   }
+
+  return { compression, summary }
+}
+
+export function writeBuildReport(
+  output: string,
+  artifact: Awaited<ReturnType<typeof compressReferenceArtifact>>,
+  timings: Readonly<Record<string, number>>,
+  started: number,
+  previousSeconds = 0
+): void {
+  const report = {
+    ...artifact.summary,
+    build_seconds: previousSeconds + (Date.now() - started) / 1000,
+    timings_seconds: { ...timings, compression: (timings.compression ?? 0) + artifact.compression }
+  }
+
+  writeFileSync(path.join(output, 'build-report.json'), `${JSON.stringify(report, undefined, 2)}\n`)
 }

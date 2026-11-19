@@ -72,14 +72,15 @@ With `WOTLK_MCP_DB` set, the server makes no network requests.
 | codex | Imports the Lua API Records. |
 | client data | Imports every build-12340 DBC file into `dbc_` tables using WoWDBDefs layouts. |
 | interface | Imports FrameXML, GlueXML, and Blizzard addon files into `ui_` tables. |
-| world | Runs the AzerothCore world importer against a fresh MySQL container and copies the world tables into `world_` tables. |
+| world | Runs the AzerothCore world importer against a fresh MySQL container. It streams each InnoDB table once from a snapshot, checking the MySQL row count and the SQLite count and hash. |
 | native | Links Lua functions and widget methods to their native registrations in the client. |
 | world links, loot links, client and spawn links | Derives Links from stored keys. |
 | world enums, spell enums and foreign keys | Loads enum and flag names from the AzerothCore headers. |
 | fidelity report | Writes `fidelity.json`. |
 | provenance and notices | Fills the `source` table and writes `NOTICE.md`. |
-| compressed reference | Writes `wotlk.sqlite.br` and `build-report.json`. |
+| compressed reference | Writes `wotlk.sqlite.br`. |
 | server and SQL worker | Runs `vp pack` to compile `dist/`. |
+| build report | Writes `build-report.json` with all completed stage timings. |
 
 ## Outputs
 
@@ -116,11 +117,12 @@ The published importer image can lag AzerothCore's branch head, so World Data ma
 ### Interpretation rules
 
 - **Records are not merged.** AzerothCore `*_dbc` override tables stay in `world_` tables and do not change Client Data Records.
-- **Links come only from stored keys.** Names, scripts, and text never create a Link, and both ends must be existing Records. Missing or cyclic loot references abort the build with the source row.
+- **Slash Records require a handler.** `ui_slash` keeps all declarations, but a declaration becomes a Record only when its exact key has a `SlashCmdList` handler.
+- **Links come only from stored keys.** Names, scripts, and text never create a Link, and both ends must be existing Records. Missing or cyclic loot references abort the build with the source row, even for loot tables that do not produce Links.
 - **Loot and spawn notes are raw values.** Chances, groups, and spawn counts repeat the stored rows; they are not effective drop probabilities or inferred zones.
-- **Enum decoding is additive.** `get` shows decoded names after the raw value. Unknown values, flag bits, and the sentinel `-1` are left undecoded.
-- **Codex addresses are claims.** Codex `memoryAddress` values are kept as data, never used as evidence for native Links. `implemented by` Links require a curated Offset with the same address.
-- **Source rows are kept exactly.** A value SQLite cannot store exactly, such as a negative zero, fails the build with the table, column, and value.
+- **Enum decoding is additive.** `get` shows decoded names after the raw value. Unknown values, flag bits, and the sentinel `-1` are left undecoded. The importer evaluates 32-bit signed and unsigned C++ expressions and rejects expressions it cannot resolve exactly.
+- **Codex addresses are claims.** Codex `memoryAddress` values are kept as data, never used as evidence for native Links. `implemented by` Links require a verified function Offset with the same address.
+- **Source rows are kept exactly.** A value SQLite cannot store exactly, such as a negative zero, fails the build with the table, column, and value. DBC import rejects malformed UTF-8 with the string-block offset, and DBC logical hashes distinguish positive and negative infinity.
 
 ## Rights
 

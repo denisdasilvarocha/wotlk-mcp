@@ -1,4 +1,5 @@
 import { importCodex, readCodex } from '../../build/codex/index.ts'
+import { resolveWidgets } from '../../build/native/resolution.ts'
 import { initReference } from '../../build/offsets.ts'
 import { packagedServer, unpackPackage } from '../helpers/package.ts'
 import { Client } from '@modelcontextprotocol/client'
@@ -133,6 +134,7 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
         {
           description: 'Widget',
           inheritedMethods: [],
+          inherits: [],
           methods: [
             {
               description: 'Anchors',
@@ -144,6 +146,18 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
           ],
           name: 'Region',
           scriptHandlers: [{ name: 'OnShow' }]
+        },
+        {
+          inheritedMethods: [
+            {
+              description: 'Anchors this button relative to another region',
+              name: 'Button:SetPoint(point)',
+              parameters: [{ name: 'point' }]
+            }
+          ],
+          inherits: ['Region'],
+          methods: [{ name: 'Button:Click()' }],
+          name: 'Button'
         }
       ]
     })
@@ -164,10 +178,62 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
       expect(
         db.prepare("SELECT name FROM record WHERE id='method:Region:SetPoint'").get()
       ).toMatchObject({ name: 'SetPoint' })
-      expect(db.prepare('SELECT methods, scriptHandlers FROM lua_widget').get()).toMatchObject({
+      expect(
+        db.prepare("SELECT methods, scriptHandlers FROM lua_widget WHERE name='Region'").get()
+      ).toMatchObject({
         methods: '["SetPoint"]',
         scriptHandlers: '[{"name":"OnShow"}]'
       })
+      expect(
+        db
+          .prepare(
+            "SELECT inheritedMethods, inheritedMethodDocs FROM lua_widget WHERE name='Button'"
+          )
+          .get()
+      ).toMatchObject({
+        inheritedMethodDocs: JSON.stringify([
+          {
+            description: 'Anchors this button relative to another region',
+            name: 'Button:SetPoint(point)',
+            parameters: [{ name: 'point' }]
+          }
+        ]),
+        inheritedMethods: '["SetPoint"]'
+      })
+      const table = '0x00403000'
+      const { resolved } = resolveWidgets(
+        db,
+        [
+          {
+            call_sites: ['0x00402000'],
+            context: 'game',
+            index: 0,
+            kind: 'method',
+            name: 'SetPoint',
+            table,
+            va: '0x00400004'
+          },
+          {
+            call_sites: ['0x00402000'],
+            context: 'game',
+            index: 1,
+            kind: 'method',
+            name: 'Click',
+            table,
+            va: '0x00400005'
+          }
+        ],
+        {},
+        {
+          [table]: {
+            exact_inheritance: true,
+            methods_sha256: createHash('sha256').update('["Click","SetPoint"]').digest('hex'),
+            reason: 'fixture confirms Button inherits SetPoint from Region',
+            widget: 'Button'
+          }
+        }
+      )
+      expect(resolved.get(table)).toBe('Button')
       expect(db.prepare('SELECT arguments FROM lua_cle').get()).toMatchObject({
         arguments: '[{"name":"spellId"},{"name":"amount"}]'
       })
@@ -187,13 +253,14 @@ if [ "$1" = run ]; then echo 'evaluation failed' >&2; exit 1; fi
       await client.connect(packagedServer(dir, dbPath))
 
       const result = await client.callTool({
-        arguments: { ids: ['fn:Foo', 'method:Region:SetPoint', 'widget:Region'] },
+        arguments: { ids: ['fn:Foo', 'method:Region:SetPoint', 'widget:Region', 'widget:Button'] },
         name: 'get'
       })
 
       expect(JSON.stringify(result)).toContain('memoryAddress: 0x1234')
       expect(JSON.stringify(result)).toContain('declaringWidget: Region')
       expect(JSON.stringify(result)).toContain('OnShow')
+      expect(JSON.stringify(result)).toContain('Anchors this button relative to another region')
     } finally {
       await client.close()
     }
