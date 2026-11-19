@@ -21,6 +21,7 @@ import {
   validateMatrix,
   writeOutput
 } from './database-release-readers.mjs'
+import { asArray, asRecord } from './records.mjs'
 import { createReadStream, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -239,7 +240,27 @@ if (command === 'previous') {
     throw new Error('conflicting release tag')
   }
 
-  validateMatrix(await json(`${base}/actions/runs/${runId}/jobs?per_page=100`))
+  const readJobs = async (page = 1) =>
+    asRecord(await json(`${base}/actions/runs/${runId}/jobs?filter=all&per_page=100&page=${page}`))
+  const first = await readJobs()
+  const total = first.total_count
+  if (typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0 || total > 1000) {
+    throw new TypeError('invalid matrix job count')
+  }
+  const remainingPages = Math.max(0, Math.ceil(total / 100) - 1)
+  const rest = await Promise.all(
+    Array.from({ length: remainingPages }, (_, index) => readJobs(index + 2))
+  )
+  const jobs = [first, ...rest].flatMap((page) => {
+    if (!Array.isArray(page.jobs) || page.total_count !== total) {
+      throw new TypeError('invalid matrix jobs page')
+    }
+    return asArray(page.jobs)
+  })
+  if (jobs.length !== total) {
+    throw new Error('incomplete acceptance matrix jobs')
+  }
+  validateMatrix({ jobs })
 
   const result = readRelease(
     await json(`${base}/releases/${id}`, {
