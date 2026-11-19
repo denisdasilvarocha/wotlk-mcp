@@ -199,6 +199,7 @@ PRAGMA table_info('world_item_template')
 - Output stops at `limit` rows or 32,000 characters and ends with a `[truncated: …]` line.
 - SQLite limits strings, blobs, and encoded rows to 32 MiB. The isolated SQL worker also samples its process memory and stops the query if resident memory exceeds 192 MiB at a sample.
 - A query that runs longer than 5 seconds is stopped with `SQL query timed out after 5 seconds`.
+- The server runs up to 4 SQL queries at once and queues up to 32 more. The 5-second timeout starts when a query begins running. If the queue is full, wait for outstanding calls to finish before retrying.
 
 ### Output format
 
