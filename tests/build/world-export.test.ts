@@ -160,9 +160,10 @@ test('exported artifact preserves world rows and indexes only curated templates'
     writeFileSync(
       path.join(bin, 'docker'),
       `#!/bin/sh
-case "$1" in rm|network) exit 0 ;; esac
+case "$1" in rm|network|run) exit 0 ;; esac
 for query do :; done
 case "$query" in
+  'SELECT 1'|'CREATE USER '*) exit 0 ;;
   *'SELECT VERSION()'*) printf '%s\\n' '8.4.3	ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION	+00:00	utf8mb4	utf8mb4_general_ci'; exit ;;
   *information_schema.columns*) cat "$WORLD_ROOT/schema-columns.tsv"; exit ;;
   *information_schema.statistics*) cat "$WORLD_ROOT/schema-indexes.tsv"; exit ;;
@@ -170,9 +171,15 @@ esac
 table=\${query#*' FROM \`'}
 table=\${table%%'\`'*}
 case "$query" in
-  'SELECT COUNT('* ) if [ "$WORLD_MISMATCH" = 1 ]; then echo 1; elif [ -f "$WORLD_ROWS/$table" ]; then echo 1; else echo 0; fi ;;
-  * ) if [ -f "$WORLD_ROWS/$table" ]; then cat "$WORLD_ROWS/$table"; fi ;;
+  *'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY; SELECT IF('*'COUNT(*)'*'ORDER BY SHA2('*'; COMMIT') ;;
+  *) echo 'invalid export protocol' >&2; exit 1 ;;
 esac
+if [ -n "$WORLD_SCAN_LOG" ]; then
+  if grep -Fx "$table" "$WORLD_SCAN_LOG" >/dev/null 2>&1; then echo 'duplicate table scan' >&2; exit 1; fi
+  echo "$table" >> "$WORLD_SCAN_LOG"
+fi
+if [ "$WORLD_MISMATCH" = 1 ]; then echo 1; elif [ -f "$WORLD_ROWS/$table" ]; then echo 1; else echo 0; fi
+if [ -f "$WORLD_ROWS/$table" ]; then cat "$WORLD_ROWS/$table"; fi
 `,
       { mode: 0o755 }
     )
@@ -185,6 +192,7 @@ esac
         ...process.env,
         PATH: `${bin}${path.delimiter}${process.env.PATH}`,
         WORLD_ROOT: world,
+        WORLD_SCAN_LOG: path.join(dir, 'scans'),
         WORLD_ROWS: rows
       }
     })

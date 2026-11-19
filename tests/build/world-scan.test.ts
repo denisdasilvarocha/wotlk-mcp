@@ -21,13 +21,17 @@ case "$*" in
   *"SELECT VERSION()"*) printf '8.4.3\\tONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION\\t+00:00\\tutf8mb4\\tutf8mb4_general_ci\\n' ;;
   *information_schema.columns*) cat data/world/schema-columns.tsv ;;
   *information_schema.statistics*) cat data/world/schema-indexes.tsv ;;
-  *"SELECT COUNT("*) echo 0 ;;
   *"ORDER BY SHA2("*)
+    case "$WORLD_MODE" in
+      missing-count) exit 0 ;;
+      invalid-count) echo invalid; exit 0 ;;
+    esac
     if [ -f "$WORLD_STATE/scanned" ]; then
       kill -TERM "$PPID"
       exec sleep 5
     fi
-    touch "$WORLD_STATE/scanned" ;;
+    touch "$WORLD_STATE/scanned"
+    echo 0 ;;
 esac
 `,
     { mode: 0o755 }
@@ -62,7 +66,9 @@ try {
 
 test.skipIf(process.platform === 'win32').each([
   { code: 1, error: /Caught World import failure: Error: spawn .* ENOENT/u, mode: 'spawn' },
-  { code: 143, error: /Caught World import failure: AbortError/u, mode: 'interruption' }
+  { code: 143, error: /Caught World import failure: AbortError/u, mode: 'interruption' },
+  { code: 1, error: /Missing source count/u, mode: 'missing-count' },
+  { code: 1, error: /Invalid source count/u, mode: 'invalid-count' }
 ])('World scan $mode failure rolls back and cleans up', ({ code, error, mode }) => {
   const dir = mkdtempSync(path.join(tmpdir(), 'world-scan-'))
 

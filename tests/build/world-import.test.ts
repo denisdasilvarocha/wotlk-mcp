@@ -48,7 +48,7 @@ case "$*" in
       *"SELECT VERSION()"*) printf '8.4.3\\tONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION\\t+00:00\\tutf8mb4\\tutf8mb4_general_ci\\n' ;;
       *information_schema.columns*) if [ "$WORLD_MODE" = export ]; then cat data/world/schema-columns.tsv; else echo drift; fi ;;
       *information_schema.statistics*) cat data/world/schema-indexes.tsv ;;
-      *"SELECT COUNT("*) echo export-failure >&2; exit 43 ;;
+      *"ORDER BY SHA2("*) echo export-failure >&2; exit 43 ;;
       *) echo drift ;;
     esac ;;
 esac
